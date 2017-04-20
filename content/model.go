@@ -3,122 +3,82 @@ package content
 import "time"
 
 type Identifier struct {
-	Authority       string `json:"authority"`
-	IdentifierValue string `json:"identifierValue"`
+	Authority       string `json:"authority,omitempty"`
+	IdentifierValue string `json:"identifierValue,omitempty"`
 }
 
-type Annotation struct {
-	Predicate string `json:"predicate"`
-	Uri       string `json:"uri"`
-	ApiUrl    string `json:"apiUrl"`
-	Label     string `json:"label"`
-	Type      string `json:"type"`
-}
 type Standout struct {
-	EditorsChoice bool `json:"editorsChoice"`
-	Exclusive     bool `json:"exclusive"`
-	Scoop         bool `json:"scoop"`
+	EditorsChoice bool `json:"editorsChoice,omitempty"`
+	Exclusive     bool `json:"exclusive,omitempty"`
+	Scoop         bool `json:"scoop,omitempty"`
 }
 
 type AlternativeTitles struct {
-	PromotionalTitle string `json:"promotionalTitle"`
+	PromotionalTitle string `json:"promotionalTitle,omitempty"`
 }
 
 type AlternativeStandfirsts struct {
-	PromotionalStandfirst string `json:"promotionalStandfirst"`
+	PromotionalStandfirst string `json:"promotionalStandfirst,omitempty"`
 }
 
 type AlternativeImages struct {
-	PromotionalImage string `json:"promotionalImage"`
+	PromotionalImage string `json:"promotionalImage,omitempty"`
 }
 
 type Uri struct {
-	Id string `json:"id"`
+	Id string `json:"id,omitempty"`
 }
 
 type Comments struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type Copyright struct {
-	Notice string `json:"notice"`
+	Notice string `json:"notice,omitempty"`
 }
 
 type Content struct {
-	Uuid               string `json:"id"`
-	Type               string `json:"type"`
-	BodyXML            string `json:"bodyXML"`
-	OpeningXML         string `json:"openingXML"`
-	Title              string `json:"title"`
-	Byline             string `json:"byline"`
-	Description        string `json:"description"`
-	PublishedDate      time.Time `json:"publishedDate"`
-	Identifiers        []Identifier `json:"identifiers"`
-	Members            []Uri `json:"members"`
-	RequestUrl         string `json:"requestUrl"`
-	BinaryUrl          string `json:"binaryUrl"`
-	Brands             []string `json:"brands"`
-	Annotations        []Annotation `json:"annotations"`
-	MainImage          Uri `json:"MainImage"`
-	Comments           Comments `json:"comments"`
-	Realtime           bool `json:"realtime"`
-	Copyright          Copyright `json:"copyright"`
-	PublishReference   string `json:"publishReference"`
-	PixelWidth         int `json:"pixelWidth"`
-	PixelHeight        int `json:"pixelHeight"`
-	Stdout             Standout `json:"standout"`
-	LastModified       time.Time `json:"lastModified"`
-	Standfirst         string `json:"standfirst"`
-	AltTitles          AlternativeTitles `json:"alternativeTitles"`
-	AltStandfirsts     AlternativeStandfirsts `json:"alternativeStandfirsts"`
-	AltImages          AlternativeImages `json:"alternativeImages"`
-	WebUrl             string `json:"webUrl"`
-	CanBeSyndicated    string `json:"canBeSyndicated"`
-	FirstPublishedDate time.Time `json:"firstPublishedDate"`
-	AccessLevel        string `json:"accessLevel"`
-	CanBeDistributed   string `json:"canBeDistributed"`
-}
-
-type ContentOutput struct {
-	Uuid               string `json:"id"`
-	Type               string `json:"type"`
-	BodyXML            string `json:"bodyXML"`
-	OpeningXML         string `json:"openingXML"`
-	Title              string `json:"title"`
-	Byline             string `json:"byline"`
-	Description        string `json:"description"`
-	PublishedDate      time.Time `json:"publishedDate"`
-	Identifiers        []Identifier `json:"identifiers"`
-	Members            []Content `json:"members"`
-	RequestUrl         string `json:"requestUrl"`
-	BinaryUrl          string `json:"binaryUrl"`
-	Brands             []string `json:"brands"`
-	Annotations        []Annotation `json:"annotations"`
-	MainImage          Uri `json:"MainImage"`
-	Comments           Comments `json:"comments"`
-	Realtime           bool `json:"realtime"`
-	Copyright          Copyright `json:"copyright"`
-	PublishReference   string `json:"publishReference"`
-	PixelWidth         int `json:"pixelWidth"`
-	PixelHeight        int `json:"pixelHeight"`
-	Stdout             Standout `json:"standout"`
-	LastModified       time.Time `json:"lastModified"`
-	Standfirst         string `json:"standfirst"`
-	AltTitles          AlternativeTitles `json:"alternativeTitles"`
-	AltStandfirsts     AlternativeStandfirsts `json:"alternativeStandfirsts"`
-	AltImages          AlternativeImages `json:"alternativeImages"`
-	WebUrl             string `json:"webUrl"`
-	CanBeSyndicated    string `json:"canBeSyndicated"`
-	FirstPublishedDate time.Time `json:"firstPublishedDate"`
-	AccessLevel        string `json:"accessLevel"`
-	CanBeDistributed   string `json:"canBeDistributed"`
+	UUID               string `json:"id,omitempty"`
+	Type               string `json:"type,omitempty"`
+	BodyXML            string `json:"bodyXML,omitempty"`
+	OpeningXML         string `json:"openingXML,omitempty"`
+	Title              string `json:"title,omitempty"`
+	Byline             string `json:"byline,omitempty"`
+	Description        string `json:"description,omitempty"`
+	PublishedDate      *time.Time `json:"publishedDate,omitempty"`
+	Identifiers        []Identifier `json:"identifiers,omitempty"`
+	Members            []Content `json:"members,omitempty"`
+	RequestURL         string `json:"requestUrl,omitempty"`
+	BinaryURL          string `json:"binaryUrl,omitempty"`
+	Brands             []string `json:"brands,omitempty"`
+	MainImage          *Uri `json:"MainImage,omitempty"`
+	Comments           *Comments `json:"comments,omitempty"`
+	Realtime           bool `json:"realtime,omitempty"`
+	Copyright          *Copyright `json:"copyright,omitempty"`
+	PublishReference   string `json:"publishReference,omitempty"`
+	PixelWidth         int `json:"pixelWidth,omitempty"`
+	PixelHeight        int `json:"pixelHeight,omitempty"`
+	Stdout             *Standout `json:"standout,omitempty"`
+	LastModified       *time.Time `json:"lastModified,omitempty"`
+	Standfirst         string `json:"standfirst,omitempty"`
+	AltTitles          *AlternativeTitles `json:"alternativeTitles,omitempty"`
+	AltStandfirsts     *AlternativeStandfirsts `json:"alternativeStandfirsts,omitempty"`
+	AltImages          *AlternativeImages `json:"alternativeImages,omitempty"`
+	WebURL             string `json:"webUrl,omitempty"`
+	CanBeSyndicated    string `json:"canBeSyndicated,omitempty"`
+	FirstPublishedDate *time.Time `json:"firstPublishedDate,omitempty"`
+	AccessLevel        string `json:"accessLevel,omitempty"`
+	CanBeDistributed   string `json:"canBeDistributed,omitempty"`
 }
 
 type UnrolledContent struct {
-	MainImage        *ContentOutput `json:"mainImage,omitempty"`
-	Embeds           []ContentOutput `json:"embeds,omitempty"`
-	PromotionalImage *ContentOutput  `json:"promotionalImage,omitempty"`
+	MainImage         *Content `json:"mainImage,omitempty"`
+	Embeds            []Content `json:"embeds,omitempty"`
+	AlternativeImages *PromotionalImage  `json:"alternativeImages,omitempty"`
 }
 
+type PromotionalImage struct {
+	PromotionalImage *Content `json:"promotionalImage,omitempty"`
+}
 type UnrolledLeadImagesContent struct {
 }

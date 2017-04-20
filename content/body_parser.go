@@ -17,7 +17,7 @@ func (bp BodyParser) GetEmbedded(content Content) ([]string, error) {
 	var ids []string
 
 	if content.BodyXML == "" {
-		return ids, errors.New(fmt.Sprintf("Cannot parse empty body of content [%s]", content.Uuid))
+		return ids, errors.New(fmt.Sprintf("Cannot parse empty body of content [%s]", content.UUID))
 	}
 
 	ids, err := parseXMLBody(content.BodyXML)

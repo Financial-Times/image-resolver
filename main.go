@@ -100,7 +100,6 @@ func main() {
 func setupServiceHandler(sc content.ServiceConfig, ch *content.ContentHandler) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/content/{uuid}", ch.GetContentImages).Methods("GET")
-	r.HandleFunc("/internalcontent/{uuid}", ch.GetInternalLeadImages).Methods("GET")
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)

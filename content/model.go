@@ -80,5 +80,4 @@ type UnrolledContent struct {
 type PromotionalImage struct {
 	PromotionalImage *Content `json:"promotionalImage,omitempty"`
 }
-type UnrolledLeadImagesContent struct {
-}
+

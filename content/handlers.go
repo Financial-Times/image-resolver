@@ -77,56 +77,6 @@ func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (hh *ContentHandler) GetInternalLeadImages(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	vars := mux.Vars(r)
-	contentUUID := vars["uuid"]
-	err := validateUuid(contentUUID)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("The given uuid is not valid, err=%v", err)})
-		if errm != nil {
-			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
-		} else {
-			w.Write([]byte(msg))
-		}
-		return
-	}
-
-	leadImagesContent, found, err := hh.Service.UnrollLeadImages(contentUUID)
-
-	if !found {
-		w.WriteHeader(http.StatusNotFound)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Requested item does not exist %s", contentUUID)})
-		if errm != nil {
-			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
-		} else {
-			w.Write([]byte(msg))
-		}
-		return
-	}
-
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Error retrieving leading images for %s, err=%v", contentUUID, err)})
-		if errm != nil {
-			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
-		} else {
-			w.Write([]byte(msg))
-		}
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-
-	if err = json.NewEncoder(w).Encode(leadImagesContent); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		msg, _ := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with uuid %s, err=%v", contentUUID, err)})
-		w.Write([]byte(msg))
-	}
-
-}
 
 func validateUuid(contentUUID string) error {
 	parsedUUID, err := uuid.FromString(contentUUID)

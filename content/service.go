@@ -2,12 +2,11 @@ package content
 
 import (
 	"strings"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 )
 
 type Resolver interface {
 	UnrollImages(uuid string) (UnrolledContent, bool, error)
-	UnrollLeadImages(uuid string) (UnrolledLeadImagesContent, bool, error)
 }
 
 type ImageResolver struct {
@@ -57,7 +56,7 @@ func (ir *ImageResolver) UnrollImages(uuid string) (UnrolledContent, bool, error
 		}
 		result.Embeds = embeddedImages
 	} else {
-		fmt.Println("Empty body")
+		log.Infof("Error parsing body for article uuid=%s, err=%v", art.UUID, err)
 	}
 
 	//promotional image
@@ -96,42 +95,38 @@ func (ir *ImageResolver) getEmbeddedImages(UUIDs []string) ([]Content, error) {
 }
 
 func (ir *ImageResolver) getImageSets(uuids []string) ([]Content, error) {
-	contentOutputs := []Content{}
+	outputs := []Content{}
 	for _, uuid := range uuids {
 		imageSet, err := ir.reader.Get(uuid)
 		if err != nil {
-			return contentOutputs, err
+			return outputs, err
 		}
-		membersIDs := []string{}
-		for _, b := range imageSet.Members {
-			id := b.UUID
-			membersIDs = append(membersIDs, extractIdfromUrl(id))
+		if imageSet.UUID != "" {
+			membersIDs := []string{}
+			for _, b := range imageSet.Members {
+				id := b.UUID
+				membersIDs = append(membersIDs, extractIdfromUrl(id))
+			}
+			members, err := ir.getImageSetMembers(membersIDs)
+			if err != nil {
+				return outputs, err
+			}
+			imageSet.Members = members
+			outputs = append(outputs, imageSet)
 		}
-		members, err := ir.getImageSetMembers(membersIDs)
-		if err != nil {
-			return contentOutputs, err
-		}
-		imageSet.Members = members
-		contentOutputs = append(contentOutputs, imageSet)
 	}
-	return contentOutputs, nil
+	return outputs, nil
 }
 
 func (ir *ImageResolver) getImageSetMembers(membersUUIDs []string) ([]Content, error) {
 	membersCh := []Content{}
 	for _, member := range membersUUIDs {
 		im, err := ir.reader.Get(member)
-		fmt.Print(im)
 		if err != nil {
 			return membersCh, err
 		}
 		membersCh = append(membersCh, im)
 	}
-
 	return membersCh, nil
 }
 
-func (ir *ImageResolver) UnrollLeadImages(uuid string) (UnrolledLeadImagesContent, bool, error) {
-	var result = UnrolledLeadImagesContent{}
-	return result, true, nil
-}

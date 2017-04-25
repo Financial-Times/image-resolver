@@ -1,6 +1,5 @@
 package content
 
-import "time"
 
 type Identifier struct {
 	Authority       string `json:"authority,omitempty"`
@@ -43,30 +42,30 @@ type Content struct {
 	BodyXML            string `json:"bodyXML,omitempty"`
 	OpeningXML         string `json:"openingXML,omitempty"`
 	Title              string `json:"title,omitempty"`
+	AltTitles          *AlternativeTitles `json:"alternativeTitles,omitempty"`
+	Standfirst         string `json:"standfirst,omitempty"`
+	AltStandfirsts     *AlternativeStandfirsts `json:"alternativeStandfirsts,omitempty"`
 	Byline             string `json:"byline,omitempty"`
 	Description        string `json:"description,omitempty"`
-	PublishedDate      *time.Time `json:"publishedDate,omitempty"`
+	FirstPublishedDate interface{} `json:"firstPublishedDate,omitempty"`
+	PublishedDate      interface{}  `json:"publishedDate,omitempty"`
+	WebURL             string `json:"webUrl,omitempty"`
 	Identifiers        []Identifier `json:"identifiers,omitempty"`
 	Members            []Content `json:"members,omitempty"`
 	RequestURL         string `json:"requestUrl,omitempty"`
 	BinaryURL          string `json:"binaryUrl,omitempty"`
-	Brands             []string `json:"brands,omitempty"`
-	MainImage          *Uri `json:"MainImage,omitempty"`
-	Comments           *Comments `json:"comments,omitempty"`
-	Realtime           bool `json:"realtime,omitempty"`
-	Copyright          *Copyright `json:"copyright,omitempty"`
-	PublishReference   string `json:"publishReference,omitempty"`
 	PixelWidth         int `json:"pixelWidth,omitempty"`
 	PixelHeight        int `json:"pixelHeight,omitempty"`
-	Stdout             *Standout `json:"standout,omitempty"`
-	LastModified       *time.Time `json:"lastModified,omitempty"`
-	Standfirst         string `json:"standfirst,omitempty"`
-	AltTitles          *AlternativeTitles `json:"alternativeTitles,omitempty"`
-	AltStandfirsts     *AlternativeStandfirsts `json:"alternativeStandfirsts,omitempty"`
+	Brands             []string `json:"brands,omitempty"`
+	MainImage          *Uri `json:"MainImage,omitempty"`
 	AltImages          *AlternativeImages `json:"alternativeImages,omitempty"`
-	WebURL             string `json:"webUrl,omitempty"`
+	Comments           *Comments `json:"comments,omitempty"`
+	Copyright          *Copyright `json:"copyright,omitempty"`
+	Realtime           bool `json:"realtime,omitempty"`
+	Stdout             *Standout `json:"standout,omitempty"`
+	PublishReference   string `json:"publishReference,omitempty"`
+	LastModified       interface{}  `json:"lastModified,omitempty"`
 	CanBeSyndicated    string `json:"canBeSyndicated,omitempty"`
-	FirstPublishedDate *time.Time `json:"firstPublishedDate,omitempty"`
 	AccessLevel        string `json:"accessLevel,omitempty"`
 	CanBeDistributed   string `json:"canBeDistributed,omitempty"`
 }

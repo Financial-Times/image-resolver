@@ -10,6 +10,7 @@ import (
 	"os"
 	"testing"
 	"github.com/Financial-Times/image-resolver/content"
+	"strings"
 )
 
 var imageResolver *httptest.Server
@@ -61,11 +62,11 @@ func happyHandler(w http.ResponseWriter, r *http.Request) {
 
 func startImageResolverService() {
 	contentAPIURI := contentAPIMock.URL + "/content/"
-
+	router := strings.Replace(contentAPIMock.URL, "http://", "",-1)
 	sc := content.ServiceConfig{
 		"9090",
 		"content-public-read",
-		"localhost:8080",
+		router,
 		"",
 		"",
 		http.DefaultClient,
@@ -75,7 +76,7 @@ func startImageResolverService() {
 	var parser content.Parser
 	var ir content.ImageResolver
 
-	reader = content.NewContentReader(contentAPIURI, "localhost:8080")
+	reader = content.NewContentReader(contentAPIURI, router)
 	parser = content.BodyParser{}
 	ir = *content.NewImageResolver(&reader, &parser)
 

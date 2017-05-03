@@ -16,11 +16,11 @@ type BodyParser struct{}
 func (bp BodyParser) GetEmbedded(content Content) ([]string, error) {
 	var ids []string
 
-	if content.BodyXML == "" {
+	if *content.BodyXML == "" {
 		return ids, errors.New(fmt.Sprintf("Cannot parse empty body of content [%s]", content.UUID))
 	}
 
-	ids, err := parseXMLBody(content.BodyXML)
+	ids, err := parseXMLBody(*content.BodyXML)
 	if err != nil {
 		return ids, err
 	}
@@ -44,8 +44,7 @@ func parseXMLBody(body string) ([]string, error) {
 					isEmbedded = true
 				}
 				if a.Key == "url" {
-					splitUrl := strings.Split(a.Val, "/")
-					uuid = splitUrl[len(splitUrl)-1]
+					uuid = a.Val
 				}
 			}
 			if isEmbedded {

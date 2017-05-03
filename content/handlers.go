@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"io/ioutil"
 )
 
 type ErrorMessage struct {
@@ -29,13 +29,13 @@ type ContentHandler struct {
 func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	vars := mux.Vars(r)
+	var article Content
+	b, _ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(b, &article)
 
-	contentUUID := vars["uuid"]
-	err := validateUuid(contentUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("The given uuid is not valid, err=%v", err)})
+		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("The given json content is not valid, err=%v", err)})
 		if errm != nil {
 			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
 		} else {
@@ -44,22 +44,13 @@ func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	unrolledContent, found, err := hh.Service.UnrollImages(contentUUID)
-
-	if !found {
-		w.WriteHeader(http.StatusNotFound)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Requested item does not exist %s", contentUUID)})
-		if errm != nil {
-			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
-		} else {
-			w.Write([]byte(msg))
-		}
-		return
-	}
+	contentUUID := article.UUID
+	id := hh.Service.ExtractIdfromUrl(contentUUID)
+	err = validateUuid(id)
 
 	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Error retrieving images for %s, err=%v", contentUUID, err)})
+		w.WriteHeader(http.StatusBadRequest)
+		msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("The uuid =%s is not valid, err=%v", id, err)})
 		if errm != nil {
 			w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
 		} else {
@@ -67,12 +58,14 @@ func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Reques
 		}
 		return
 	}
+
+	unrolledContent := hh.Service.UnrollImages(article)
 
 	w.WriteHeader(http.StatusOK)
 
 	if err = json.NewEncoder(w).Encode(unrolledContent); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		msg, _ := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with uuid %s, err=%v", contentUUID, err)})
+		msg, _ := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with id %s, err=%v", id, err)})
 		w.Write([]byte(msg))
 	}
 }

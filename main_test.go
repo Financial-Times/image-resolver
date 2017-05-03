@@ -11,6 +11,7 @@ import (
 	"testing"
 	"github.com/Financial-Times/image-resolver/content"
 	"strings"
+	"bytes"
 )
 
 var imageResolver *httptest.Server
@@ -24,8 +25,8 @@ func startContentAPIMock(status string) {
 	if status == "happy" {
 		getContent = happyContentAPIMock
 		health = happyHandler
-	} else if status == "notFound" {
-		getContent = notFoundHandler
+	} else if status == "badRequest" {
+		getContent = badRequest
 		health = happyHandler
 	} else {
 		getContent = internalErrorHandler
@@ -40,7 +41,7 @@ func startContentAPIMock(status string) {
 }
 
 func happyContentAPIMock(writer http.ResponseWriter, request *http.Request) {
-	file, err := os.Open("test-resources/image-output.json")
+	file, err := os.Open("test-resources/content.json")
 	if err != nil {
 		return
 	}
@@ -52,8 +53,8 @@ func internalErrorHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusServiceUnavailable)
 }
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
+func badRequest(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func happyHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,9 +82,7 @@ func startImageResolverService() {
 	ir = *content.NewImageResolver(&reader, &parser)
 
 	contentHandler := content.ContentHandler{&sc, &ir}
-
 	h := setupServiceHandler(sc, &contentHandler)
-
 	imageResolver = httptest.NewServer(h)
 }
 
@@ -102,66 +101,50 @@ func TestShouldReturn200(t *testing.T) {
 	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
-	file, _ := os.Open("test-resources/image-output.json")
+	file, _ := os.Open("test-resources/content.json")
 	defer file.Close()
-	resp, err := http.Get(contentAPIMock.URL + "/content/5c3cae78-dbef-11e6-9d7c-be108f1c1dce")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to content endpoint", err.Error())
-	}
+	resp, err := http.Get(contentAPIMock.URL + "/content/22c0d426-1466-11e7-b0c1-37e417ee6c76")
+	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
 
 	expectedOutput := getMapFromReader(file)
 	actualOutput := getMapFromReader(resp.Body)
 
 	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
+	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
+	respPost, errPost := http.Post(imageResolver.URL + "/content", "application/json", bytes.NewBuffer(jsonStr))
+	assert.NoError(t, errPost, "Cannot send request to imageresolver endpoint")
+	defer respPost.Body.Close()
+
+	assert.Equal(t, http.StatusOK, respPost.StatusCode, "Response status should be 200")
 }
 
-func TestShouldReturn404(t *testing.T) {
-	startContentAPIMock("notFound")
-	startImageResolverService()
-	defer stopServices()
-
-	resp, err := http.Get(imageResolver.URL + "/content/5c3cae78-dbef-11e6-9d7c-be108f1c1dce")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to content endpoint", err.Error())
-	}
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode, "Response status should be 404")
-}
-
-
-func TestShouldReturn400WhenInvalidUUID(t *testing.T) {
+func TestShouldReturn400InvalidJson(t *testing.T) {
 	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
-
-	resp, err := http.Get(imageResolver.URL + "/content/123-invalid-uuid")
-
-	if err != nil {
-		panic(err)
-	}
+	var jsonStr = []byte(`{
+	"id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",
+		"type": "http://www.ft.com/ontology/content/Article",
+		"blabla"}`)
+	resp, err := http.Post(imageResolver.URL + "/content", "",bytes.NewBuffer(jsonStr))
+	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Response status should be 400")
 }
 
-func TestShouldReturn503WhenContentUnavailable(t *testing.T) {
-	startContentAPIMock("unHappy")
+func TestShouldReturn400InvalidID(t *testing.T) {
+	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
+	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76xxxxx"}`)
+	respPost, errPost := http.Post(imageResolver.URL + "/content", "application/json", bytes.NewBuffer(jsonStr))
+	assert.NoError(t, errPost, "Cannot send request to content endpoint")
+	defer respPost.Body.Close()
 
-	resp, err := http.Get(contentAPIMock.URL + "/content/5c3cae78-dbef-11e6-9d7c-be108f1c1dce")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to content endpoint", err.Error())
-	}
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
+	assert.Equal(t, http.StatusBadRequest, respPost.StatusCode, "Response status should be 400")
 }
-
 
 func TestShouldBeHealthy(t *testing.T) {
 	startContentAPIMock("happy")
@@ -169,9 +152,7 @@ func TestShouldBeHealthy(t *testing.T) {
 	defer stopServices()
 
 	resp, err := http.Get(imageResolver.URL + "/__health")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to health endpoint", err.Error())
-	}
+	assert.NoError(t, err, "Cannot send request to health endpoint")
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
 }
@@ -182,10 +163,7 @@ func TestShouldNotBeHealthyWhenContentApiIsNotHappy(t *testing.T) {
 	defer stopServices()
 
 	resp, err := http.Get(contentAPIMock.URL + "/__health")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to health endpoint", err.Error())
-	}
-
+	assert.NoError(t, err, "Cannot send request to health endpoint")
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
 }
 
@@ -196,10 +174,7 @@ func TestShouldBeGoodToGo(t *testing.T) {
 	defer stopServices()
 
 	resp, err := http.Get(imageResolver.URL + "/__gtg")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to gtg endpoint", err.Error())
-	}
-
+	assert.NoError(t, err, "Cannot send request to gtg endpoint")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
 }
 
@@ -209,9 +184,6 @@ func TestShouldNotBeGoodToGoWhenContentApiIsNotHappy(t *testing.T) {
 	defer stopServices()
 
 	resp, err := http.Get(contentAPIMock.URL + "/__gtg")
-	if err != nil {
-		assert.FailNow(t, "Cannot send request to gtg endpoint", err.Error())
-	}
-
+	assert.NoError(t, err, "Cannot send request to gtg endpoint")
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
 }

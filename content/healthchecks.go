@@ -29,7 +29,6 @@ func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 			return sc.checkerContent()
 		},
 	}
-
 }
 
 func (sc *ServiceConfig) checkerContent() (string, error) {

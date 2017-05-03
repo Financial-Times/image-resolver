@@ -1,0 +1,19 @@
+{
+  "id": "http://www.ft.com/thing/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
+  "type": "http://www.ft.com/ontology/content/MediaResource",
+  "alternativeTitles": {},
+  "alternativeStandfirsts": {},
+  "firstPublishedDate": "2017-03-06T14:50:00.000Z",
+  "publishedDate": "2017-03-06T14:50:00.000Z",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "4723cb4e-027c-11e7-ace0-1ce02ef0def9"
+    }
+  ],
+  "requestUrl": "http://test.api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
+  "binaryUrl": "http://com.ft.imagepublish.prod-us.s3.amazonaws.com/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
+  "alternativeImages": {},
+  "publishReference": "tid_axufgrmrhm",
+  "lastModified": "2017-03-06T14:50:50.298Z"
+}

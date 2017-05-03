@@ -24,7 +24,9 @@
   "mainImage": {
     "id": "http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
   },
-  "alternativeImages": {},
+  "alternativeImages": {
+    "promotionalImage": "http://test.api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9"
+  },
   "comments": {
     "enabled": true
   },
@@ -37,5 +39,19 @@
   "lastModified": "2017-03-31T15:42:28.504Z",
   "canBeSyndicated": "yes",
   "accessLevel": "subscribed",
-  "canBeDistributed": "yes"
+  "canBeDistributed": "yes",
+  "leadImages": [
+    {
+      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "type": "square"
+    },
+    {
+      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "type": "standard"
+    },
+    {
+      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "type": "wide"
+    }
+  ]
 }

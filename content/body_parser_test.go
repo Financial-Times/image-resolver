@@ -11,7 +11,7 @@ func TestShouldReturnImages(t *testing.T){
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
-	var expectedOutput = []string{"639cd952-149f-11e7-2ea7-a07ecd9ac73f", "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", "0261ea4a-1474-11e7-1e92-847abda1ac65", "da0e3d5d-ccf0-3b40-b865-f648189fb849"}
+	var expectedOutput = []string{"http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/0261ea4a-1474-11e7-1e92-847abda1ac65", "http://api.ft.com/content/da0e3d5d-ccf0-3b40-b865-f648189fb849"}
 	reader = NewContentReader("", "")
 	parser = BodyParser{}
 	ir = *NewImageResolver(&reader, &parser)
@@ -19,7 +19,8 @@ func TestShouldReturnImages(t *testing.T){
 	if err != nil {
 		assert.Fail(t, "Cannot read test file")
 	}
-	result.BodyXML = string(fileBytes)
+	str := string(fileBytes)
+	result.BodyXML = &str
 	emImagesUUIDs, err := ir.parser.GetEmbedded(result)
 	if err != nil {
 		assert.Fail(t, err.Error())
@@ -36,7 +37,8 @@ func TestBodyEmpty(t *testing.T){
 	reader = NewContentReader("", "")
 	parser = BodyParser{}
 	ir = *NewImageResolver(&reader, &parser)
-	result.BodyXML = ""
+	str := ""
+	result.BodyXML = &str
 	_, err := ir.parser.GetEmbedded(result)
 	assert.Equal(t, "Cannot parse empty body of content []", err.Error(), "Response should return empty body error")
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type Reader interface {
-	Get(uuid string) (Content, error)
+	Get(uuid string) (Content, error, int)
 }
 
 type ContentReader struct {
@@ -25,7 +25,7 @@ func NewContentReader(ch string, routingAddr string) *ContentReader {
 	}
 }
 
-func (cr *ContentReader) Get(uuid string) (Content, error) {
+func (cr *ContentReader) Get(uuid string) (Content, error, int) {
 	var result Content
 
 	url := "http://" + cr.routingAddr + "/content/" + uuid
@@ -36,21 +36,24 @@ func (cr *ContentReader) Get(uuid string) (Content, error) {
 	req.Host = cr.contentHost
 
 	res, err := cr.client.Do(req)
-	if err != nil {
-		return result, err
+
+	if res != nil {
+		if err != nil {
+			return result, err, res.StatusCode
+		}
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return result, err, res.StatusCode
+		}
+
+		err = json.Unmarshal(body, &result)
+
+		if err != nil {
+			return result, err, res.StatusCode
+		}
+		return result, nil, res.StatusCode
 	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return result, err
-	}
-
-	err = json.Unmarshal(body, &result)
-
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
+	return result, nil, http.StatusInternalServerError
 }

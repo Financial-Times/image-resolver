@@ -6,6 +6,18 @@ import (
 	"net/http"
 )
 
+const (
+	MainImage = "mainImage"
+	ID        = "id"
+	Embeds 	  = "embeds"
+	AltImages = "alternativeImages"
+	LeadImages= "leadImages"
+	Members   = "members"
+	Type      = "type"
+	BodyXml   = "bodyXML"
+        PromoImage= "promotionalImage"
+)
+
 type Resolver interface {
 	UnrollImages(Content) (Content)
 	ExtractIdfromUrl(string) (string)
@@ -27,44 +39,47 @@ func (ir *ImageResolver) UnrollImages(art Content) (Content) {
 	result := art
 
 	//mainImage
-	mi := art.MainImage
-	if mi != nil {
-		mainImage := ir.getImage(mi.UUID)
-		if len(mainImage) == 1 {
-			result.MainImage = &mainImage[0]
+	mi, found := art[MainImage].(map[string]interface{})
+	if found {
+		id, ok := mi[ID].(string)
+		if ok && id != "" {
+			mainImage := ir.getImage(id)
+			if len(mainImage) == 1 {
+				result[MainImage] = mainImage[0]
+			}
 		}
 	}
 
 	//embedded images
-	if art.BodyXML != nil {
-		emImagesUUIDs, err := ir.parser.GetEmbedded(art)
+	bodyXml, found := art[BodyXml].(string)
+	if found && bodyXml != "" {
+		emImagesUUIDs, err := ir.parser.GetEmbedded(bodyXml)
 		if err == nil {
 			embeddedImages := ir.getEmbeddedImages(emImagesUUIDs)
-			result.Embeds = embeddedImages
+			result[Embeds] = embeddedImages
 		} else {
-			result.Embeds = nil
-			log.Infof("Error parsing body for article uuid=%s, err=%v", art.UUID, err)
+			result[Embeds] = nil
+			log.Infof("Error parsing body for article uuid=%s, err=%v", art[ID].(string), err)
 		}
 	}
 
 	//promotional image
-	if art.AltImages != nil {
-		uuid := art.AltImages.(map[string]interface{})
-		if uuid != nil {
-			id := uuid["promotionalImage"]
-			if id != nil && id != "" {
-				promotionalImage := ir.getImage(id.(string))
-				if len(promotionalImage) == 1 {
-					result.AltImages = &PromotionalImage{&promotionalImage[0]}
-				}
+	uuid, found := art[AltImages].(map[string]interface{})
+	if found {
+		id, ok := uuid[PromoImage].(string)
+		if ok && id != ""{
+			promotionalImage := ir.getImage(id)
+			if len(promotionalImage) == 1 {
+				promo := PromotionalImage{promotionalImage[0]}
+				result[AltImages] = promo
 			}
 		}
 	}
 
 	//lead images
-	if art.LeadImages != nil {
-		images := art.LeadImages.([]interface{})
-		result.LeadImages = ir.getLeadImages(images)
+	images, found := art[LeadImages].([]interface{})
+	if found {
+		result[LeadImages] = ir.getLeadImages(images)
 	}
 
 	return result
@@ -95,20 +110,27 @@ func (ir *ImageResolver) getImageSets(uuids []string) []Content {
 		id := ir.ExtractIdfromUrl(uuid)
 		imageSet, err, code := ir.reader.Get(id)
 		if code != http.StatusOK {
-			imageSet.UUID = uuid
+			imageSet[ID] = uuid
 			outputs = append(outputs, imageSet)
 			log.Infof("Error unrolling image uuid =%s, err=%v", id, err)
 		} else {
-			if imageSet.UUID != "" {
+			if imageSet[ID] != "" {
 				membersIDs := []string{}
-				for _, b := range imageSet.Members {
-					membersIDs = append(membersIDs, b.UUID)
+				membs, ok := imageSet[Members].([]interface{})
+				if ok {
+					for _, b := range membs {
+						b, ok := b.(map[string]interface{})
+						if !ok {
+							continue
+						}
+						membersIDs = append(membersIDs, b[ID].(string))
+					}
+					members := ir.getImageSetMembers(membersIDs)
+					imageSet[Members] = members
+					outputs = append(outputs, imageSet)
 				}
-				members := ir.getImageSetMembers(membersIDs)
-				imageSet.Members = members
-				outputs = append(outputs, imageSet)
 			} else {
-				imageSet.UUID = uuid
+				imageSet[ID] = uuid
 				outputs = append(outputs, imageSet)
 			}
 		}
@@ -122,7 +144,7 @@ func (ir *ImageResolver) getImageSetMembers(membersUUIDs []string) []Content {
 		id := ir.ExtractIdfromUrl(member)
 		im, err, code := ir.reader.Get(id)
 		if code != http.StatusOK {
-			im.UUID = member
+			im[ID] = member
 			log.Infof("Error unrolling image uuid =%s, err=%v", member, err)
 		}
 		members = append(members, im)
@@ -134,18 +156,16 @@ func (ir *ImageResolver) getLeadImages(leadImages []interface{}) ([]ImageOutput)
 	result := make([]ImageOutput, len(leadImages))
 	for index, leadImg := range leadImages {
 		img := leadImg.(map[string]interface{})
-		id := img["id"].(string)
+		id := img[ID].(string)
 		im, err, code := ir.reader.Get(ir.ExtractIdfromUrl(id))
 		if code != http.StatusOK {
-			result[index].Content = id
-			result[index].Type = img["type"].(string)
+			result[index].Content = map[string]interface{}{"id": id}
+			result[index].Type = img[Type].(string)
 			log.Infof("Error unrolling leadimage uuid =%s, err=%v", id, err)
-
 		} else {
 			result[index].Content = im
-			result[index].Type = img["type"].(string)
+			result[index].Type = img[Type].(string)
 		}
 	}
-
 	return result
 }

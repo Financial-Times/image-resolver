@@ -46,7 +46,7 @@ s output ($LOG_METRICS)
 
 
 ## Example 1 (main image)
-POST: https://xp-up.ft.com//__image-resolver/content
+POST: /image-resolver/content
 Body:
 ```
 {
@@ -186,7 +186,7 @@ Response:
 
 
 ## Example 2 (alternative images)
-POST: https://xp-up.ft.com//__image-resolver/content
+POST: /image-resolver/content
 Body:
 ```
 {
@@ -274,7 +274,7 @@ Response:
 ```
 
 ## Example 3 (lead images)
-POST: https://xp-up.ft.com//__image-resolver/content
+POST: /image-resolver/content
 Body:
 ```
 {

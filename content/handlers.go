@@ -44,7 +44,7 @@ func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	contentUUID := article.UUID
+	contentUUID := article[ID].(string)
 	id := hh.Service.ExtractIdfromUrl(contentUUID)
 	err = validateUuid(id)
 

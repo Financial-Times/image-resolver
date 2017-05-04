@@ -15,10 +15,15 @@ import (
 )
 
 var contentAPIMock *httptest.Server
-var ID = "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76"
-var TYPE = "http://www.ft.com/ontology/content/Article"
-var IMAGE_ID = "http://www.ft.com/thing/4723cb4e-027c-11e7-ace0-1ce02ef0def9"
-var IMAGE_B_URL = "http://com.ft.imagepublish.prod-us.s3.amazonaws.com/4723cb4e-027c-11e7-ace0-1ce02ef0def9"
+
+const (
+	Content_Id   = "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76"
+	Type_Art     = "http://www.ft.com/ontology/content/Article"
+	Image_ID     = "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+	Image_Date   = "2017-03-29T19:39:00.000Z"
+	Publish_Date = "publishedDate"
+	Expected_Id  = "22c0d426-1466-11e7-b0c1-37e417ee6c76"
+)
 
 func startContentAPIMock(status string) {
 	router := mux.NewRouter()
@@ -88,22 +93,21 @@ func TestUnrollImages(t *testing.T) {
 	ir := serviceIR()
 	result:= ir.UnrollImages(content)
 
-	assert.Equal(t, ID, result.UUID, "Response ID  shoud be equal")
-	assert.Equal(t, TYPE, *result.Type, "Response Type  shoud be equal")
-	assert.Equal(t, IMAGE_ID, result.MainImage.UUID, "Response Main Image Id  shoud be equal")
-	assert.Equal(t, IMAGE_B_URL, *result.MainImage.BinaryURL, "Response Main image binary url shoud be equal")
-	assert.Equal(t, 4, len(result.Embeds), "Response Embeds length shoud be equal 4")
-	uuid := result.AltImages.(*PromotionalImage)
-	assert.Equal(t, IMAGE_ID, uuid.PromotionalImage.UUID, "Response Promotional Image Id  shoud be equal")
-	assert.Equal(t, IMAGE_B_URL, *uuid.PromotionalImage.BinaryURL, "Response Promo image binary url shoud be equal")
-	lead := result.LeadImages.([]ImageOutput)
+	assert.Equal(t, Content_Id, result[ID], "Response ID  shoud be equal")
+	assert.Equal(t, Type_Art, result[Type], "Response Type  shoud be equal")
+	assert.Equal(t, Image_ID, result[MainImage].(Content)[ID], "Response Main Image Id  shoud be equal")
+	assert.Equal(t, Image_Date, result[MainImage].(Content)["publishedDate"], "Response Main image publishedDate shoud be equal")
+	assert.Equal(t, 4, len(result[Embeds].([]Content)), "Response Embeds length shoud be equal 4")
+	img := result[AltImages].(PromotionalImage)
+	promo := img.PromotionalImage.(Content)
+	assert.Equal(t, Image_ID, promo[ID], "Response Promotional Image Id  shoud be equal")
+	assert.Equal(t, Image_Date, promo[Publish_Date], "Response Promotional Image publishedDate shoud be equal")
+	lead := result[LeadImages].([]ImageOutput)
 	assert.Equal(t, 3, len(lead), "Response LeadImages length shoud be equal 3")
 }
 
 func TestExtractIdfromUrl(t *testing.T){
 	ir := serviceIR()
-	URL:= "http://www.ft.com/thing/4723cb4e-027c-11e7-ace0-1ce02ef0def9"
-	expected := "4723cb4e-027c-11e7-ace0-1ce02ef0def9"
-	actual := ir.ExtractIdfromUrl(URL)
-	assert.Equal(t, expected, actual, "Response Embeds length shoud be equal")
+	actual := ir.ExtractIdfromUrl(Content_Id)
+	assert.Equal(t, Expected_Id, actual, "Response Embeds length shoud be equal")
 }

@@ -7,7 +7,6 @@ import (
 )
 
 func TestShouldReturnImages(t *testing.T){
-	var result Content
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
@@ -20,8 +19,7 @@ func TestShouldReturnImages(t *testing.T){
 		assert.Fail(t, "Cannot read test file")
 	}
 	str := string(fileBytes)
-	result.BodyXML = &str
-	emImagesUUIDs, err := ir.parser.GetEmbedded(result)
+	emImagesUUIDs, err := ir.parser.GetEmbedded(str)
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -30,7 +28,6 @@ func TestShouldReturnImages(t *testing.T){
 
 
 func TestBodyEmpty(t *testing.T){
-	var result Content
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
@@ -38,7 +35,6 @@ func TestBodyEmpty(t *testing.T){
 	parser = BodyParser{}
 	ir = *NewImageResolver(&reader, &parser)
 	str := ""
-	result.BodyXML = &str
-	_, err := ir.parser.GetEmbedded(result)
-	assert.Equal(t, "Cannot parse empty body of content []", err.Error(), "Response should return empty body error")
+	emImagesUUIDs, _ := ir.parser.GetEmbedded(str)
+	assert.Equal(t, 0, len(emImagesUUIDs),"Response should return zero images")
 }

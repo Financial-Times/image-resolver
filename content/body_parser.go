@@ -1,26 +1,20 @@
 package content
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"golang.org/x/net/html"
 )
 
 type Parser interface {
-	GetEmbedded(content Content) ([]string, error)
+	GetEmbedded(content string) ([]string, error)
 }
 
 type BodyParser struct{}
 
-func (bp BodyParser) GetEmbedded(content Content) ([]string, error) {
+func (bp BodyParser) GetEmbedded(body string) ([]string, error) {
 	var ids []string
 
-	if *content.BodyXML == "" {
-		return ids, errors.New(fmt.Sprintf("Cannot parse empty body of content [%s]", content.UUID))
-	}
-
-	ids, err := parseXMLBody(*content.BodyXML)
+	ids, err := parseXMLBody(body)
 	if err != nil {
 		return ids, err
 	}

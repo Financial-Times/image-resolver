@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM golang:1.8-alpine
 
 ENV SOURCE_DIR /image-resolver-src
 

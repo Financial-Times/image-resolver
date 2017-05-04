@@ -1,8 +1,8 @@
 package content
 
 import (
-	"strings"
 	"golang.org/x/net/html"
+	"strings"
 )
 
 type Parser interface {

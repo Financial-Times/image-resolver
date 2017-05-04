@@ -1,12 +1,12 @@
 package content
 
 import (
-	"testing"
-	"io/ioutil"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"testing"
 )
 
-func TestShouldReturnImages(t *testing.T){
+func TestShouldReturnImages(t *testing.T) {
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
@@ -26,8 +26,7 @@ func TestShouldReturnImages(t *testing.T){
 	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids shoud be equal to expected images")
 }
 
-
-func TestBodyEmpty(t *testing.T){
+func TestBodyEmpty(t *testing.T) {
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
@@ -36,5 +35,5 @@ func TestBodyEmpty(t *testing.T){
 	ir = *NewImageResolver(&reader, &parser)
 	str := ""
 	emImagesUUIDs, _ := ir.parser.GetEmbedded(str)
-	assert.Equal(t, 0, len(emImagesUUIDs),"Response should return zero images")
+	assert.Equal(t, 0, len(emImagesUUIDs), "Response should return zero images")
 }

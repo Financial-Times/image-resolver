@@ -32,7 +32,7 @@ func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 }
 
 func (sc *ServiceConfig) checkerContent() (string, error) {
-	healthUri := "http://" + sc.RouterAddress  + "/__health"
+	healthUri := "http://" + sc.RouterAddress + "/__health"
 	req, err := http.NewRequest("GET", healthUri, nil)
 	req.Host = sc.Content_public_read
 	resp, err := sc.HttpClient.Do(req)

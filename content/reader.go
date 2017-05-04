@@ -1,10 +1,10 @@
 package content
 
 import (
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 type Reader interface {

@@ -1,26 +1,26 @@
 package content
 
 import (
-	"strings"
 	log "github.com/Sirupsen/logrus"
 	"net/http"
+	"strings"
 )
 
 const (
-	MainImage = "mainImage"
-	ID        = "id"
-	Embeds 	  = "embeds"
-	AltImages = "alternativeImages"
-	LeadImages= "leadImages"
-	Members   = "members"
-	Type      = "type"
-	BodyXml   = "bodyXML"
-        PromoImage= "promotionalImage"
+	MainImage  = "mainImage"
+	ID         = "id"
+	Embeds     = "embeds"
+	AltImages  = "alternativeImages"
+	LeadImages = "leadImages"
+	Members    = "members"
+	Type       = "type"
+	BodyXml    = "bodyXML"
+	PromoImage = "promotionalImage"
 )
 
 type Resolver interface {
-	UnrollImages(Content) (Content)
-	ExtractIdfromUrl(string) (string)
+	UnrollImages(Content) Content
+	ExtractIdfromUrl(string) string
 }
 
 type ImageResolver struct {
@@ -35,7 +35,7 @@ func NewImageResolver(r *Reader, p *Parser) *ImageResolver {
 	}
 }
 
-func (ir *ImageResolver) UnrollImages(art Content) (Content) {
+func (ir *ImageResolver) UnrollImages(art Content) Content {
 	result := art
 
 	//mainImage
@@ -67,7 +67,7 @@ func (ir *ImageResolver) UnrollImages(art Content) (Content) {
 	uuid, found := art[AltImages].(map[string]interface{})
 	if found {
 		id, ok := uuid[PromoImage].(string)
-		if ok && id != ""{
+		if ok && id != "" {
 			promotionalImage := ir.getImage(id)
 			if len(promotionalImage) == 1 {
 				promo := PromotionalImage{promotionalImage[0]}
@@ -152,7 +152,7 @@ func (ir *ImageResolver) getImageSetMembers(membersUUIDs []string) []Content {
 	return members
 }
 
-func (ir *ImageResolver) getLeadImages(leadImages []interface{}) ([]ImageOutput) {
+func (ir *ImageResolver) getLeadImages(leadImages []interface{}) []ImageOutput {
 	result := make([]ImageOutput, len(leadImages))
 	for index, leadImg := range leadImages {
 		img := leadImg.(map[string]interface{})

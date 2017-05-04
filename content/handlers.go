@@ -3,9 +3,9 @@ package content
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
+	"net/http"
 )
 
 type ErrorMessage struct {
@@ -69,7 +69,6 @@ func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Reques
 		w.Write([]byte(msg))
 	}
 }
-
 
 func validateUuid(contentUUID string) error {
 	parsedUUID, err := uuid.FromString(contentUUID)

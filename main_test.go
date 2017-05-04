@@ -1,6 +1,9 @@
 package main
+
 import (
+	"bytes"
 	"encoding/json"
+	"github.com/Financial-Times/image-resolver/content"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -8,10 +11,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"testing"
-	"github.com/Financial-Times/image-resolver/content"
 	"strings"
-	"bytes"
+	"testing"
 )
 
 var imageResolver *httptest.Server
@@ -63,7 +64,7 @@ func happyHandler(w http.ResponseWriter, r *http.Request) {
 
 func startImageResolverService() {
 	contentAPIURI := contentAPIMock.URL + "/content/"
-	router := strings.Replace(contentAPIMock.URL, "http://", "",-1)
+	router := strings.Replace(contentAPIMock.URL, "http://", "", -1)
 	sc := content.ServiceConfig{
 		"9090",
 		"content-public-read",
@@ -112,7 +113,7 @@ func TestShouldReturn200(t *testing.T) {
 
 	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
 	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
-	respPost, errPost := http.Post(imageResolver.URL + "/content", "application/json", bytes.NewBuffer(jsonStr))
+	respPost, errPost := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewBuffer(jsonStr))
 	assert.NoError(t, errPost, "Cannot send request to imageresolver endpoint")
 	defer respPost.Body.Close()
 
@@ -127,7 +128,7 @@ func TestShouldReturn400InvalidJson(t *testing.T) {
 	"id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",
 		"type": "http://www.ft.com/ontology/content/Article",
 		"blabla"}`)
-	resp, err := http.Post(imageResolver.URL + "/content", "",bytes.NewBuffer(jsonStr))
+	resp, err := http.Post(imageResolver.URL+"/content", "", bytes.NewBuffer(jsonStr))
 	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
 
@@ -139,7 +140,7 @@ func TestShouldReturn400InvalidID(t *testing.T) {
 	startImageResolverService()
 	defer stopServices()
 	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76xxxxx"}`)
-	respPost, errPost := http.Post(imageResolver.URL + "/content", "application/json", bytes.NewBuffer(jsonStr))
+	respPost, errPost := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewBuffer(jsonStr))
 	assert.NoError(t, errPost, "Cannot send request to content endpoint")
 	defer respPost.Body.Close()
 
@@ -166,7 +167,6 @@ func TestShouldNotBeHealthyWhenContentApiIsNotHappy(t *testing.T) {
 	assert.NoError(t, err, "Cannot send request to health endpoint")
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
 }
-
 
 func TestShouldBeGoodToGo(t *testing.T) {
 	startContentAPIMock("happy")

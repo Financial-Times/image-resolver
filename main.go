@@ -1,22 +1,21 @@
 package main
 
 import (
-	"net/http"
-	"github.com/jawher/mow.cli"
-	"os"
-	"github.com/gorilla/mux"
+	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/image-resolver/content"
-	log "github.com/Sirupsen/logrus"
 	"github.com/Financial-Times/service-status-go/gtg"
 	"github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/gorilla/handlers"
-	"net"
-	"time"
-	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Sirupsen/logrus"
-	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
+	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/jawher/mow.cli"
+	"net"
+	"net/http"
+	"os"
+	"time"
 )
-
 
 func main() {
 	app := cli.App("image-resolver", "Image resolver - unroll images for a given article UUID")
@@ -56,7 +55,6 @@ func main() {
 		EnvVar: "LOG_METRICS",
 	})
 
-
 	app.Action = func() {
 		httpClient := &http.Client{
 			Timeout: 10 * time.Second,
@@ -68,12 +66,12 @@ func main() {
 			},
 		}
 		sc := content.ServiceConfig{
-			*port,
-			*cprHost,
-			*routerAddress,
-			*graphiteTCPAddress,
-			*graphitePrefix,
-			httpClient,
+			AppPort:             *port,
+			Content_public_read: *cprHost,
+			RouterAddress:       *routerAddress,
+			GraphiteTCPAddress:  *graphiteTCPAddress,
+			GraphitePrefix:      *graphitePrefix,
+			HttpClient:          httpClient,
 		}
 
 		var reader content.Reader
@@ -86,7 +84,7 @@ func main() {
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 		ch := &content.ContentHandler{&sc, ir}
 		h := setupServiceHandler(sc, ch)
-		err := http.ListenAndServe(":" + *port, h)
+		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			logrus.Fatalf("Unable to start server: %v", err)
 		}
@@ -105,7 +103,7 @@ func setupServiceHandler(sc content.ServiceConfig, ch *content.ContentHandler) *
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
 	checks := []fthealth.Check{sc.ContentCheck()}
-	hc := fthealth.HealthCheck{SystemCode: "image-resolver", Name: "Image Resolver", Description: "Image Resolver", Checks: checks }
+	hc := fthealth.HealthCheck{SystemCode: "image-resolver", Name: "Image Resolver", Description: "Image Resolver", Checks: checks}
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(&hc))})
 	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})

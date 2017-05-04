@@ -6,12 +6,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"testing"
 	"strings"
-	"io/ioutil"
+	"testing"
 )
 
 var contentAPIMock *httptest.Server
@@ -91,7 +91,7 @@ func TestUnrollImages(t *testing.T) {
 	err = json.Unmarshal(fileBytes, &content)
 
 	ir := serviceIR()
-	result:= ir.UnrollImages(content)
+	result := ir.UnrollImages(content)
 
 	assert.Equal(t, Content_Id, result[ID], "Response ID  shoud be equal")
 	assert.Equal(t, Type_Art, result[Type], "Response Type  shoud be equal")
@@ -106,7 +106,7 @@ func TestUnrollImages(t *testing.T) {
 	assert.Equal(t, 3, len(lead), "Response LeadImages length shoud be equal 3")
 }
 
-func TestExtractIdfromUrl(t *testing.T){
+func TestExtractIdfromUrl(t *testing.T) {
 	ir := serviceIR()
 	actual := ir.ExtractIdfromUrl(Content_Id)
 	assert.Equal(t, Expected_Id, actual, "Response Embeds length shoud be equal")

@@ -12,7 +12,7 @@ func TestShouldReturnImages(t *testing.T) {
 	var ir ImageResolver
 	var expectedOutput = []string{"http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/0261ea4a-1474-11e7-1e92-847abda1ac65", "http://api.ft.com/content/da0e3d5d-ccf0-3b40-b865-f648189fb849"}
 	reader = NewContentReader("", "")
-	parser = BodyParser{}
+	parser = NewBodyParser()
 	ir = *NewImageResolver(&reader, &parser)
 	fileBytes, err := ioutil.ReadFile("../test-resources/bodyXml.xml")
 	if err != nil {
@@ -31,7 +31,7 @@ func TestBodyEmpty(t *testing.T) {
 	var parser Parser
 	var ir ImageResolver
 	reader = NewContentReader("", "")
-	parser = BodyParser{}
+	parser =NewBodyParser()
 	ir = *NewImageResolver(&reader, &parser)
 	str := ""
 	emImagesUUIDs, _ := ir.parser.GetEmbedded(str)

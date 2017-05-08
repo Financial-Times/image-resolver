@@ -11,14 +11,14 @@ type Parser interface {
 
 type BodyParser struct{}
 
-func (bp BodyParser) GetEmbedded(body string) ([]string, error) {
-	var ids []string
+func NewBodyParser() *BodyParser {
+	return &BodyParser{}
+}
 
+func (bp *BodyParser) GetEmbedded(body string) ([]string, error) {
+	var ids []string
 	ids, err := parseXMLBody(body)
-	if err != nil {
-		return ids, err
-	}
-	return ids, nil
+	return ids, err
 }
 
 func parseXMLBody(body string) ([]string, error) {

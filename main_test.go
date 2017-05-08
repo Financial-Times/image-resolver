@@ -79,10 +79,10 @@ func startImageResolverService() {
 	var ir content.ImageResolver
 
 	reader = content.NewContentReader(contentAPIURI, router)
-	parser = content.BodyParser{}
+	parser = content.NewBodyParser()
 	ir = *content.NewImageResolver(&reader, &parser)
-
-	contentHandler := content.ContentHandler{&sc, &ir}
+	appLogger := content.NewAppLogger()
+	contentHandler := content.ContentHandler{&sc, &ir, appLogger}
 	h := setupServiceHandler(sc, &contentHandler)
 	imageResolver = httptest.NewServer(h)
 }
@@ -98,7 +98,7 @@ func getMapFromReader(r io.Reader) map[string]interface{} {
 	return m
 }
 
-func TestShouldReturn200(t *testing.T) {
+func TestShouldReturn200Content(t *testing.T) {
 	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
@@ -114,37 +114,86 @@ func TestShouldReturn200(t *testing.T) {
 	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
 	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
 	respPost, errPost := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewBuffer(jsonStr))
-	assert.NoError(t, errPost, "Cannot send request to imageresolver endpoint")
+	assert.NoError(t, errPost, "Cannot send request to imageresolver /content endpoint")
 	defer respPost.Body.Close()
 
 	assert.Equal(t, http.StatusOK, respPost.StatusCode, "Response status should be 200")
 }
 
-func TestShouldReturn400InvalidJson(t *testing.T) {
+func TestShouldReturn200LeadImages(t *testing.T) {
 	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
-	var jsonStr = []byte(`{
-	"id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",
-		"type": "http://www.ft.com/ontology/content/Article",
-		"blabla"}`)
-	resp, err := http.Post(imageResolver.URL+"/content", "", bytes.NewBuffer(jsonStr))
+	file, _ := os.Open("test-resources/content.json")
+	defer file.Close()
+	resp, err := http.Get(contentAPIMock.URL + "/content/22c0d426-1466-11e7-b0c1-37e417ee6c76")
+	assert.NoError(t, err, "Cannot send request to content endpoint")
+	defer resp.Body.Close()
+
+	expectedOutput := getMapFromReader(file)
+	actualOutput := getMapFromReader(resp.Body)
+
+	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
+	var jsonStr = []byte(`{"uuid":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
+	respPost, errPost := http.Post(imageResolver.URL+"/internalcontent", "application/json", bytes.NewBuffer(jsonStr))
+	assert.NoError(t, errPost, "Cannot send request to imageresolver /internalcontent endpoint")
+	defer respPost.Body.Close()
+
+	assert.Equal(t, http.StatusOK, respPost.StatusCode, "Response status should be 200")
+}
+
+func TestShouldReturn400InvalidJsonLeadImages(t *testing.T) {
+	startContentAPIMock("happy")
+	startImageResolverService()
+	defer stopServices()
+	var invalidjsonStr = []byte(`{
+	  "design": null,
+	  "tableOfContents": null,
+	  "topper": null,
+	  "leadImages": [
+	    {
+	      "id": "89f194c8-13bc-11e7-80f4-13e067d5072c",
+	      "type": "square"
+	    },
+	    {
+	      "id": "3e96c818-13bc-11e7-b0c1-37e417ee6c76",
+	      "type": "standard"
+	    },
+	    {
+	      "id": "8d7b4e22-13bc-11e7-80f4-13e067d5072c",
+	      "type": "wide"
+	    }
+	  ],
+	  "uuid": "5010e2e4-09bd-11e7-97d1-5e720a26771b",
+	  "lastModified": "2017-03-31T08:23:37.061Z",
+	  "publishReference":
+	}`)
+	resp, err := http.Post(imageResolver.URL+"/internalcontent", "", bytes.NewBuffer(invalidjsonStr))
 	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Response status should be 400")
 }
 
-func TestShouldReturn400InvalidID(t *testing.T) {
+func TestShouldReturn400InvalidJsonContent(t *testing.T) {
 	startContentAPIMock("happy")
 	startImageResolverService()
 	defer stopServices()
-	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76xxxxx"}`)
-	respPost, errPost := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewBuffer(jsonStr))
-	assert.NoError(t, errPost, "Cannot send request to content endpoint")
-	defer respPost.Body.Close()
+	var invalidjsonStr = []byte(`{
+	  "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+	  "type": "http://www.ft.com/ontology/content/ImageSet",
+	  "title": "",
+	  "alternativeTitles": {},
+	  "alternativeStandfirsts": {},
+	  "publishReference": "tid_5ypvntzcpu",
+	  "lastModified": "2017-03-29T19:39:18.226Z",
+	  "canBeDistributed":
+	  }`)
+	resp, err := http.Post(imageResolver.URL+"/content", "", bytes.NewBuffer(invalidjsonStr))
+	assert.NoError(t, err, "Cannot send request to content endpoint")
+	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusBadRequest, respPost.StatusCode, "Response status should be 400")
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Response status should be 400")
 }
 
 func TestShouldBeHealthy(t *testing.T) {

@@ -1,6 +1,6 @@
 .idea/
-*.exe
+*.iml
 vendor/*/
 .vscode
-*.iml
-image-resolver
+.project
+image-resolver*

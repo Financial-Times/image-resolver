@@ -23,6 +23,11 @@ const (
 	Image_Date   = "2017-03-29T19:39:00.000Z"
 	Publish_Date = "publishedDate"
 	Expected_Id  = "22c0d426-1466-11e7-b0c1-37e417ee6c76"
+	Square       = "square"
+	Standard     = "standard"
+	Wide	     = "wide"
+	RequestUrlStr= "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+	RequestUrl  = "requestUrl"
 )
 
 func startContentAPIMock(status string) {
@@ -69,7 +74,7 @@ func serviceIR() ImageResolver {
 	var ir ImageResolver
 
 	reader = NewContentReader(contentAPIURI, router)
-	parser = BodyParser{}
+	parser = NewBodyParser()
 	ir = *NewImageResolver(&reader, &parser)
 	return ir
 }
@@ -96,18 +101,43 @@ func TestUnrollImages(t *testing.T) {
 	assert.Equal(t, Content_Id, result[ID], "Response ID  shoud be equal")
 	assert.Equal(t, Type_Art, result[Type], "Response Type  shoud be equal")
 	assert.Equal(t, Image_ID, result[MainImage].(Content)[ID], "Response Main Image Id  shoud be equal")
-	assert.Equal(t, Image_Date, result[MainImage].(Content)["publishedDate"], "Response Main image publishedDate shoud be equal")
+	assert.Equal(t, Image_Date, result[MainImage].(Content)[Publish_Date], "Response Main image publishedDate shoud be equal")
 	assert.Equal(t, 4, len(result[Embeds].([]Content)), "Response Embeds length shoud be equal 4")
-	img := result[AltImages].(PromotionalImage)
-	promo := img.PromotionalImage.(Content)
-	assert.Equal(t, Image_ID, promo[ID], "Response Promotional Image Id  shoud be equal")
-	assert.Equal(t, Image_Date, promo[Publish_Date], "Response Promotional Image publishedDate shoud be equal")
-	lead := result[LeadImages].([]ImageOutput)
+	img := result[AltImages].(map[string]interface{})[PromoImage]
+	assert.Equal(t, Image_ID, img.(Content)[ID], "Response Promotional Image Id  shoud be equal")
+	assert.Equal(t, Image_Date, img.(Content)[Publish_Date], "Response Promotional Image publishedDate shoud be equal")
+}
+
+
+func TestUnrollLeadImages(t *testing.T) {
+	var content Content
+	startContentAPIMock("happy")
+	defer contentAPIMock.Close()
+	resp, err := http.Get(contentAPIMock.URL + "/content/22c0d426-1466-11e7-b0c1-37e417ee6c76")
+	assert.NoError(t, err, "Cannot send request to content endpoint")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
+
+	fileBytes, err := ioutil.ReadFile("../test-resources/leadImages.json")
+	if err != nil {
+		assert.Fail(t, "Cannot read test file")
+	}
+	err = json.Unmarshal(fileBytes, &content)
+
+	ir := serviceIR()
+	result := ir.UnrollLeadImages(content)
+
+	lead := result[LeadImages].([]Content)
 	assert.Equal(t, 3, len(lead), "Response LeadImages length shoud be equal 3")
+	assert.Equal(t, Image_ID, lead[0][Image].(Content)[ID], "Response Promotional Image Id  shoud be equal")
+	assert.Equal(t, RequestUrlStr, lead[0][Image].(Content)[RequestUrl], "Response Promotional Image RequestUrl  shoud be equal")
+	assert.Equal(t, Square, lead[0][Type], "Response Promotional Image Type shoud be equal")
+	assert.Equal(t, Standard, lead[1][Type], "Response Promotional Image Type shoud be equal")
+	assert.Equal(t, Wide, lead[2][Type], "Response Promotional Image Type shoud be equal")
 }
 
 func TestExtractIdfromUrl(t *testing.T) {
-	ir := serviceIR()
-	actual := ir.ExtractIdfromUrl(Content_Id)
-	assert.Equal(t, Expected_Id, actual, "Response Embeds length shoud be equal")
+	actual := extractIdfromUrl(Content_Id)
+	assert.Equal(t, Expected_Id, actual, "Response id shoud be equal")
 }

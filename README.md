@@ -2,7 +2,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/image-resolver/badge.svg)](https://coveralls.io/github/Financial-Times/image-resolver)
 # image-resolver
 
-Image resolver is an internally used API for retrieving unrolled images. It receive a content and return the content plus images unrolled.
+Image resolver is an internally used API for retrieving unrolled images and leadimages. It receive a content and return the content plus images unrolled.
 
 ## Usage
 ### Install
@@ -23,7 +23,7 @@ Options:
   --graphiteTCPAddress=""                     Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you d
 o NOT want to output to graphite (e.g. if running locally) ($GRAPHITE_ADDRESS)
   --graphitePrefix=""                         Prefix to use. Should start with content, include the environment, and the
- host name. e.g. coco.pre-prod.public-things-api.1 ($GRAPHITE_PREFIX)
+ host name. e.g. coco.pre-prod.image-resolver.1 ($GRAPHITE_PREFIX)
   --logMetrics=false                          Whether to log metrics. Set to true if running locally and you want metric
 s output ($LOG_METRICS)
 
@@ -34,6 +34,7 @@ s output ($LOG_METRICS)
 ### Application specific endpoints:
 
 * /content
+* /internalcontent
 
 ### Admin specific endpoints:
 
@@ -46,7 +47,7 @@ s output ($LOG_METRICS)
 
 
 ## Example 1 (main image)
-POST: /image-resolver/content
+POST: /content
 Body:
 ```
 {
@@ -95,98 +96,98 @@ Body:
 Response:
 ```
 {
-  "id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",
-  "type": "http://www.ft.com/ontology/content/Article",
-  "bodyXML": "<body></body>",
-  "title": "Brexit begins as Theresa May triggers Article 50",
+  "accessLevel": "subscribed",
+  "alternativeImages": {},
+  "alternativeStandfirsts": {},
   "alternativeTitles": {
     "promotionalTitle": "Brexit begins as Theresa May triggers Article 50"
   },
-  "standfirst": "Prime minister sets out Britain’s negotiating stance in statement to MPs",
-  "alternativeStandfirsts": {},
+  "bodyXML": "<body></body>",
+  "brands": [
+    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+  ],
   "byline": "George Parker and Kate Allen in London and Arthur Beesley in Brussels",
+  "canBeDistributed": "yes",
+  "canBeSyndicated": "yes",
+  "comments": {
+    "enabled": true
+  },
   "firstPublishedDate": "2017-03-29T11:07:52.000Z",
-  "publishedDate": "2017-03-30T06:54:02.000Z",
+  "id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",
   "identifiers": [
     {
       "authority": "http://api.ft.com/system/FTCOM-METHODE",
       "identifierValue": "22c0d426-1466-11e7-b0c1-37e417ee6c76"
     }
   ],
-  "requestUrl": "http://test.api.ft.com/content/22c0d426-1466-11e7-b0c1-37e417ee6c76",
-  "brands": [
-    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
-  ],
+  "lastModified": "2017-03-31T15:42:35.266Z",
   "mainImage": {
-    "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
-    "type": "http://www.ft.com/ontology/content/ImageSet",
-    "title": "",
-    "alternativeTitles": {},
+    "alternativeImages": {},
     "alternativeStandfirsts": {},
+    "alternativeTitles": {},
+    "canBeDistributed": "verify",
     "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
     "firstPublishedDate": "2017-03-29T19:39:00.000Z",
-    "publishedDate": "2017-03-29T19:39:00.000Z",
+    "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
     "identifiers": [
       {
         "authority": "http://api.ft.com/system/FTCOM-METHODE",
         "identifierValue": "639cd952-149f-11e7-2ea7-a07ecd9ac73f"
       }
     ],
+    "lastModified": "2017-03-29T19:39:31.361Z",
     "members": [
       {
-        "id": "http://www.ft.com/thing/639cd952-149f-11e7-b0c1-37e417ee6c76",
-        "type": "http://www.ft.com/ontology/content/MediaResource",
-        "title": "",
-        "alternativeTitles": {},
+        "alternativeImages": {},
         "alternativeStandfirsts": {},
+        "alternativeTitles": {},
+        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/639cd952-149f-11e7-b0c1-37e417ee6c76",
+        "canBeDistributed": "verify",
+        "copyright": {
+          "notice": "© Bloomberg"
+        },
         "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
         "firstPublishedDate": "2017-03-29T19:39:00.000Z",
-        "publishedDate": "2017-03-29T19:39:00.000Z",
+        "id": "http://www.ft.com/thing/639cd952-149f-11e7-b0c1-37e417ee6c76",
         "identifiers": [
           {
             "authority": "http://api.ft.com/system/FTCOM-METHODE",
             "identifierValue": "639cd952-149f-11e7-b0c1-37e417ee6c76"
           }
         ],
-        "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-b0c1-37e417ee6c76",
-        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/639cd952-149f-11e7-b0c1-37e417ee6c76",
-        "pixelWidth": 2048,
-        "pixelHeight": 1152,
-        "alternativeImages": {},
-        "copyright": {
-          "notice": "© Bloomberg"
-        },
-        "publishReference": "tid_5ypvntzcpu",
         "lastModified": "2017-03-29T19:39:31.361Z",
-        "canBeDistributed": "verify"
+        "pixelHeight": 1152,
+        "pixelWidth": 2048,
+        "publishReference": "tid_5ypvntzcpu",
+        "publishedDate": "2017-03-29T19:39:00.000Z",
+        "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-b0c1-37e417ee6c76",
+        "title": "",
+        "type": "http://www.ft.com/ontology/content/MediaResource"
       }
     ],
-    "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
-    "alternativeImages": {},
     "publishReference": "tid_5ypvntzcpu",
-    "lastModified": "2017-03-29T19:39:31.361Z",
-    "canBeDistributed": "verify"
+    "publishedDate": "2017-03-29T19:39:00.000Z",
+    "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+    "title": "",
+    "type": "http://www.ft.com/ontology/content/ImageSet"
   },
-  "alternativeImages": {},
-  "comments": {
-    "enabled": true
-  },
+  "publishReference": "tid_ra4srof3qc",
+  "publishedDate": "2017-03-30T06:54:02.000Z",
+  "requestUrl": "http://test.api.ft.com/content/22c0d426-1466-11e7-b0c1-37e417ee6c76",
+  "standfirst": "Prime minister sets out Britain’s negotiating stance in statement to MPs",
   "standout": {
     "editorsChoice": false,
     "exclusive": false,
     "scoop": false
   },
-  "publishReference": "tid_ra4srof3qc",
-  "lastModified": "2017-03-31T15:42:35.266Z",
-  "canBeSyndicated": "yes",
-  "accessLevel": "subscribed",
-  "canBeDistributed": "yes"
+  "title": "Brexit begins as Theresa May triggers Article 50",
+  "type": "http://www.ft.com/ontology/content/Article"
 }
 ```
 
 
 ## Example 2 (alternative images)
-POST: /image-resolver/content
+POST: /content
 Body:
 ```
 {
@@ -212,7 +213,7 @@ Body:
     "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
   ],
   "alternativeImages": {
-    "promotionalImage": "http://test.api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9"
+    "promotionalImage": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
   },
   "publishReference": "UK-V-5th-PP-CPH-Scenario-05-Trail-01",
   "lastModified": "2017-04-05T14:58:57.016Z",
@@ -224,228 +225,211 @@ Body:
 Response:
 ```
 {
-  "id": "http://www.ft.com/thing/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
-  "type": "http://www.ft.com/ontology/content/Content",
-  "title": "Relaxed takes on tailoring for men",
-  "alternativeTitles": {
-    "promotionalTitle": "Relaxed takes on tailoring for men"
+  "alternativeImages": {
+    "promotionalImage": {
+      "alternativeImages": {},
+      "alternativeStandfirsts": {},
+      "alternativeTitles": {},
+      "canBeDistributed": "verify",
+      "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
+      "firstPublishedDate": "2017-03-29T19:39:00.000Z",
+      "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+      "identifiers": [
+        {
+          "authority": "http://api.ft.com/system/FTCOM-METHODE",
+          "identifierValue": "639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+        }
+      ],
+      "lastModified": "2017-03-29T19:39:31.361Z",
+      "members": [
+        {
+          "alternativeImages": {},
+          "alternativeStandfirsts": {},
+          "alternativeTitles": {},
+          "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/639cd952-149f-11e7-b0c1-37e417ee6c76",
+          "canBeDistributed": "verify",
+          "copyright": {
+            "notice": "© Bloomberg"
+          },
+          "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
+          "firstPublishedDate": "2017-03-29T19:39:00.000Z",
+          "id": "http://www.ft.com/thing/639cd952-149f-11e7-b0c1-37e417ee6c76",
+          "identifiers": [
+            {
+              "authority": "http://api.ft.com/system/FTCOM-METHODE",
+              "identifierValue": "639cd952-149f-11e7-b0c1-37e417ee6c76"
+            }
+          ],
+          "lastModified": "2017-03-29T19:39:31.361Z",
+          "pixelHeight": 1152,
+          "pixelWidth": 2048,
+          "publishReference": "tid_5ypvntzcpu",
+          "publishedDate": "2017-03-29T19:39:00.000Z",
+          "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-b0c1-37e417ee6c76",
+          "title": "",
+          "type": "http://www.ft.com/ontology/content/MediaResource"
+        }
+      ],
+      "publishReference": "tid_5ypvntzcpu",
+      "publishedDate": "2017-03-29T19:39:00.000Z",
+      "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+      "title": "",
+      "type": "http://www.ft.com/ontology/content/ImageSet"
+    }
   },
   "alternativeStandfirsts": {
     "promotionalStandfirst": "This season’s fluid, super-comfortable tailoring is right on the sartorial money"
   },
-  "publishedDate": "2017-03-08T10:39:48.000Z",
-  "webUrl": "https://howtospendit.ft.com/mens-style/200263-relaxed-fluid-men-s-tailoring",
+  "alternativeTitles": {
+    "promotionalTitle": "Relaxed takes on tailoring for men"
+  },
+  "brands": [
+    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+  ],
+  "canBeDistributed": "verify",
+  "canBeSyndicated": "verify",
+  "id": "http://www.ft.com/thing/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
   "identifiers": [
     {
       "authority": "http://api.ft.com/system/FTCOM-METHODE",
       "identifierValue": "6e1b070e-027b-11e7-ace0-1ce02ef0def9"
     }
   ],
-  "requestUrl": "http://test.api.ft.com/content/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
-  "brands": [
-    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
-  ],
-  "alternativeImages": {
-    "promotionalImage": {
-      "id": "http://www.ft.com/thing/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
-      "type": "http://www.ft.com/ontology/content/MediaResource",
-      "alternativeTitles": {},
-      "alternativeStandfirsts": {},
-      "firstPublishedDate": "2017-03-06T14:50:00.000Z",
-      "publishedDate": "2017-03-06T14:50:00.000Z",
-      "identifiers": [
-        {
-          "authority": "http://api.ft.com/system/FTCOM-METHODE",
-          "identifierValue": "4723cb4e-027c-11e7-ace0-1ce02ef0def9"
-        }
-      ],
-      "requestUrl": "http://test.api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
-      "binaryUrl": "http://com.ft.imagepublish.prod-us.s3.amazonaws.com/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
-      "alternativeImages": {},
-      "publishReference": "tid_axufgrmrhm",
-      "lastModified": "2017-03-06T14:50:50.298Z"
-    }
-  },
-  "publishReference": "UK-V-5th-PP-CPH-Scenario-05-Trail-01",
   "lastModified": "2017-04-05T14:58:57.016Z",
-  "canBeSyndicated": "verify",
-  "canBeDistributed": "verify"
+  "publishReference": "UK-V-5th-PP-CPH-Scenario-05-Trail-01",
+  "publishedDate": "2017-03-08T10:39:48.000Z",
+  "requestUrl": "http://test.api.ft.com/content/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
+  "title": "Relaxed takes on tailoring for men",
+  "type": "http://www.ft.com/ontology/content/Content",
+  "webUrl": "https://howtospendit.ft.com/mens-style/200263-relaxed-fluid-men-s-tailoring"
 }
 ```
 
 ## Example 3 (lead images)
-POST: /image-resolver/content
+POST: /internalcontent
 Body:
 ```
 {
-  "id": "http://www.ft.com/thing/4da6a172-2431-11e7-a24c-6bbb6ec0bc98",
-  "type": "http://www.ft.com/ontology/content/Article",
-  "bodyXML": "<body><p>Test Lead Image (all 3 formats)</p>\n\n\n</body>",
-  "title": "Lead Image",
-  "alternativeTitles": {},
-  "alternativeStandfirsts": {},
-  "byline": "TL",
-  "firstPublishedDate": "2017-04-18T12:04:28.000Z",
-  "publishedDate": "2017-04-18T12:04:28.000Z",
-  "identifiers": [
-    {
-      "authority": "http://api.ft.com/system/FTCOM-METHODE",
-      "identifierValue": "4da6a172-2431-11e7-a24c-6bbb6ec0bc98"
-    }
-  ],
-  "requestUrl": "http://test.api.ft.com/content/4da6a172-2431-11e7-a24c-6bbb6ec0bc98",
-  "brands": [
-    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
-  ],
-  "alternativeImages": {},
-  "comments": {
-    "enabled": true
-  },
-  "standout": {
-    "editorsChoice": false,
-    "exclusive": false,
-    "scoop": false
-  },
-  "publishReference": "tid_hcqcors4wf",
-  "lastModified": "2017-04-18T12:23:32.744Z",
-  "canBeDistributed": "yes",
-  "canBeSyndicated": "verify",
-  "accessLevel": "subscribed",
+  "design": null,
+  "tableOfContents": null,
+  "topper": null,
   "leadImages": [
     {
-      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "id": "89f194c8-13bc-11e7-80f4-13e067d5072c",
       "type": "square"
     },
     {
-      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "id": "3e96c818-13bc-11e7-b0c1-37e417ee6c76",
       "type": "standard"
     },
     {
-      "id": "588d9ba6-1557-11e7-9469-afea892e4de3",
+      "id": "8d7b4e22-13bc-11e7-80f4-13e067d5072c",
       "type": "wide"
     }
-  ]
+  ],
+  "uuid": "5010e2e4-09bd-11e7-97d1-5e720a26771b",
+  "lastModified": "2017-03-31T08:23:37.061Z",
+  "publishReference": "tid_8pqiiuxbvz"
 }
 ```
 
 Response:
 ```
 {
-  "id": "http://www.ft.com/thing/4da6a172-2431-11e7-a24c-6bbb6ec0bc98",
-  "type": "http://www.ft.com/ontology/content/Article",
-  "bodyXML": "<body><p>Test Lead Image (all 3 formats)</p>\n\n\n</body>",
-  "title": "Lead Image",
-  "alternativeTitles": {},
-  "alternativeStandfirsts": {},
-  "byline": "TL",
-  "firstPublishedDate": "2017-04-18T12:04:28.000Z",
-  "publishedDate": "2017-04-18T12:04:28.000Z",
-  "identifiers": [
-    {
-      "authority": "http://api.ft.com/system/FTCOM-METHODE",
-      "identifierValue": "4da6a172-2431-11e7-a24c-6bbb6ec0bc98"
-    }
-  ],
-  "requestUrl": "http://test.api.ft.com/content/4da6a172-2431-11e7-a24c-6bbb6ec0bc98",
-  "brands": [
-    "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
-  ],
-  "alternativeImages": {},
-  "comments": {
-    "enabled": true
-  },
-  "standout": {
-    "editorsChoice": false,
-    "exclusive": false,
-    "scoop": false
-  },
-  "publishReference": "tid_hcqcors4wf",
-  "lastModified": "2017-04-18T12:23:32.744Z",
-  "canBeSyndicated": "verify",
-  "accessLevel": "subscribed",
-  "canBeDistributed": "yes",
+  "design": null,
+  "lastModified": "2017-03-31T08:23:37.061Z",
   "leadImages": [
     {
+      "id": "89f194c8-13bc-11e7-80f4-13e067d5072c",
       "image": {
-        "id": "http://www.ft.com/thing/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "type": "http://www.ft.com/ontology/content/MediaResource",
-        "title": "",
-        "alternativeTitles": {},
+        "alternativeImages": {},
         "alternativeStandfirsts": {},
+        "alternativeTitles": {},
+        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/89f194c8-13bc-11e7-80f4-13e067d5072c",
+        "canBeDistributed": "verify",
         "description": "",
-        "firstPublishedDate": "2017-04-05T08:25:00.000Z",
-        "publishedDate": "2017-04-05T08:25:00.000Z",
+        "firstPublishedDate": "2017-03-28T13:45:00.000Z",
+        "id": "http://www.ft.com/thing/89f194c8-13bc-11e7-80f4-13e067d5072c",
         "identifiers": [
           {
             "authority": "http://api.ft.com/system/FTCOM-METHODE",
-            "identifierValue": "588d9ba6-1557-11e7-9469-afea892e4de3"
+            "identifierValue": "89f194c8-13bc-11e7-80f4-13e067d5072c"
           }
         ],
-        "requestUrl": "http://test.api.ft.com/content/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "pixelWidth": 4645,
+        "lastModified": "2017-03-28T13:45:53.438Z",
         "pixelHeight": 2612,
-        "alternativeImages": {},
-        "publishReference": "tid_n6vkawrq1l",
-        "lastModified": "2017-04-05T08:25:20.438Z",
-        "canBeDistributed": "verify"
+        "pixelWidth": 2612,
+        "publishReference": "tid_lej6rdjegj",
+        "publishedDate": "2017-03-28T13:45:00.000Z",
+        "requestUrl": "http://test.api.ft.com/content/89f194c8-13bc-11e7-80f4-13e067d5072c",
+        "title": "",
+        "type": "http://www.ft.com/ontology/content/MediaResource"
       },
       "type": "square"
     },
     {
+      "id": "3e96c818-13bc-11e7-b0c1-37e417ee6c76",
       "image": {
-        "id": "http://www.ft.com/thing/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "type": "http://www.ft.com/ontology/content/MediaResource",
-        "title": "",
-        "alternativeTitles": {},
+        "alternativeImages": {},
         "alternativeStandfirsts": {},
+        "alternativeTitles": {},
+        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/3e96c818-13bc-11e7-b0c1-37e417ee6c76",
+        "canBeDistributed": "verify",
+        "copyright": {
+          "notice": "© EPA"
+        },
         "description": "",
-        "firstPublishedDate": "2017-04-05T08:25:00.000Z",
-        "publishedDate": "2017-04-05T08:25:00.000Z",
+        "firstPublishedDate": "2017-03-28T13:42:00.000Z",
+        "id": "http://www.ft.com/thing/3e96c818-13bc-11e7-b0c1-37e417ee6c76",
         "identifiers": [
           {
             "authority": "http://api.ft.com/system/FTCOM-METHODE",
-            "identifierValue": "588d9ba6-1557-11e7-9469-afea892e4de3"
+            "identifierValue": "3e96c818-13bc-11e7-b0c1-37e417ee6c76"
           }
         ],
-        "requestUrl": "http://test.api.ft.com/content/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "pixelWidth": 4645,
-        "pixelHeight": 2612,
-        "alternativeImages": {},
-        "publishReference": "tid_n6vkawrq1l",
-        "lastModified": "2017-04-05T08:25:20.438Z",
-        "canBeDistributed": "verify"
+        "lastModified": "2017-03-28T13:43:00.375Z",
+        "pixelHeight": 1152,
+        "pixelWidth": 2048,
+        "publishReference": "tid_tv7jfgi6jn",
+        "publishedDate": "2017-03-28T13:42:00.000Z",
+        "requestUrl": "http://test.api.ft.com/content/3e96c818-13bc-11e7-b0c1-37e417ee6c76",
+        "title": "Leader of the PVV party Gert Wilders reacts to the election result",
+        "type": "http://www.ft.com/ontology/content/MediaResource"
       },
       "type": "standard"
     },
     {
+      "id": "8d7b4e22-13bc-11e7-80f4-13e067d5072c",
       "image": {
-        "id": "http://www.ft.com/thing/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "type": "http://www.ft.com/ontology/content/MediaResource",
-        "title": "",
-        "alternativeTitles": {},
+        "alternativeImages": {},
         "alternativeStandfirsts": {},
+        "alternativeTitles": {},
+        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/8d7b4e22-13bc-11e7-80f4-13e067d5072c",
+        "canBeDistributed": "verify",
         "description": "",
-        "firstPublishedDate": "2017-04-05T08:25:00.000Z",
-        "publishedDate": "2017-04-05T08:25:00.000Z",
+        "firstPublishedDate": "2017-03-28T13:45:00.000Z",
+        "id": "http://www.ft.com/thing/8d7b4e22-13bc-11e7-80f4-13e067d5072c",
         "identifiers": [
           {
             "authority": "http://api.ft.com/system/FTCOM-METHODE",
-            "identifierValue": "588d9ba6-1557-11e7-9469-afea892e4de3"
+            "identifierValue": "8d7b4e22-13bc-11e7-80f4-13e067d5072c"
           }
         ],
-        "requestUrl": "http://test.api.ft.com/content/588d9ba6-1557-11e7-9469-afea892e4de3",
-        "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/588d9ba6-1557-11e7-9469-afea892e4de3",
+        "lastModified": "2017-03-28T13:45:53.525Z",
+        "pixelHeight": 1548,
         "pixelWidth": 4645,
-        "pixelHeight": 2612,
-        "alternativeImages": {},
-        "publishReference": "tid_n6vkawrq1l",
-        "lastModified": "2017-04-05T08:25:20.438Z",
-        "canBeDistributed": "verify"
+        "publishReference": "tid_prlsj2avbn",
+        "publishedDate": "2017-03-28T13:45:00.000Z",
+        "requestUrl": "http://test.api.ft.com/content/8d7b4e22-13bc-11e7-80f4-13e067d5072c",
+        "title": "",
+        "type": "http://www.ft.com/ontology/content/MediaResource"
       },
       "type": "wide"
     }
-  ]
+  ],
+  "publishReference": "tid_8pqiiuxbvz",
+  "tableOfContents": null,
+  "topper": null,
+  "uuid": "5010e2e4-09bd-11e7-97d1-5e720a26771b"
 }
 ```

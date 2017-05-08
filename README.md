@@ -33,8 +33,8 @@ s output ($LOG_METRICS)
 
 ### Application specific endpoints:
 
-* /content
-* /internalcontent
+* /content/image
+* /internalcontent/image
 
 ### Admin specific endpoints:
 
@@ -47,7 +47,7 @@ s output ($LOG_METRICS)
 
 
 ## Example 1 (main image)
-POST: /content
+POST: /content/image
 Body:
 ```
 {
@@ -187,7 +187,7 @@ Response:
 
 
 ## Example 2 (alternative images)
-POST: /content
+POST: /content/image
 Body:
 ```
 {
@@ -306,7 +306,7 @@ Response:
 ```
 
 ## Example 3 (lead images)
-POST: /internalcontent
+POST: /internalcontent/image
 Body:
 ```
 {

@@ -113,7 +113,7 @@ func TestShouldReturn200Content(t *testing.T) {
 
 	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
 	var jsonStr = []byte(`{"id":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
-	respPost, errPost := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewBuffer(jsonStr))
+	respPost, errPost := http.Post(imageResolver.URL+"/content/image", "application/json", bytes.NewBuffer(jsonStr))
 	assert.NoError(t, errPost, "Cannot send request to imageresolver /content endpoint")
 	defer respPost.Body.Close()
 
@@ -135,7 +135,7 @@ func TestShouldReturn200LeadImages(t *testing.T) {
 
 	assert.Equal(t, expectedOutput, actualOutput, "Response body shoud be equal to transformer response body")
 	var jsonStr = []byte(`{"uuid":"22c0d426-1466-11e7-b0c1-37e417ee6c76"}`)
-	respPost, errPost := http.Post(imageResolver.URL+"/internalcontent", "application/json", bytes.NewBuffer(jsonStr))
+	respPost, errPost := http.Post(imageResolver.URL+"/internalcontent/image", "application/json", bytes.NewBuffer(jsonStr))
 	assert.NoError(t, errPost, "Cannot send request to imageresolver /internalcontent endpoint")
 	defer respPost.Body.Close()
 
@@ -168,7 +168,7 @@ func TestShouldReturn400InvalidJsonLeadImages(t *testing.T) {
 	  "lastModified": "2017-03-31T08:23:37.061Z",
 	  "publishReference":
 	}`)
-	resp, err := http.Post(imageResolver.URL+"/internalcontent", "", bytes.NewBuffer(invalidjsonStr))
+	resp, err := http.Post(imageResolver.URL+"/internalcontent/image", "", bytes.NewBuffer(invalidjsonStr))
 	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
 
@@ -189,7 +189,7 @@ func TestShouldReturn400InvalidJsonContent(t *testing.T) {
 	  "lastModified": "2017-03-29T19:39:18.226Z",
 	  "canBeDistributed":
 	  }`)
-	resp, err := http.Post(imageResolver.URL+"/content", "", bytes.NewBuffer(invalidjsonStr))
+	resp, err := http.Post(imageResolver.URL+"/content/image", "", bytes.NewBuffer(invalidjsonStr))
 	assert.NoError(t, err, "Cannot send request to content endpoint")
 	defer resp.Body.Close()
 

@@ -30,10 +30,10 @@ func TestBodyEmpty(t *testing.T) {
 	var reader Reader
 	var parser Parser
 	var ir ImageResolver
+	var str string
 	reader = NewContentReader("", "")
 	parser =NewBodyParser()
 	ir = *NewImageResolver(&reader, &parser)
-	str := ""
 	emImagesUUIDs, _ := ir.parser.GetEmbedded(str)
 	assert.Equal(t, 0, len(emImagesUUIDs), "Response should return zero images")
 }

@@ -191,34 +191,34 @@ POST: /content/image
 Body:
 ```
 {
-  "id": "http://www.ft.com/thing/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
+  "id": "http://www.ft.com/thing/bba8a342-28f4-11e7-bc4b-5528796fe35c",
   "type": "http://www.ft.com/ontology/content/Content",
-  "title": "Relaxed takes on tailoring for men",
+  "title": "At $250m, this is America’s most expensive house",
   "alternativeTitles": {
-    "promotionalTitle": "Relaxed takes on tailoring for men"
+    "promotionalTitle": "At $250m, this is America’s most expensive house"
   },
   "alternativeStandfirsts": {
-    "promotionalStandfirst": "This season’s fluid, super-comfortable tailoring is right on the sartorial money"
+    "promotionalStandfirst": "924 Bel Air Road is the frame for the ultimate selfie in which LA forms the backdrop"
   },
-  "publishedDate": "2017-03-08T10:39:48.000Z",
-  "webUrl": "https://howtospendit.ft.com/mens-style/200263-relaxed-fluid-men-s-tailoring",
+  "publishedDate": "2017-05-03T07:20:13.000Z",
+  "webUrl": "https://propertylistings.ft.com/propertynews/los-angeles/5024-at-250m-this-is-americas-most-expensive-house.html",
   "identifiers": [
     {
       "authority": "http://api.ft.com/system/FTCOM-METHODE",
-      "identifierValue": "6e1b070e-027b-11e7-ace0-1ce02ef0def9"
+      "identifierValue": "bba8a342-28f4-11e7-bc4b-5528796fe35c"
     }
   ],
-  "requestUrl": "http://test.api.ft.com/content/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
+  "requestUrl": "http://test.api.ft.com/content/bba8a342-28f4-11e7-bc4b-5528796fe35c",
   "brands": [
     "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
   ],
   "alternativeImages": {
-    "promotionalImage": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+    "promotionalImage": "http://test.api.ft.com/content/59b138be-2f36-11e7-9555-23ef563ecf9a"
   },
-  "publishReference": "UK-V-5th-PP-CPH-Scenario-05-Trail-01",
-  "lastModified": "2017-04-05T14:58:57.016Z",
-  "canBeSyndicated": "verify",
-  "canBeDistributed": "verify"
+  "publishReference": "tid_aj4xzjeh7h",
+  "lastModified": "2017-05-03T07:24:32.591Z",
+  "canBeDistributed": "verify",
+  "canBeSyndicated": "verify"
 }
 ```
 
@@ -230,78 +230,52 @@ Response:
       "alternativeImages": {},
       "alternativeStandfirsts": {},
       "alternativeTitles": {},
+      "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/59b138be-2f36-11e7-9555-23ef563ecf9a",
       "canBeDistributed": "verify",
-      "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
-      "firstPublishedDate": "2017-03-29T19:39:00.000Z",
-      "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+      "description": "",
+      "firstPublishedDate": "2017-05-02T12:54:00.000Z",
+      "id": "http://www.ft.com/thing/59b138be-2f36-11e7-9555-23ef563ecf9a",
       "identifiers": [
         {
           "authority": "http://api.ft.com/system/FTCOM-METHODE",
-          "identifierValue": "639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+          "identifierValue": "59b138be-2f36-11e7-9555-23ef563ecf9a"
         }
       ],
-      "lastModified": "2017-03-29T19:39:31.361Z",
-      "members": [
-        {
-          "alternativeImages": {},
-          "alternativeStandfirsts": {},
-          "alternativeTitles": {},
-          "binaryUrl": "http://com.ft.coco-imagepublish.pre-prod.s3.amazonaws.com/639cd952-149f-11e7-b0c1-37e417ee6c76",
-          "canBeDistributed": "verify",
-          "copyright": {
-            "notice": "© Bloomberg"
-          },
-          "description": "Donald Tusk, president of the European Union (EU), holds the letter invoking Article 50 of the Lisbon Treaty from U.K. Prime Minister Theresa May as leaves following a news conference at the European Council in Brussels, Belgium, on Wednesday, March 29, 2017. The U.K. will&nbsp;start the clock&nbsp;on two years of negotiations to withdraw from the European Union on Wednesday, when Britain's ambassador hands EU President Donald Tusk&nbsp;a hand-signed&nbsp;letter&nbsp;from Prime Minister&nbsp;Theresa May&nbsp;invoking Article 50 of the Lisbon Treaty, the legal exit mechanism. Photographer: Jasper Juinen/Bloomberg",
-          "firstPublishedDate": "2017-03-29T19:39:00.000Z",
-          "id": "http://www.ft.com/thing/639cd952-149f-11e7-b0c1-37e417ee6c76",
-          "identifiers": [
-            {
-              "authority": "http://api.ft.com/system/FTCOM-METHODE",
-              "identifierValue": "639cd952-149f-11e7-b0c1-37e417ee6c76"
-            }
-          ],
-          "lastModified": "2017-03-29T19:39:31.361Z",
-          "pixelHeight": 1152,
-          "pixelWidth": 2048,
-          "publishReference": "tid_5ypvntzcpu",
-          "publishedDate": "2017-03-29T19:39:00.000Z",
-          "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-b0c1-37e417ee6c76",
-          "title": "",
-          "type": "http://www.ft.com/ontology/content/MediaResource"
-        }
-      ],
-      "publishReference": "tid_5ypvntzcpu",
-      "publishedDate": "2017-03-29T19:39:00.000Z",
-      "requestUrl": "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+      "lastModified": "2017-05-02T12:54:35.658Z",
+      "pixelHeight": 1152,
+      "pixelWidth": 2048,
+      "publishReference": "tid_retjsscm7e",
+      "publishedDate": "2017-05-02T12:54:00.000Z",
+      "requestUrl": "http://test.api.ft.com/content/59b138be-2f36-11e7-9555-23ef563ecf9a",
       "title": "",
-      "type": "http://www.ft.com/ontology/content/ImageSet"
+      "type": "http://www.ft.com/ontology/content/MediaResource"
     }
   },
   "alternativeStandfirsts": {
-    "promotionalStandfirst": "This season’s fluid, super-comfortable tailoring is right on the sartorial money"
+    "promotionalStandfirst": "924 Bel Air Road is the frame for the ultimate selfie in which LA forms the backdrop"
   },
   "alternativeTitles": {
-    "promotionalTitle": "Relaxed takes on tailoring for men"
+    "promotionalTitle": "At $250m, this is America’s most expensive house"
   },
   "brands": [
     "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
   ],
   "canBeDistributed": "verify",
   "canBeSyndicated": "verify",
-  "id": "http://www.ft.com/thing/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
+  "id": "http://www.ft.com/thing/bba8a342-28f4-11e7-bc4b-5528796fe35c",
   "identifiers": [
     {
       "authority": "http://api.ft.com/system/FTCOM-METHODE",
-      "identifierValue": "6e1b070e-027b-11e7-ace0-1ce02ef0def9"
+      "identifierValue": "bba8a342-28f4-11e7-bc4b-5528796fe35c"
     }
   ],
-  "lastModified": "2017-04-05T14:58:57.016Z",
-  "publishReference": "UK-V-5th-PP-CPH-Scenario-05-Trail-01",
-  "publishedDate": "2017-03-08T10:39:48.000Z",
-  "requestUrl": "http://test.api.ft.com/content/6e1b070e-027b-11e7-ace0-1ce02ef0def9",
-  "title": "Relaxed takes on tailoring for men",
+  "lastModified": "2017-05-03T07:24:32.591Z",
+  "publishReference": "tid_aj4xzjeh7h",
+  "publishedDate": "2017-05-03T07:20:13.000Z",
+  "requestUrl": "http://test.api.ft.com/content/bba8a342-28f4-11e7-bc4b-5528796fe35c",
+  "title": "At $250m, this is America’s most expensive house",
   "type": "http://www.ft.com/ontology/content/Content",
-  "webUrl": "https://howtospendit.ft.com/mens-style/200263-relaxed-fluid-men-s-tailoring"
+  "webUrl": "https://propertylistings.ft.com/propertynews/los-angeles/5024-at-250m-this-is-americas-most-expensive-house.html"
 }
 ```
 

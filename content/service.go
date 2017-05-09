@@ -59,12 +59,12 @@ func (ir *ImageResolver) UnrollImages(body Content) Content {
 	if found && bodyXml != "" {
 		emImagesUUIDs, err := ir.parser.GetEmbedded(bodyXml)
 		if err == nil {
-			embeddedImages := ir.getEmbeddedImages(emImagesUUIDs)
+			embeddedImages := ir.getImageSets(emImagesUUIDs)
 			if len(embeddedImages) > 0 {
 				result[Embeds] = embeddedImages
 			}
 		} else {
-			log.Infof("Error parsing body for article uuid=%s, err=%v", body[ID].(string), err)
+			log.Errorf("Error parsing body for article uuid=%s, err=%v", body[ID].(string), err)
 		}
 	}
 
@@ -73,10 +73,11 @@ func (ir *ImageResolver) UnrollImages(body Content) Content {
 	if found {
 		id, ok := uuid[PromoImage].(string)
 		if ok && id != "" {
-			promotionalImage := ir.getImage(id)
-			if len(promotionalImage) == 1 {
-				promo := map[string]interface{}{PromoImage: promotionalImage[0]}
-				result[AltImages] = promo
+			promotionalImage, err := ir.reader.Get(extractIdfromUrl(id))
+			if err == nil {
+				result[AltImages] =  map[string]interface{}{PromoImage: promotionalImage}
+			} else {
+				log.Errorf("Error unrolling promotional image uuid =%s, err=%v", id, err)
 			}
 		}
 	}
@@ -97,10 +98,6 @@ func (ir *ImageResolver) getImage(uuid string) []Content {
 	return ir.getImageSets([]string{uuid})
 }
 
-func (ir *ImageResolver) getEmbeddedImages(UUIDs []string) []Content {
-	return ir.getImageSets(UUIDs)
-}
-
 func (ir *ImageResolver) getImageSets(uuids []string) []Content {
 	outputs := []Content{}
 	for _, uuid := range uuids {
@@ -110,7 +107,7 @@ func (ir *ImageResolver) getImageSets(uuids []string) []Content {
 			imageSet = make(map[string]interface{})
 			imageSet[ID] = uuid
 			outputs = append(outputs, imageSet)
-			log.Infof("Error unrolling image uuid = %s, err: %v", id, err)
+			log.Errorf("Error unrolling image uuid = %s, err: %v", id, err)
 		} else {
 			if imageSet[ID] != "" {
 				membersIDs := []string{}
@@ -143,7 +140,7 @@ func (ir *ImageResolver) getImageSetMembers(membersUUIDs []string) []Content {
 		im, err := ir.reader.Get(id)
 		if err != nil {
 			im[ID] = member
-			log.Infof("Error unrolling image uuid =%s, err=%v", member, err)
+			log.Errorf("Error unrolling image uuid =%s, err=%v", member, err)
 		}
 		members = append(members, im)
 	}
@@ -160,7 +157,7 @@ func (ir *ImageResolver) getLeadImages(leadImages []interface{}) []Content {
 		if err != nil{
 			result[index][ID]= id
 			result[index][Type] = img[Type].(string)
-			log.Infof("Error unrolling leadimage uuid =%s, err=%v", id, err)
+			log.Errorf("Error unrolling leadimage uuid =%s, err=%v", id, err)
 		} else {
 			result[index][Image] = im
 			result[index][Type] = img[Type].(string)
@@ -171,7 +168,7 @@ func (ir *ImageResolver) getLeadImages(leadImages []interface{}) []Content {
 }
 
 func extractIdfromUrl(url string) string {
-	id := ""
+	var id string
 	re, _ := regexp.Compile("([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
 	values := re.FindStringSubmatch(url)
 	if len(values) > 0 {

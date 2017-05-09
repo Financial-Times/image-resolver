@@ -16,12 +16,6 @@ func NewBodyParser() *BodyParser {
 }
 
 func (bp *BodyParser) GetEmbedded(body string) ([]string, error) {
-	var ids []string
-	ids, err := parseXMLBody(body)
-	return ids, err
-}
-
-func parseXMLBody(body string) ([]string, error) {
 	embedsImg := []string{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
@@ -53,3 +47,4 @@ func parseXMLBody(body string) ([]string, error) {
 	f(doc)
 	return embedsImg, nil
 }
+

@@ -41,6 +41,10 @@ func (cr *ContentReader) Get(uuid string) (Content, error) {
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode != http.StatusOK {
+		return result, fmt.Errorf("Cannot read from content-public-read for uuid=%s, err=%v", uuid, err)
+	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return result, fmt.Errorf("Error reading response from content-public-read for uuid=%s, err=%v", uuid, err)
@@ -48,12 +52,8 @@ func (cr *ContentReader) Get(uuid string) (Content, error) {
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return result, fmt.Errorf("Error reading response from content-public-read for uuid=%s, err=%v", uuid, err)
-	} else {
-		if res.StatusCode == http.StatusNotFound || res.StatusCode == http.StatusBadRequest {
-			return nil, fmt.Errorf("Requested item does not exist uuid = %s ", uuid)
-		} else {
-			return result, nil
-		}
+		return result, fmt.Errorf("Error unmarshalling response from content-public-read for uuid=%s, err=%v", uuid, err)
 	}
+
+	return result, nil
 }

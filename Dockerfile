@@ -19,7 +19,7 @@ RUN apk add --update bash git libc-dev ca-certificates \
   && echo $LDFLAGS \
   && go get -u github.com/kardianos/govendor \
   && $GOPATH/bin/govendor sync \
-  && go get -v \
+  && go get ./... \
   && go build -ldflags="${LDFLAGS}" \
   && mv ./image-resolver / \
   && apk del go git \

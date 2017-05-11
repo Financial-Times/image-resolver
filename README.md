@@ -38,8 +38,6 @@ s output ($LOG_METRICS)
 
 ### Admin specific endpoints:
 
-* /ping
-* /build-info
 * /__ping
 * /__build-info
 * /__health

@@ -23,6 +23,7 @@ const (
 	Port           = "port"
 	CprHost        = "cprHost"
 	RouterAddress  = "routerAddress"
+	EmbedsType     = "embedsType"
 	GraphiteTCP    = "graphite-tcp-address"
 	GraphitePrefix = "graphite-prefix"
 	LogMetrics     = "log-metrics"
@@ -64,6 +65,12 @@ func main() {
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
 	})
+	embedsType := app.String(cli.StringOpt{
+		Name:    EmbedsType,
+		Value:  "http://www.ft.com/ontology/content/ImageSet",
+		Desc:   "The type suported for embedded images, ex ImageSet",
+		EnvVar: "EMBEDS_TYPE_WHITELIST",
+	})
 
 	app.Action = func() {
 		httpClient := &http.Client{
@@ -79,6 +86,7 @@ func main() {
 			AppPort:             *port,
 			Content_public_read: *cprHost,
 			RouterAddress:       *routerAddress,
+			EmbedsType: 	     *embedsType,
 			GraphiteTCPAddress:  *graphiteTCPAddress,
 			GraphitePrefix:      *graphitePrefix,
 			HttpClient:          httpClient,
@@ -96,7 +104,7 @@ func main() {
 		var parser content.Parser
 		var ir content.Resolver
 		reader = content.NewContentReader(*cprHost, *routerAddress)
-		parser = content.NewBodyParser()
+		parser = content.NewBodyParser(*embedsType)
 		ir = content.NewImageResolver(&reader, &parser)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)

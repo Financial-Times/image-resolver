@@ -16,6 +16,7 @@ type ServiceConfig struct {
 	AppPort             string
 	Content_public_read string
 	RouterAddress       string
+	EmbedsType          string
 	GraphiteTCPAddress  string
 	GraphitePrefix      string
 	HttpClient          *http.Client

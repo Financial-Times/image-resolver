@@ -27,7 +27,8 @@ const (
 	Standard     = "standard"
 	Wide	     = "wide"
 	RequestUrlStr= "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
-	RequestUrl  = "requestUrl"
+	RequestUrl   = "requestUrl"
+	ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
 )
 
 func startContentAPIMock(status string) {
@@ -74,7 +75,7 @@ func serviceIR() ImageResolver {
 	var ir ImageResolver
 
 	reader = NewContentReader(contentAPIURI, router)
-	parser = NewBodyParser()
+	parser = NewBodyParser(ImageSetType)
 	ir = *NewImageResolver(&reader, &parser)
 	return ir
 }
@@ -102,7 +103,7 @@ func TestUnrollImages(t *testing.T) {
 	assert.Equal(t, Type_Art, result[Type], "Response Type  shoud be equal")
 	assert.Equal(t, Image_ID, result[MainImage].(Content)[ID], "Response Main Image Id  shoud be equal")
 	assert.Equal(t, Image_Date, result[MainImage].(Content)[Publish_Date], "Response Main image publishedDate shoud be equal")
-	assert.Equal(t, 4, len(result[Embeds].([]Content)), "Response Embeds length shoud be equal 4")
+	assert.Equal(t, 3, len(result[Embeds].([]Content)), "Response Embeds length shoud be equal 3")
 	img := result[AltImages].(map[string]interface{})[PromoImage]
 	assert.Equal(t, Image_ID, img.(Content)[ID], "Response Promotional Image Id  shoud be equal")
 	assert.Equal(t, Image_Date, img.(Content)[Publish_Date], "Response Promotional Image publishedDate shoud be equal")

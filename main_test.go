@@ -69,6 +69,7 @@ func startImageResolverService() {
 		"9090",
 		"content-public-read",
 		router,
+		"http://www.ft.com/ontology/content/ImageSet",
 		"",
 		"",
 		http.DefaultClient,
@@ -79,7 +80,7 @@ func startImageResolverService() {
 	var ir content.ImageResolver
 
 	reader = content.NewContentReader(contentAPIURI, router)
-	parser = content.NewBodyParser()
+	parser = content.NewBodyParser(sc.EmbedsType)
 	ir = *content.NewImageResolver(&reader, &parser)
 	appLogger := content.NewAppLogger()
 	contentHandler := content.ContentHandler{&sc, &ir, appLogger}

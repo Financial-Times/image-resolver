@@ -18,6 +18,7 @@ const (
 	UUID       = "uuid"
 	AppName    = "image-resolver"
 	Image 	   = "image"
+	ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
 )
 
 type Content map[string]interface{}

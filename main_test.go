@@ -79,7 +79,7 @@ func startImageResolverService() {
 	var ir content.ImageResolver
 
 	reader = content.NewContentReader(contentAPIURI, router)
-	parser = content.NewBodyParser()
+	parser = content.NewBodyParser(content.ImageSetType)
 	ir = *content.NewImageResolver(&reader, &parser)
 	appLogger := content.NewAppLogger()
 	contentHandler := content.ContentHandler{&sc, &ir, appLogger}

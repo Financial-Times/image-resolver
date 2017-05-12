@@ -86,7 +86,6 @@ func main() {
 			AppPort:             *port,
 			Content_public_read: *cprHost,
 			RouterAddress:       *routerAddress,
-			EmbedsType: 	     *embedsType,
 			GraphiteTCPAddress:  *graphiteTCPAddress,
 			GraphitePrefix:      *graphitePrefix,
 			HttpClient:          httpClient,

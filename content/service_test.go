@@ -28,7 +28,6 @@ const (
 	Wide	     = "wide"
 	RequestUrlStr= "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
 	RequestUrl   = "requestUrl"
-	ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
 )
 
 func startContentAPIMock(status string) {

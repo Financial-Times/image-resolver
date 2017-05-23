@@ -12,100 +12,94 @@ type ErrorMessage struct {
 	Message string `json:"message"`
 }
 
-type ServiceConfig struct {
-	AppPort             string
-	Content_public_read string
-	RouterAddress       string
-	GraphiteTCPAddress  string
-	GraphitePrefix      string
-	HttpClient          *http.Client
+var logger = NewAppLogger()
+
+type Handler struct {
+	Service Resolver
 }
 
-type ContentHandler struct {
-	ServiceConfig *ServiceConfig
-	Service       Resolver
-	Log           *appLogger
-}
-
-func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	var article Content
-	var id string
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
-
-	hh.Log.TransactionStartedEvent(r.RequestURI, tid, id)
-
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleBadRequest(r, tid, w, err)
 		return
 	}
 
+	var article Content
 	err = json.Unmarshal(b, &article)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleBadRequest(r, tid, w, err)
 		return
 	}
 
-	contentUUID, ok := article[ID].(string)
-	if ok {
-		id = extractIdfromUrl(contentUUID)
+	id, ok := article[id].(string)
+	if !ok {
+		handleBadRequest(r, tid, w, err)
+		return
 	}
+	uuid := extractUUIDFromURL(id)
+	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
-	hh.Log.RequestEvent(AppName, r.RequestURI, tid, id)
 	//unrolling images
-	content, err := json.Marshal(hh.Service.UnrollImages(article));
+	c, err := hh.Service.UnrollImages(article)
 	if err != nil {
-		handleInternalServerError(hh, r, tid, id, w, err)
+		handleInternalServerError(r, tid, uuid, w, err)
+		return
+	}
+	jsonRes, err := json.Marshal(c)
+	if err != nil {
+		handleInternalServerError(r, tid, uuid, w, err)
 		return
 	}
 
-	hh.Log.ResponseEvent(AppName, r.URL.String(), tid, http.StatusOK, id)
-	w.Write([]byte(content))
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
+	w.Write(jsonRes)
 }
 
-func (hh *ContentHandler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	var article Content
-	var id string
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
-
-	hh.Log.TransactionStartedEvent(r.RequestURI, tid, id)
-
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleBadRequest(r, tid, w, err)
 		return
 	}
 
+	var article Content
 	err = json.Unmarshal(b, &article)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleBadRequest(r, tid, w, err)
 		return
 	}
 
-	contentUUID, ok := article[UUID].(string)
-	if ok {
-		id = extractIdfromUrl(contentUUID)
+	id, ok := article[id].(string)
+	if !ok {
+		handleBadRequest(r, tid, w, err)
+		return
 	}
+	uuid := extractUUIDFromURL(id)
+	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
-	hh.Log.RequestEvent(AppName, r.RequestURI, tid, id)
 	//unrolling lead images
-	content, err := json.Marshal(hh.Service.UnrollLeadImages(article));
-	if  err != nil {
-		handleInternalServerError(hh, r, tid, id, w, err)
+	c, err := hh.Service.UnrollLeadImages(article)
+	if err != nil {
+		handleInternalServerError(r, tid, uuid, w, err)
+		return
+	}
+	jsonRes, err := json.Marshal(c)
+	if err != nil {
+		handleInternalServerError(r, tid, uuid, w, err)
 		return
 	}
 
-	hh.Log.ResponseEvent(AppName, r.URL.String(), tid, http.StatusOK, id)
-	w.Write([]byte(content))
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
+	w.Write(jsonRes)
 }
 
-
-func handleBadRequest(hh *ContentHandler, r *http.Request, tid string, id string, w http.ResponseWriter, err error) {
-	hh.Log.RequestFailedEvent(AppName, r.RequestURI, tid, http.StatusBadRequest, id)
+func handleBadRequest(r *http.Request, tid string, w http.ResponseWriter, err error) {
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusBadRequest, "", err.Error())
 	w.WriteHeader(http.StatusBadRequest)
 	msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Error reading content, err=%v", err)})
 	if errm != nil {
@@ -115,9 +109,13 @@ func handleBadRequest(hh *ContentHandler, r *http.Request, tid string, id string
 	}
 }
 
-func handleInternalServerError(hh *ContentHandler, r *http.Request, tid string, id string, w http.ResponseWriter, err error)  {
-	hh.Log.RequestFailedEvent(AppName, r.RequestURI, tid, http.StatusInternalServerError, id)
+func handleInternalServerError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error) {
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusInternalServerError, uuid, err.Error())
 	w.WriteHeader(http.StatusInternalServerError)
-	msg, _ := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with id %s, err=%v", id, err)})
-	w.Write([]byte(msg))
+	msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with id %s, err=%v", uuid, err)})
+	if errm != nil {
+		w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
+	} else {
+		w.Write([]byte(msg))
+	}
 }

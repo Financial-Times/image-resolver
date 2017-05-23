@@ -17,59 +17,65 @@ import (
 )
 
 const (
-	AppCode        = "image-resolver"
-	AppName        = "Image Resolver"
-	AppDesc        = "Image Resolver - unroll images for a given content"
-	Port           = "port"
-	CprHost        = "cprHost"
-	RouterAddress  = "routerAddress"
-	EmbedsType     = "embedsType"
-	GraphiteTCP    = "graphite-tcp-address"
-	GraphitePrefix = "graphite-prefix"
-	LogMetrics     = "log-metrics"
+	AppCode = "image-resolver"
+	AppName = "Image Resolver"
+	AppDesc = "Image Resolver - unroll images for a given content"
 )
 
 func main() {
 	app := cli.App(AppCode, AppDesc)
 	port := app.String(cli.StringOpt{
-		Name:   Port,
+		Name:   "port",
 		Value:  "9090",
 		Desc:   "application port",
-		EnvVar: "PORT"})
-	cprHost := app.String(cli.StringOpt{
-		Name:   CprHost,
+		EnvVar: "PORT",
+	})
+	contentSourceAppName := app.String(cli.StringOpt{
+		Name:   "Content Source Application Name",
 		Value:  "content-public-read",
 		Desc:   "Content read app",
-		EnvVar: "CONTENT_READ_ENDPOINT",
+		EnvVar: "CONTENT_SOURCE_APP_NAME",
 	})
-	routerAddress := app.String(cli.StringOpt{
-		Name:   RouterAddress,
-		Value:  "localhost:8080",
+	contentSourceURL := app.String(cli.StringOpt{
+		Name:   "Content Source URL",
+		Value:  "http://localhost:8080",
 		Desc:   "Vulcan host",
-		EnvVar: "ROUTER_ADDRESS",
+		EnvVar: "CONTENT_SOURCE_URL",
+	})
+	contentSourcePath := app.String(cli.StringOpt{
+		Name:   "Content Source Path",
+		Value:  "/content",
+		Desc:   "Endpoint of content source app for retrieving content",
+		EnvVar: "CONTENT_SOURCE_PATH",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
-		Name:   GraphiteTCP,
+		Name:   "graphite-tcp-address",
 		Desc:   "Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)",
 		EnvVar: "GRAPHITE_TCP_ADDRESS",
 	})
 	graphitePrefix := app.String(cli.StringOpt{
-		Name:   GraphitePrefix,
+		Name:   "graphite-prefix",
 		Value:  "coco.services.$ENV.image-resolver.0",
 		Desc:   "Prefix to use. Should start with content, include the environment, and the host name. e.g. coco.pre-prod.image-resolver.1",
 		EnvVar: "GRAPHITE_PREFIX",
 	})
 	logMetrics := app.Bool(cli.BoolOpt{
-		Name:   LogMetrics,
+		Name:   "log-metrics",
 		Value:  false,
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
 	})
-	embedsType := app.String(cli.StringOpt{
-		Name:    EmbedsType,
+	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
+		Name:   "embeddedContentTypeWhitelist",
 		Value:  "http://www.ft.com/ontology/content/ImageSet",
 		Desc:   "The type suported for embedded images, ex ImageSet",
-		EnvVar: "EMBEDS_TYPE_WHITELIST",
+		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
+	})
+	apiHost := app.String(cli.StringOpt{
+		Name:   "apiHost",
+		Value:  "test.api.ft.com",
+		Desc:   "API host to use for URLs in responses",
+		EnvVar: "API_HOST",
 	})
 
 	app.Action = func() {
@@ -82,36 +88,21 @@ func main() {
 				}).Dial,
 			},
 		}
+
 		sc := content.ServiceConfig{
-			AppPort:             *port,
-			Content_public_read: *cprHost,
-			RouterAddress:       *routerAddress,
-			GraphiteTCPAddress:  *graphiteTCPAddress,
-			GraphitePrefix:      *graphitePrefix,
-			HttpClient:          httpClient,
+			ContentSourceAppName: *contentSourceAppName,
+			ContentSourceURL:     *contentSourceURL,
+			HttpClient:           httpClient,
 		}
 
-		scMap := map[string]interface{}{
-			Port:          port,
-			CprHost:       cprHost,
-			RouterAddress: routerAddress,
-			GraphiteTCP:   graphiteTCPAddress,
-			GraphitePrefix:             graphitePrefix,
-		}
-
-		var reader content.Reader
-		var parser content.Parser
-		var ir content.Resolver
-		reader = content.NewContentReader(*cprHost, *routerAddress)
-		parser = content.NewBodyParser(*embedsType)
-		ir = content.NewImageResolver(&reader, &parser)
+		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, *contentSourcePath, httpClient)
+		parser := content.NewBodyParser(*embeddedContentTypeWhitelist)
+		ir := content.NewImageResolver(reader, parser, *apiHost)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
-		appLogger := content.NewAppLogger()
-		ch := &content.ContentHandler{ServiceConfig:&sc, Service: ir, Log: appLogger}
+		ch := &content.Handler{Service: ir}
 		h := setupServiceHandler(sc, ch)
-		appLogger.ServiceStartedEvent(AppCode, scMap)
-		err := http.ListenAndServe(":"+*port, h)
+		err := http.ListenAndServe(":" + *port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
 		}
@@ -122,7 +113,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(sc content.ServiceConfig, ch *content.ContentHandler) *mux.Router {
+func setupServiceHandler(sc content.ServiceConfig, ch *content.Handler) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/content/image", ch.GetContentImages).Methods("POST")
 	r.HandleFunc("/internalcontent/image", ch.GetLeadImages).Methods("POST")

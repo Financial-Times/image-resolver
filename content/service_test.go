@@ -1,143 +1,181 @@
 package content
 
 import (
-	"encoding/json"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"strings"
 	"testing"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"encoding/json"
+	"github.com/pkg/errors"
 )
-
-var contentAPIMock *httptest.Server
 
 const (
-	Content_Id   = "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76"
-	Type_Art     = "http://www.ft.com/ontology/content/Article"
-	Image_ID     = "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
-	Image_Date   = "2017-03-29T19:39:00.000Z"
-	Publish_Date = "publishedDate"
-	Expected_Id  = "22c0d426-1466-11e7-b0c1-37e417ee6c76"
-	Square       = "square"
-	Standard     = "standard"
-	Wide	     = "wide"
-	RequestUrlStr= "http://test.api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
-	RequestUrl   = "requestUrl"
+	ID         = "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76"
+	expectedId = "22c0d426-1466-11e7-b0c1-37e417ee6c76"
 )
 
-func startContentAPIMock(status string) {
-	router := mux.NewRouter()
-	var getContent http.HandlerFunc
-
-	if status == "happy" {
-		getContent = happyContentAPIMock
-
-	} else if status == "notFound" {
-		getContent = notFoundHandler
-
-	} else {
-		getContent = internalErrorHandler
-
-	}
-	router.Path("/content/{uuid}").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(getContent)})
-	contentAPIMock = httptest.NewServer(router)
+type ReaderMock struct {
+	mockGet func(c UUIDBatch) (map[string]Content, error)
 }
 
-func happyContentAPIMock(writer http.ResponseWriter, request *http.Request) {
-	file, err := os.Open("../test-resources/image.json")
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	io.Copy(writer, file)
+func (rm *ReaderMock) Get(c UUIDBatch) (map[string]Content, error) {
+	return rm.mockGet(c)
 }
 
-func internalErrorHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusServiceUnavailable)
+type ParserMock struct {
+	mockGetEmbedded func(body string) ([]imageSetUUID, error)
 }
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
-}
-
-func serviceIR() ImageResolver {
-	contentAPIURI := contentAPIMock.URL + "/content/"
-	router := strings.Replace(contentAPIMock.URL, "http://", "", -1)
-
-	var reader Reader
-	var parser Parser
-	var ir ImageResolver
-
-	reader = NewContentReader(contentAPIURI, router)
-	parser = NewBodyParser(ImageSetType)
-	ir = *NewImageResolver(&reader, &parser)
-	return ir
+func (pm *ParserMock) GetEmbedded(body string) ([]imageSetUUID, error) {
+	return pm.mockGetEmbedded(body)
 }
 
 func TestUnrollImages(t *testing.T) {
-	var content Content
-	startContentAPIMock("happy")
-	defer contentAPIMock.Close()
-	resp, err := http.Get(contentAPIMock.URL + "/content/22c0d426-1466-11e7-b0c1-37e417ee6c76")
-	assert.NoError(t, err, "Cannot send request to content endpoint")
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
-
-	fileBytes, err := ioutil.ReadFile("../test-resources/content.json")
-	if err != nil {
-		assert.Fail(t, "Cannot read test file")
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c UUIDBatch) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		parser: &ParserMock{
+			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
+				return []imageSetUUID{
+					{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"},
+					{uuid: "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "71231d3a-13c7-11e7-b0c1-37e417ee6c76"},
+					{uuid: "0261ea4a-1474-11e7-1e92-847abda1ac65", imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c"},
+				}, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
 	}
-	err = json.Unmarshal(fileBytes, &content)
 
-	ir := serviceIR()
-	result := ir.UnrollImages(content)
+	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
 
-	assert.Equal(t, Content_Id, result[ID], "Response ID  shoud be equal")
-	assert.Equal(t, Type_Art, result[Type], "Response Type  shoud be equal")
-	assert.Equal(t, Image_ID, result[MainImage].(Content)[ID], "Response Main Image Id  shoud be equal")
-	assert.Equal(t, Image_Date, result[MainImage].(Content)[Publish_Date], "Response Main image publishedDate shoud be equal")
-	assert.Equal(t, 3, len(result[Embeds].([]Content)), "Response Embeds length shoud be equal 3")
-	img := result[AltImages].(map[string]interface{})[PromoImage]
-	assert.Equal(t, Image_ID, img.(Content)[ID], "Response Promotional Image Id  shoud be equal")
-	assert.Equal(t, Image_Date, img.(Content)[Publish_Date], "Response Promotional Image publishedDate shoud be equal")
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+
+	actual, err := ir.UnrollImages(c)
+	assert.NoError(t, err, "Should not get an error when expanding images")
+
+	actualJson, err := json.Marshal(actual)
+	assert.JSONEq(t, string(actualJson), string(expected))
 }
 
-
-func TestUnrollLeadImages(t *testing.T) {
-	var content Content
-	startContentAPIMock("happy")
-	defer contentAPIMock.Close()
-	resp, err := http.Get(contentAPIMock.URL + "/content/22c0d426-1466-11e7-b0c1-37e417ee6c76")
-	assert.NoError(t, err, "Cannot send request to content endpoint")
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
-
-	fileBytes, err := ioutil.ReadFile("../test-resources/leadImages.json")
-	if err != nil {
-		assert.Fail(t, "Cannot read test file")
+func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c UUIDBatch) (map[string]Content, error) {
+				return nil, errors.New("Cannot retrieve content")
+			},
+		},
+		parser: &ParserMock{
+			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
+				return []imageSetUUID{
+					{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"},
+					{uuid: "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "71231d3a-13c7-11e7-b0c1-37e417ee6c76"},
+					{uuid: "0261ea4a-1474-11e7-1e92-847abda1ac65", imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c"},
+				}, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
 	}
-	err = json.Unmarshal(fileBytes, &content)
 
-	ir := serviceIR()
-	result := ir.UnrollLeadImages(content)
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	assert.NoError(t, err, "Cannot read test file")
+	err = json.Unmarshal(fileBytes, &c)
 
-	lead := result[LeadImages].([]Content)
-	assert.Equal(t, 3, len(lead), "Response LeadImages length shoud be equal 3")
-	assert.Equal(t, Image_ID, lead[0][Image].(Content)[ID], "Response Promotional Image Id  shoud be equal")
-	assert.Equal(t, RequestUrlStr, lead[0][Image].(Content)[RequestUrl], "Response Promotional Image RequestUrl  shoud be equal")
-	assert.Equal(t, Square, lead[0][Type], "Response Promotional Image Type shoud be equal")
-	assert.Equal(t, Standard, lead[1][Type], "Response Promotional Image Type shoud be equal")
-	assert.Equal(t, Wide, lead[2][Type], "Response Promotional Image Type shoud be equal")
+	_, err = ir.UnrollImages(c)
+	assert.Error(t, err)
 }
 
-func TestExtractIdfromUrl(t *testing.T) {
-	actual := extractIdfromUrl(Content_Id)
-	assert.Equal(t, Expected_Id, actual, "Response id shoud be equal")
+func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(t *testing.T) {
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c UUIDBatch) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response-no-body.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		parser: &ParserMock{
+			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
+				return nil, errors.New("Cannot parse body")
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	assert.NoError(t, err, "Cannot read test file")
+	err = json.Unmarshal(fileBytes, &c)
+
+	result, err := ir.UnrollImages(c)
+	assert.NoError(t, err, "Should not receive error when body cannot be parsed.")
+	assert.Nil(t, result["embeds"], "Response should not contain embeds field")
+}
+
+func TestImageResolver_UnrollLeadImages(t *testing.T) {
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c UUIDBatch) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-internalcontent-reader-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
+	assert.NoError(t, err, "File necessary for building request body nod found")
+	err = json.Unmarshal(fileBytes, &c)
+
+	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
+	assert.NoError(t, err, "File necessary for building expected output not found.")
+
+	actual, err := ir.UnrollLeadImages(c)
+	assert.NoError(t, err, "Should not receive error for expanding lead images")
+	actualJson, err := json.Marshal(actual)
+	assert.JSONEq(t, string(actualJson), string(expected))
+}
+
+func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c UUIDBatch) (map[string]Content, error) {
+				return nil, errors.New("Cannot read content")
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
+	assert.NoError(t, err, "Cannot read test file")
+	err = json.Unmarshal(fileBytes, &c)
+
+	_, err = ir.UnrollLeadImages(c)
+	assert.Error(t, err)
+}
+
+func TestExtractIDFromURL(t *testing.T) {
+	actual := extractUUIDFromURL(ID)
+	assert.Equal(t, expectedId, actual, "Response id should be equal")
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type Parser interface {
-	GetEmbedded(content string) ([]string, error)
+	GetEmbedded(body string) ([]imageSetUUID, error)
 }
 
 type BodyParser struct {
@@ -20,8 +20,8 @@ func NewBodyParser(embedsType string) *BodyParser {
 	}
 }
 
-func (bp *BodyParser) GetEmbedded(body string) ([]string, error) {
-	embedsImg := []string{}
+func (bp *BodyParser) GetEmbedded(body string) ([]imageSetUUID, error) {
+	embedsImg := []imageSetUUID{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return embedsImg, err
@@ -48,8 +48,14 @@ func (bp *BodyParser) GetEmbedded(body string) ([]string, error) {
 					uuid = a.Val
 				}
 			}
-			if isEmbedded && isImageSet{
-				embedsImg = append(embedsImg, uuid)
+			if isEmbedded && isImageSet {
+				var emb imageSetUUID
+				emb.uuid = extractUUIDFromURL(uuid)
+				imgModel, err := getImageModelUUID(emb.uuid)
+				if err == nil {
+					emb.imageModelUUID = imgModel
+				}
+				embedsImg = append(embedsImg, emb)
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -60,4 +66,3 @@ func (bp *BodyParser) GetEmbedded(body string) ([]string, error) {
 	f(doc)
 	return embedsImg, nil
 }
-

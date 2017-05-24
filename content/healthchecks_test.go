@@ -4,7 +4,7 @@ import (
 	"testing"
 	"net/http/httptest"
 	"net/http"
-	"github.com/docker/docker/pkg/testutil/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func startFunctionalService() *httptest.Server {

@@ -181,6 +181,12 @@
 			"revisionTime": "2017-01-30T11:31:45Z"
 		},
 		{
+			"checksumSHA1": "2JAc7m+LS6gGoo8su0omhIUz1VY=",
+			"path": "github.com/willf/bitset",
+			"revision": "5c3c0fce48842b2c0bbaa99b4e61b0175d84b47c",
+			"revisionTime": "2016-12-02T17:00:36Z"
+		},
+		{
 			"checksumSHA1": "jzagU1HfylQH/eBE9u9MrpkVHw8=",
 			"path": "go4.org/osutil",
 			"revision": "169ea6cabe2a4888dba958edaecc9e9751adc711",

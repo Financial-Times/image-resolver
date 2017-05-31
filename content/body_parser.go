@@ -1,60 +1,48 @@
 package content
 
 import (
-	"golang.org/x/net/html"
-	"strings"
 	"regexp"
+	"strings"
+
+	"github.com/pkg/errors"
+	"golang.org/x/net/html"
 )
 
-type Parser interface {
-	GetEmbedded(body string) ([]imageSetUUID, error)
-}
-
-type BodyParser struct {
-	embedsType string
-}
-
-func NewBodyParser(embedsType string) *BodyParser {
-	return &BodyParser{
-		embedsType: embedsType,
-	}
-}
-
-func (bp *BodyParser) GetEmbedded(body string) ([]imageSetUUID, error) {
+func getEmbedded(body string, embedsType string, tid string, uuid string) ([]imageSetUUID, error) {
 	embedsImg := []imageSetUUID{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return embedsImg, err
 	}
 
-	re, _ := regexp.Compile(bp.embedsType)
+	re, err := regexp.Compile(embedsType)
+	if err != nil {
+		return embedsImg, errors.Wrap(err, "Error while compiling whitelist")
+	}
+
 	var f func(*html.Node)
 	f = func(n *html.Node) {
 		if n.Data == "ft-content" {
 			isEmbedded := false
 			isImageSet := false
-			var uuid string
+			var id string
 			for _, a := range n.Attr {
 				if a.Key == "data-embedded" && a.Val == "true" {
 					isEmbedded = true
-				}
-				if a.Key == "type" {
+				} else if a.Key == "type" {
 					values := re.FindStringSubmatch(a.Val)
 					if len(values) == 1 {
 						isImageSet = true
 					}
-				}
-				if a.Key == "url" {
-					uuid = a.Val
+				} else if a.Key == "url" {
+					id = a.Val
 				}
 			}
 			if isEmbedded && isImageSet {
 				var emb imageSetUUID
-				emb.uuid = extractUUIDFromURL(uuid)
-				imgModel, err := getImageModelUUID(emb.uuid)
-				if err == nil {
-					emb.imageModelUUID = imgModel
-				}
+				emb.uuid = extractUUIDFromURL(id)
+				emb.imageModelUUID, err = getImageModelUUID(emb.uuid)
+				logger.Infof(tid, uuid, "Cannot get image model UUID from image set UUID %s", emb.uuid)
 				embedsImg = append(embedsImg, emb)
 			}
 		}

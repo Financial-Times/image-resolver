@@ -1,11 +1,12 @@
 package content
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
+	"testing"
+
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -41,15 +42,7 @@ func TestUnrollImages(t *testing.T) {
 				return res, nil
 			},
 		},
-		parser: &ParserMock{
-			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
-				return []imageSetUUID{
-					{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"},
-					{uuid: "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "71231d3a-13c7-11e7-b0c1-37e417ee6c76"},
-					{uuid: "0261ea4a-1474-11e7-1e92-847abda1ac65", imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c"},
-				}, nil
-			},
-		},
+		whitelist: ImageSetType,
 		apiHost: "test.api.ft.com",
 	}
 
@@ -61,11 +54,11 @@ func TestUnrollImages(t *testing.T) {
 	assert.NoError(t, err, "Cannot read necessary test file")
 	err = json.Unmarshal(fileBytes, &c)
 	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollRequest{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollImages(req)
+	assert.NoError(t, actual.err, "Should not get an error when expanding images")
 
-	actual, err := ir.UnrollImages(c)
-	assert.NoError(t, err, "Should not get an error when expanding images")
-
-	actualJson, err := json.Marshal(actual)
+	actualJson, err := json.Marshal(actual.uc)
 	assert.JSONEq(t, string(actualJson), string(expected))
 }
 
@@ -76,15 +69,7 @@ func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
 				return nil, errors.New("Cannot retrieve content")
 			},
 		},
-		parser: &ParserMock{
-			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
-				return []imageSetUUID{
-					{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"},
-					{uuid: "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "71231d3a-13c7-11e7-b0c1-37e417ee6c76"},
-					{uuid: "0261ea4a-1474-11e7-1e92-847abda1ac65", imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c"},
-				}, nil
-			},
-		},
+		whitelist: ImageSetType,
 		apiHost: "test.api.ft.com",
 	}
 
@@ -93,8 +78,9 @@ func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
 	assert.NoError(t, err, "Cannot read test file")
 	err = json.Unmarshal(fileBytes, &c)
 
-	_, err = ir.UnrollImages(c)
-	assert.Error(t, err)
+	req := UnrollRequest{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollImages(req)
+	assert.Error(t, actual.err)
 }
 
 func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(t *testing.T) {
@@ -109,11 +95,7 @@ func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(
 				return res, nil
 			},
 		},
-		parser: &ParserMock{
-			mockGetEmbedded: func(body string) ([]imageSetUUID, error) {
-				return nil, errors.New("Cannot parse body")
-			},
-		},
+		whitelist: ImageSetType,
 		apiHost: "test.api.ft.com",
 	}
 
@@ -121,10 +103,12 @@ func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(
 	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
 	assert.NoError(t, err, "Cannot read test file")
 	err = json.Unmarshal(fileBytes, &c)
+	c[bodyXML] = "invalid body"
 
-	result, err := ir.UnrollImages(c)
-	assert.NoError(t, err, "Should not receive error when body cannot be parsed.")
-	assert.Nil(t, result["embeds"], "Response should not contain embeds field")
+	req := UnrollRequest{c, "tid_sample", "sample_uuid"}
+	res := ir.UnrollImages(req)
+	assert.NoError(t, res.err, "Should not receive error when body cannot be parsed.")
+	assert.Nil(t, res.uc["embeds"], "Response should not contain embeds field")
 }
 
 func TestImageResolver_UnrollLeadImages(t *testing.T) {
@@ -150,9 +134,10 @@ func TestImageResolver_UnrollLeadImages(t *testing.T) {
 	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
 	assert.NoError(t, err, "File necessary for building expected output not found.")
 
-	actual, err := ir.UnrollLeadImages(c)
-	assert.NoError(t, err, "Should not receive error for expanding lead images")
-	actualJson, err := json.Marshal(actual)
+	req := UnrollRequest{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollLeadImages(req)
+	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
+	actualJson, err := json.Marshal(actual.uc)
 	assert.JSONEq(t, string(actualJson), string(expected))
 }
 
@@ -171,8 +156,9 @@ func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
 	assert.NoError(t, err, "Cannot read test file")
 	err = json.Unmarshal(fileBytes, &c)
 
-	_, err = ir.UnrollLeadImages(c)
-	assert.Error(t, err)
+	req := UnrollRequest{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollLeadImages(req)
+	assert.Error(t, actual.err)
 }
 
 func TestExtractIDFromURL(t *testing.T) {

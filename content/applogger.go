@@ -2,7 +2,6 @@ package content
 
 import (
 	"github.com/Sirupsen/logrus"
-	"fmt"
 )
 
 type appLogger struct {
@@ -31,14 +30,13 @@ func (appLogger *appLogger) TransactionFinishedEvent(requestURL string, transact
 		"uuid":           uuid,
 	})
 
-	msg := fmt.Sprintf("Transaction %s finished with status %d: %s", transactionID, statusCode, message)
 	if statusCode < 300 {
-		e.Infof(msg)
+		e.Infof("Transaction %s finished with status %d: %s", transactionID, statusCode, message)
 	} else {
-		e.Errorf(msg)
+		e.Errorf("Transaction %s finished with status %d: %s", transactionID, statusCode, message)
 	}
 }
 
-func (appLogger *appLogger) Infof(uuid string, format string, args ...interface{}) {
-	appLogger.log.WithFields(logrus.Fields{"uuid": uuid}).Infof(format, args)
+func (appLogger *appLogger) Infof(tid string, uuid string, format string, args ...interface{}) {
+	appLogger.log.WithFields(logrus.Fields{"tid": tid, "uuid": uuid}).Infof(format, args)
 }

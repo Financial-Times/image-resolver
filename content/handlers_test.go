@@ -1,39 +1,40 @@
 package content
 
 import (
-	"testing"
-	"io/ioutil"
-	"github.com/stretchr/testify/assert"
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"bytes"
 	"strings"
+	"testing"
+
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 type ImageResolverMock struct {
-	mockUnrollImages     func(c Content) (Content, error)
-	mockUnrollLeadImages func(c Content) (Content, error)
+	mockUnrollImages     func(req UnrollRequest) UnrollResponse
+	mockUnrollLeadImages func(req UnrollRequest) UnrollResponse
 }
 
-func (irm *ImageResolverMock) UnrollImages(c Content) (Content, error) {
-	return irm.mockUnrollImages(c)
+func (irm *ImageResolverMock) UnrollImages(req UnrollRequest) UnrollResponse {
+	return irm.mockUnrollImages(req)
 }
 
-func (irm *ImageResolverMock) UnrollLeadImages(c Content) (Content, error) {
-	return irm.mockUnrollLeadImages(c)
+func (irm *ImageResolverMock) UnrollLeadImages(req UnrollRequest) UnrollResponse {
+	return irm.mockUnrollLeadImages(req)
 }
 
 func TestContentHandler_GetContentImages(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollImages: func(c Content) (Content, error) {
+		mockUnrollImages: func(req UnrollRequest) UnrollResponse {
 			var r Content
 			fileBytes, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
 			assert.NoError(t, err, "Cannot read resources test file")
 			err = json.Unmarshal(fileBytes, &r)
 			assert.NoError(t, err, "Cannot build json body")
-			return r, nil
+			return UnrollResponse{r, nil}
 		},
 	}
 
@@ -76,8 +77,8 @@ func TestContentHandler_GetContentImagesWhenBodyNotValid(t *testing.T) {
 
 func TestContentHandler_GetContentImages_InternalServerErrorWhenServiceReturnsError(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollImages: func(c Content) (Content, error) {
-			return nil, errors.New("Image resolver failed")
+		mockUnrollImages: func(req UnrollRequest) UnrollResponse {
+			return UnrollResponse{nil, errors.New("Image resolver failed")}
 		},
 	}
 
@@ -99,13 +100,13 @@ func TestContentHandler_GetContentImages_InternalServerErrorWhenServiceReturnsEr
 
 func TestContentHandler_GetLeadImages(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(c Content) (Content, error) {
+		mockUnrollLeadImages: func(req UnrollRequest) UnrollResponse {
 			var r Content
 			fileBytes, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
 			assert.NoError(t, err, "Cannot read test file")
 			err = json.Unmarshal(fileBytes, &r)
 			assert.NoError(t, err, "Cannot build json body")
-			return r, nil
+			return UnrollResponse{r, nil}
 		},
 	}
 
@@ -148,8 +149,8 @@ func TestContentHandler_GetLeadImagesWhenBodyNotValid(t *testing.T) {
 
 func TestHandler_GetLeadImages_InternalServerErrorWhenServiceReturnsError(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(c Content) (Content, error) {
-			return nil, errors.New("Image resolver failed")
+		mockUnrollLeadImages: func(req UnrollRequest) UnrollResponse {
+			return UnrollResponse{nil, errors.New("Image resolver failed")}
 		},
 	}
 

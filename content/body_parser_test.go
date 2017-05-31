@@ -23,13 +23,12 @@ func TestShouldReturnImages(t *testing.T) {
 			imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c",
 		},
 	}
-	p := BodyParser{ImageSetType}
 	fileBytes, err := ioutil.ReadFile("../test-resources/bodyXml.xml")
 	if err != nil {
 		assert.Fail(t, "Cannot read test file")
 	}
 	str := string(fileBytes)
-	emImagesUUIDs, err := p.GetEmbedded(str)
+	emImagesUUIDs, err := getEmbedded(str, ImageSetType, "", "")
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -37,26 +36,18 @@ func TestShouldReturnImages(t *testing.T) {
 }
 
 func TestBodyNoEmbeddedImagesReturnsEmptyList(t *testing.T) {
-	p := BodyParser{ImageSetType}
-	emImagesUUIDs, err := p.GetEmbedded("<body><p>Sample body</p></body>")
+	emImagesUUIDs, err := getEmbedded("<body><p>Sample body</p></body>", ImageSetType, "", "")
 	assert.NoError(t, err, "Body parsing should be successful")
 	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
 }
 
 func TestMalformedBodyReturnsEmptyList(t *testing.T) {
-	p := BodyParser{ImageSetType}
-	emImagesUUIDs, err := p.GetEmbedded("Sample body")
+	emImagesUUIDs, err := getEmbedded("Sample body", ImageSetType, "", "")
 	assert.NoError(t, err, "Body parsing should be successful")
 	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
 }
 
 func TestEmptyBodyReturnsEmptyList(t *testing.T) {
-	parser := BodyParser{ImageSetType}
-	emImagesUUIDs, _ := parser.GetEmbedded("")
+	emImagesUUIDs, _ := getEmbedded("", ImageSetType, "", "")
 	assert.Equal(t, 0, len(emImagesUUIDs), "Response should return zero images")
-}
-
-func TestNewBodyParser(t *testing.T) {
-	parser := NewBodyParser(ImageSetType)
-	assert.Equal(t, parser, &BodyParser{ImageSetType})
 }

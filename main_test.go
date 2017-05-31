@@ -1,25 +1,28 @@
 package main
 
 import (
-	"github.com/Financial-Times/image-resolver/content"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"bytes"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"bytes"
 	"strings"
-	"fmt"
+	"testing"
+
+	"github.com/Financial-Times/image-resolver/content"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 const contentSourceAppMame = "content-source-app-name"
 
-var imageResolver *httptest.Server
-var contentAPIMock *httptest.Server
+var (
+	imageResolver  *httptest.Server
+	contentAPIMock *httptest.Server
+)
 
 func startContentAPIMock(contentApiMock func(http.ResponseWriter, *http.Request), healthMock func(http.ResponseWriter, *http.Request)) {
 	router := mux.NewRouter()
@@ -63,12 +66,9 @@ func startImageResolverService() {
 	}
 
 	r := content.NewContentReader("content-source-app-name", contentAPIMock.URL, "/content", http.DefaultClient)
-	p := content.NewBodyParser("http://www.ft.com/ontology/content/ImageSet")
-	ir := content.NewImageResolver(r, p, "test.api.ft.com")
-	contentHandler := content.Handler{
-		Service: ir,
-	}
-	h := setupServiceHandler(sc, &contentHandler)
+	ir := content.NewImageResolver(r, "http://www.ft.com/ontology/content/ImageSet", "test.api.ft.com")
+
+	h := setupServiceHandler(ir, sc)
 	imageResolver = httptest.NewServer(h)
 }
 

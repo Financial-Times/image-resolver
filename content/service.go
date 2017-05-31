@@ -5,26 +5,26 @@ import (
 )
 
 const (
-	mainImage  = "mainImage"
-	id         = "id"
-	embeds     = "embeds"
-	altImages  = "alternativeImages"
+	mainImage = "mainImage"
+	id = "id"
+	embeds = "embeds"
+	altImages = "alternativeImages"
 	leadImages = "leadImages"
-	members    = "members"
-	bodyXML    = "bodyXML"
+	members = "members"
+	bodyXML = "bodyXML"
 	promoImage = "promotionalImage"
-	image      = "image"
+	image = "image"
 )
 
 type Resolver interface {
-	UnrollImages(c Content) (Content, error)
-	UnrollLeadImages(Content) (Content, error)
+	UnrollImages(req UnrollRequest) UnrollResponse
+	UnrollLeadImages(req UnrollRequest) UnrollResponse
 }
 
 type ImageResolver struct {
-	reader  Reader
-	parser  Parser
-	apiHost string
+	reader    Reader
+	whitelist string
+	apiHost   string
 }
 type Content map[string]interface{}
 
@@ -40,20 +40,19 @@ type UUIDBatch struct {
 	leadImages       []string
 }
 
-func NewImageResolver(r Reader, p Parser, apiHost string) *ImageResolver {
+func NewImageResolver(r Reader, whitelist string, apiHost string) *ImageResolver {
 	return &ImageResolver{
 		reader:  r,
-		parser:  p,
+		whitelist:whitelist,
 		apiHost: apiHost,
 	}
 }
 
-func (ir *ImageResolver) UnrollImages(c Content) (Content, error) {
+func (ir *ImageResolver) UnrollImages(req UnrollRequest) UnrollResponse {
 	//make a copy of the content
-	uuid := extractUUIDFromURL(c[id].(string))
+	c := req.c
 	cc := c.clone()
 	b := UUIDBatch{}
-	var err error
 
 	//mainImage
 	mi, foundMainImg := cc[mainImage].(map[string]interface{})
@@ -63,28 +62,29 @@ func (ir *ImageResolver) UnrollImages(c Content) (Content, error) {
 		mis.uuid = extractUUIDFromURL(id)
 		imgModelUUID, err := getImageModelUUID(mis.uuid)
 		if err != nil {
-			logger.Infof(uuid, "Cannot convert image set UUID %v to a image model UUID. Skipping item.", mis.uuid)
+			logger.Infof(req.tid, req.uuid, "Cannot convert image set UUID %v to a image model UUID. Skipping item.", mis.uuid)
 		} else {
 			mis.imageModelUUID = imgModelUUID
 		}
 		b.mainImageSet = mis
 	} else {
-		logger.Infof(uuid, "Cannot find main image for %v. Skipping expanding main image", uuid)
+		logger.Infof(req.tid, req.uuid, "Cannot find main image for %v. Skipping expanding main image", req.uuid)
 	}
 
 	//embedded images
 	var emImagesUUIDs []imageSetUUID
+	var err error
 	body, foundBody := cc[bodyXML]
 	if foundBody {
 		bodyXML := body.(string)
-		emImagesUUIDs, err = ir.parser.GetEmbedded(bodyXML)
+		emImagesUUIDs, err = getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
 		if err != nil {
-			logger.Infof(uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", uuid).Error())
+			logger.Infof(req.tid, req.uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", req.uuid).Error())
 		} else {
 			b.embeddedImages = emImagesUUIDs
 		}
 	} else {
-		logger.Infof(uuid, "Missing body for %v.Skipping expanding embedded images.", uuid)
+		logger.Infof(req.tid, req.uuid, "Missing body for %v.Skipping expanding embedded images.", req.uuid)
 	}
 
 	//promotional image
@@ -99,17 +99,17 @@ func (ir *ImageResolver) UnrollImages(c Content) (Content, error) {
 			promImgID := promImg.(string)
 			b.promotionalImage = extractUUIDFromURL(promImgID)
 		} else {
-			logger.Infof(uuid, "Cannot find promotional image for %v. Skipping expanding promotional image", uuid)
+			logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v. Skipping expanding promotional image", req.uuid)
 		}
 	}
 
 	if !foundMainImg && !foundBody && !foundPromImg {
-		return c, errors.Errorf("Cannot read supplied content %v. Nothing to expand.", uuid)
+		return UnrollResponse{c, errors.Errorf("Cannot read supplied content %v. Nothing to expand.", req.uuid)}
 	}
 
 	imgMap, err := ir.reader.Get(b)
 	if err != nil {
-		return c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", uuid)
+		return UnrollResponse{c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
 	}
 
 	if foundMainImg {
@@ -123,18 +123,17 @@ func (ir *ImageResolver) UnrollImages(c Content) (Content, error) {
 		altImgMap[promoImage] = promImgContent
 	}
 
-	return cc, nil
+	return UnrollResponse{cc, nil}
 }
 
-func (ir *ImageResolver) UnrollLeadImages(c Content) (Content, error) {
-	uuid := extractUUIDFromURL(c[id].(string))
-	cc := c.clone()
+func (ir *ImageResolver) UnrollLeadImages(req UnrollRequest) UnrollResponse {
+	cc := req.c.clone()
 	b := UUIDBatch{}
 	var err error
 
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		return c, errors.Errorf("Nothing to expand for the supplied content %s", uuid)
+		return UnrollResponse{req.c, errors.Errorf("Nothing to expand for the supplied content %s", req.uuid)}
 	}
 
 	var lis []map[string]interface{}
@@ -147,25 +146,25 @@ func (ir *ImageResolver) UnrollLeadImages(c Content) (Content, error) {
 	}
 
 	if foundLeadImages && len(b.leadImages) <= 0 {
-		return c, errors.Errorf("Cannot read UUIDs for lead images of %v. Returning same content.", uuid)
+		return UnrollResponse{req.c, errors.Errorf("Cannot read UUIDs for lead images of %v. Returning same content.", req.uuid)}
 	}
 
 	imgMap, err := ir.reader.Get(b)
 	if err != nil {
-		return c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", uuid)
+		return UnrollResponse{req.c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", req.uuid)}
 	}
 
 	for _, li := range lis {
 		uuid := li[image].(string)
 		imageData, found := ir.resolveContent(uuid, imgMap)
 		if !found {
-			logger.Infof(uuid, "Missing image model %s. Returning only de id.", uuid)
+			logger.Infof(req.tid, req.uuid, "Missing image model %s. Returning only de id.", uuid)
 		}
 		li[image] = imageData
 	}
 
 	cc[leadImages] = lis
-	return cc, nil
+	return UnrollResponse{cc, nil}
 }
 
 func (ir *ImageResolver) resolveImageSetArray(imgArray []imageSetUUID, imgMap map[string]Content) []interface{} {

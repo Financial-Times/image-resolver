@@ -1,11 +1,12 @@
 package content
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
+
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/service-status-go/gtg"
-	"net/http"
+	"github.com/pkg/errors"
 )
 
 type ServiceConfig struct {
@@ -43,12 +44,10 @@ func (sc *ServiceConfig) checkerContent() (string, error) {
 	req.Host = sc.ContentSourceAppName
 	resp, err := sc.HttpClient.Do(req)
 	if err != nil {
-		msg := fmt.Sprintf("%s service is unreachable: %v", sc.ContentSourceAppName, err)
-		return msg, errors.New(msg)
+		return "Error", errors.Errorf("%s service is unreachable: %v", sc.ContentSourceAppName, err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("%s service is not responding with OK. Status=%d", sc.ContentSourceAppName, resp.StatusCode)
-		return msg, errors.New(msg)
+		return "Error", errors.Errorf("%s service is not responding with OK. Status=%d", sc.ContentSourceAppName, resp.StatusCode)
 	}
 	return "Ok", nil
 }

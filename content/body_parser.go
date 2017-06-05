@@ -20,37 +20,39 @@ func getEmbedded(body string, embedsType string, tid string, uuid string) ([]ima
 		return embedsImg, errors.Wrap(err, "Error while compiling whitelist")
 	}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Data == "ft-content" {
-			isEmbedded := false
-			isImageSet := false
-			var id string
-			for _, a := range n.Attr {
-				if a.Key == "data-embedded" && a.Val == "true" {
-					isEmbedded = true
-				} else if a.Key == "type" {
-					values := re.FindStringSubmatch(a.Val)
-					if len(values) == 1 {
-						isImageSet = true
-					}
-				} else if a.Key == "url" {
-					id = a.Val
+	parse(doc, re, &embedsImg, tid, uuid)
+	return embedsImg, nil
+}
+
+func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]imageSetUUID, tid string, uuid string) {
+	if n.Data == "ft-content" {
+		isEmbedded := false
+		isImageSet := false
+		var id string
+		for _, a := range n.Attr {
+			if a.Key == "data-embedded" && a.Val == "true" {
+				isEmbedded = true
+			} else if a.Key == "type" {
+				values := re.FindStringSubmatch(a.Val)
+				if len(values) == 1 {
+					isImageSet = true
 				}
-			}
-			if isEmbedded && isImageSet {
-				var emb imageSetUUID
-				emb.uuid = extractUUIDFromURL(id)
-				emb.imageModelUUID, err = getImageModelUUID(emb.uuid)
-				logger.Infof(tid, uuid, "Cannot get image model UUID from image set UUID %s", emb.uuid)
-				embedsImg = append(embedsImg, emb)
+			} else if a.Key == "url" {
+				id = a.Val
 			}
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
+		var err error
+		if isEmbedded && isImageSet {
+			var emb imageSetUUID
+			emb.uuid = extractUUIDFromURL(id)
+			emb.imageModelUUID, err = getImageModelUUID(emb.uuid)
+			if err != nil {
+				logger.Infof(tid, uuid, "Cannot get image model UUID from image set UUID %s", emb.uuid)
+			}
+			*embedsImg = append(*embedsImg, emb)
 		}
 	}
-
-	f(doc)
-	return embedsImg, nil
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		parse(c, re, embedsImg, tid, uuid)
+	}
 }

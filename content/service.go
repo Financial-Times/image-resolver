@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	mainImage = "mainImage"
-	id = "id"
-	embeds = "embeds"
-	altImages = "alternativeImages"
+	mainImage  = "mainImage"
+	id         = "id"
+	embeds     = "embeds"
+	altImages  = "alternativeImages"
 	leadImages = "leadImages"
-	members = "members"
-	bodyXML = "bodyXML"
+	members    = "members"
+	bodyXML    = "bodyXML"
 	promoImage = "promotionalImage"
-	image = "image"
+	image      = "image"
 )
 
 type Resolver interface {
@@ -42,9 +42,9 @@ type UUIDBatch struct {
 
 func NewImageResolver(r Reader, whitelist string, apiHost string) *ImageResolver {
 	return &ImageResolver{
-		reader:  r,
-		whitelist:whitelist,
-		apiHost: apiHost,
+		reader:    r,
+		whitelist: whitelist,
+		apiHost:   apiHost,
 	}
 }
 

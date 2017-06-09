@@ -9,20 +9,12 @@ import (
 const ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
 
 func TestShouldReturnImages(t *testing.T) {
-	var expectedOutput = []imageSetUUID{
-		{
-			uuid:           "639cd952-149f-11e7-2ea7-a07ecd9ac73f",
-			imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76",
-		},
-		{
-			uuid:           "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
-			imageModelUUID: "71231d3a-13c7-11e7-b0c1-37e417ee6c76",
-		},
-		{
-			uuid:           "0261ea4a-1474-11e7-1e92-847abda1ac65",
-			imageModelUUID: "0261ea4a-1474-11e7-80f4-13e067d5072c",
-		},
+	var expectedOutput = []string{
+			"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+			"71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
+			"0261ea4a-1474-11e7-1e92-847abda1ac65",
 	}
+
 	fileBytes, err := ioutil.ReadFile("../test-resources/bodyXml.xml")
 	if err != nil {
 		assert.Fail(t, "Cannot read test file")

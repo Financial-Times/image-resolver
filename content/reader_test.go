@@ -14,10 +14,10 @@ import (
 
 const testResourcesRoot = "../test-resources/"
 
-var testData = UUIDBatch{
-	mainImageSet:     imageSetUUID{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"},
-	embeddedImages:   []imageSetUUID{{uuid: "639cd952-149f-11e7-2ea7-a07ecd9ac73f", imageModelUUID: "639cd952-149f-11e7-b0c1-37e417ee6c76"}},
-	promotionalImage: "71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
+var testData = []string{
+	"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+	"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+	"71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
 }
 
 func successfulContentServerMock(t *testing.T, resource string) *httptest.Server {
@@ -49,7 +49,7 @@ func readerForTest(URL string, path string) *ContentReader {
 }
 
 func TestContentReader_Get(t *testing.T) {
-	ts := successfulContentServerMock(t, testResourcesRoot+"valid-content-source-response.json")
+	ts := successfulContentServerMock(t, testResourcesRoot + "valid-content-source-response.json")
 	defer ts.Close()
 
 	cr := readerForTest(ts.URL, "/content")

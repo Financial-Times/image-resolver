@@ -8,8 +8,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-func getEmbedded(body string, embedsType string, tid string, uuid string) ([]imageSetUUID, error) {
-	embedsImg := []imageSetUUID{}
+func getEmbedded(body string, embedsType string, tid string, uuid string) ([]string, error) {
+	embedsImg := []string{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return embedsImg, err
@@ -24,7 +24,7 @@ func getEmbedded(body string, embedsType string, tid string, uuid string) ([]ima
 	return embedsImg, nil
 }
 
-func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]imageSetUUID, tid string, uuid string) {
+func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]string, tid string, uuid string) {
 	if n.Data == "ft-content" {
 		isEmbedded := false
 		isImageSet := false
@@ -41,15 +41,8 @@ func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]imageSetUUID, tid strin
 				id = a.Val
 			}
 		}
-		var err error
 		if isEmbedded && isImageSet {
-			var emb imageSetUUID
-			emb.uuid = extractUUIDFromURL(id)
-			emb.imageModelUUID, err = getImageModelUUID(emb.uuid)
-			if err != nil {
-				logger.Infof(tid, uuid, "Cannot get image model UUID from image set UUID %s", emb.uuid)
-			}
-			*embedsImg = append(*embedsImg, emb)
+			*embedsImg = append(*embedsImg, extractUUIDFromString(id))
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

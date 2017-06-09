@@ -19,13 +19,13 @@ type Handler struct {
 	Service Resolver
 }
 
-type UnrollRequest struct {
+type UnrollEvent struct {
 	c    Content
 	tid  string
 	uuid string
 }
 
-type UnrollResponse struct {
+type UnrollResult struct {
 	uc  Content
 	err error
 }
@@ -50,11 +50,11 @@ func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
-	uuid := extractUUIDFromURL(id)
+	uuid := extractUUIDFromString(id)
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling images
-	req := UnrollRequest{article, tid, uuid}
+	req := UnrollEvent{article, tid, uuid}
 	res := hh.Service.UnrollImages(req)
 	if res.err != nil {
 		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)
@@ -92,11 +92,11 @@ func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
-	uuid := extractUUIDFromURL(id)
+	uuid := extractUUIDFromString(id)
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling lead images
-	req := UnrollRequest{article, tid, uuid}
+	req := UnrollEvent{article, tid, uuid}
 	res := hh.Service.UnrollLeadImages(req)
 	if res.err != nil {
 		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)

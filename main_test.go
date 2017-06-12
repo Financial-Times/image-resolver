@@ -26,7 +26,7 @@ var (
 
 func startContentAPIMock(contentApiMock func(http.ResponseWriter, *http.Request), healthMock func(http.ResponseWriter, *http.Request)) {
 	router := mux.NewRouter()
-	router.Path("/content").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(contentApiMock)})
+	router.Path("/").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(contentApiMock)})
 	router.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(healthMock)})
 	router.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(healthMock)})
 	contentAPIMock = httptest.NewServer(router)
@@ -65,7 +65,7 @@ func startImageResolverService() {
 		HttpClient:           http.DefaultClient,
 	}
 
-	r := content.NewContentReader("content-source-app-name", contentAPIMock.URL, "/content", http.DefaultClient)
+	r := content.NewContentReader("content-source-app-name", contentAPIMock.URL, http.DefaultClient)
 	ir := content.NewImageResolver(r, "http://www.ft.com/ontology/content/ImageSet", "test.api.ft.com")
 
 	h := setupServiceHandler(ir, sc)

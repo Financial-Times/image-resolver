@@ -16,15 +16,13 @@ type ContentReader struct {
 	client         *http.Client
 	contentAppName string
 	contentAppURL  string
-	path           string
 }
 
-func NewContentReader(appName string, URL string, path string, client *http.Client) *ContentReader {
+func NewContentReader(appName string, URL string, client *http.Client) *ContentReader {
 	return &ContentReader{
 		client:         client,
 		contentAppName: appName,
 		contentAppURL:  URL,
-		path:           path,
 	}
 }
 
@@ -71,7 +69,7 @@ func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
 
 func (cr *ContentReader) doGet(uuids []string) ([]Content, error) {
 	var cb []Content
-	req, err := http.NewRequest(http.MethodGet, cr.contentAppURL+cr.path, nil)
+	req, err := http.NewRequest(http.MethodGet, cr.contentAppURL, nil)
 	if err != nil {
 		return cb, errors.Wrapf(err, "Error connecting to %v", cr.contentAppName)
 	}
@@ -82,7 +80,6 @@ func (cr *ContentReader) doGet(uuids []string) ([]Content, error) {
 		}
 	}
 	req.URL.RawQuery = q.Encode()
-	req.Host = cr.contentAppName
 
 	res, err := cr.client.Do(req)
 	if err != nil {

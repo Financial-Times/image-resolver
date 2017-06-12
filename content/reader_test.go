@@ -1,15 +1,15 @@
 package content
 
 import (
-	"testing"
-	"net/http"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"os"
-	"io"
-	"fmt"
+	"testing"
 )
 
 const testResourcesRoot = "../test-resources/"
@@ -43,13 +43,12 @@ func readerForTest(URL string, path string) *ContentReader {
 	return &ContentReader{
 		contentAppName: "content-source-app-name",
 		contentAppURL:  URL,
-		path:           path,
 		client:         http.DefaultClient,
 	}
 }
 
 func TestContentReader_Get(t *testing.T) {
-	ts := successfulContentServerMock(t, testResourcesRoot + "valid-content-source-response.json")
+	ts := successfulContentServerMock(t, testResourcesRoot+"valid-content-source-response.json")
 	defer ts.Close()
 
 	cr := readerForTest(ts.URL, "/content")
@@ -100,11 +99,10 @@ func TestContentReader_Get_ContentSourceHasInvalidURL(t *testing.T) {
 }
 
 func TestNewContentReader(t *testing.T) {
-	actual := NewContentReader("content-source-app", "http://localhost:8080", "/content", http.DefaultClient)
+	actual := NewContentReader("content-source-app", "http://localhost:8080", http.DefaultClient)
 	expected := &ContentReader{
 		contentAppName: "content-source-app",
 		contentAppURL:  "http://localhost:8080",
-		path:           "/content",
 		client:         http.DefaultClient,
 	}
 	assert.Equal(t, expected, actual)

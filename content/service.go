@@ -26,6 +26,7 @@ type ImageResolver struct {
 	whitelist string
 	apiHost   string
 }
+
 type Content map[string]interface{}
 
 type ImageSchema map[string][]string
@@ -40,11 +41,10 @@ func NewImageResolver(r Reader, whitelist string, apiHost string) *ImageResolver
 
 func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	//make a copy of the content
-	c := req.c
-	cc := c.clone()
-	is := ImageSchema{}
+	cc := req.c.clone()
 
 	//mainImage
+	is := make(ImageSchema)
 	mi, foundMainImg := cc[mainImage].(map[string]interface{})
 	if foundMainImg {
 		is.put(mainImage, extractUUIDFromString(mi[id].(string)))
@@ -83,12 +83,12 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	if !foundMainImg && !foundBody && !foundPromImg {
-		return UnrollResult{c, errors.Errorf("Cannot read supplied content %v. Nothing to expand.", req.uuid)}
+		return UnrollResult{req.c, errors.Errorf("Cannot read supplied content %v. Nothing to expand.", req.uuid)}
 	}
 
 	imgMap, err := ir.reader.Get(is.toArray())
 	if err != nil {
-		return UnrollResult{c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
+		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
 	}
 	ir.resolveModelsForSetsMembers(is, imgMap)
 
@@ -114,13 +114,12 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 
 func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
-	b := ImageSchema{}
-
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
 		return UnrollResult{req.c, errors.Errorf("Nothing to expand for the supplied content %s", req.uuid)}
 	}
 
+	b := make(ImageSchema)
 	for _, item := range images {
 		li := item.(map[string]interface{})
 		uuid := extractUUIDFromString(li[id].(string))

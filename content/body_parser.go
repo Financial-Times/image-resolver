@@ -34,7 +34,7 @@ func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]string, tid string, uui
 				isEmbedded = true
 			} else if a.Key == "type" {
 				values := re.FindStringSubmatch(a.Val)
-				if len(values) == 1 {
+				if len(values) > 0 {
 					isImageSet = true
 				}
 			} else if a.Key == "url" {

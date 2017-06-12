@@ -39,15 +39,9 @@ func main() {
 	})
 	contentSourceURL := app.String(cli.StringOpt{
 		Name:   "contentSourceURL",
-		Value:  "http://localhost:8080",
-		Desc:   "Vulcan host",
+		Value:  "http://localhost:8080/__content-public-read/content",
+		Desc:   "URL of the ",
 		EnvVar: "CONTENT_SOURCE_URL",
-	})
-	contentSourcePath := app.String(cli.StringOpt{
-		Name:   "contentSourcePath",
-		Value:  "/content",
-		Desc:   "Endpoint of content source app for retrieving content",
-		EnvVar: "CONTENT_SOURCE_PATH",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
 		Name:   "graphiteTCPAddress",
@@ -68,7 +62,7 @@ func main() {
 	})
 	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
 		Name:   "embeddedContentTypeWhitelist",
-		Value:  "http://www.ft.com/ontology/content/ImageSet",
+		Value:  "^(http://www.ft.com/ontology/content/ImageSet)",
 		Desc:   "The type supported for embedded images, ex ImageSet",
 		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
 	})
@@ -96,7 +90,7 @@ func main() {
 			HttpClient:           httpClient,
 		}
 
-		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, *contentSourcePath, httpClient)
+		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
 		ir := content.NewImageResolver(reader, *embeddedContentTypeWhitelist, *apiHost)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)

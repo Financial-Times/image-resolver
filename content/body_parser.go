@@ -42,7 +42,12 @@ func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]string, tid string, uui
 			}
 		}
 		if isEmbedded && isImageSet {
-			*embedsImg = append(*embedsImg, extractUUIDFromString(id))
+			u, err := extractUUIDFromString(id)
+			if err != nil {
+				logger.Infof(tid, uuid, "Cannot extract UUID: %v", err.Error())
+			} else {
+				*embedsImg = append(*embedsImg, u)
+			}
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

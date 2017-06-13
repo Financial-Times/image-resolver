@@ -63,7 +63,10 @@ func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
 	if !ok {
 		return
 	}
-	uuid := extractUUIDFromString(id)
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		return
+	}
 	cm[uuid] = c
 }
 

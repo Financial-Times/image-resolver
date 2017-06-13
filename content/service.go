@@ -47,7 +47,13 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	is := make(ImageSchema)
 	mi, foundMainImg := cc[mainImage].(map[string]interface{})
 	if foundMainImg {
-		is.put(mainImage, extractUUIDFromString(mi[id].(string)))
+		u, err := extractUUIDFromString(mi[id].(string))
+		if err != nil {
+			logger.Infof(req.tid, req.uuid, "Cannot find main image for %v: %v. Skipping expanding main image", req.uuid, err.Error())
+			foundMainImg = false
+		} else {
+			is.put(mainImage, u)
+		}
 	} else {
 		logger.Infof(req.tid, req.uuid, "Cannot find main image for %v. Skipping expanding main image", req.uuid)
 	}
@@ -76,7 +82,12 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 		promImg, foundPromImg = altImgMap[promotionalImage]
 		if foundPromImg {
 			promImgID := promImg.(string)
-			is.put(promotionalImage, extractUUIDFromString(promImgID))
+			u, err := extractUUIDFromString(promImgID)
+			if err != nil {
+				logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v: %v. Skipping expanding promotional image", req.uuid, err.Error())
+			} else {
+				is.put(promotionalImage, u)
+			}
 		} else {
 			logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v. Skipping expanding promotional image", req.uuid)
 		}
@@ -90,7 +101,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	if err != nil {
 		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
 	}
-	ir.resolveModelsForSetsMembers(is, imgMap)
+	ir.resolveModelsForSetsMembers(is, imgMap, req.tid, req.tid)
 
 	if foundMainImg {
 		cc[mainImage] = imgMap[is.get(mainImage)]
@@ -122,7 +133,11 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	b := make(ImageSchema)
 	for _, item := range images {
 		li := item.(map[string]interface{})
-		uuid := extractUUIDFromString(li[id].(string))
+		uuid, err := extractUUIDFromString(li[id].(string))
+		if err != nil {
+			logger.Infof(req.tid, req.uuid, "Error while getting UUID for %s: %v", li[id].(string), err.Error())
+			continue
+		}
 		li[image] = uuid
 		b.put(leadImages, uuid)
 	}
@@ -152,15 +167,15 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (ir *ImageResolver) resolveModelsForSetsMembers(b ImageSchema, imgMap map[string]Content) {
+func (ir *ImageResolver) resolveModelsForSetsMembers(b ImageSchema, imgMap map[string]Content, tid string, uuid string) {
 	mainImageUUID := b.get(mainImage)
-	ir.resolveImageSet(mainImageUUID, imgMap)
+	ir.resolveImageSet(mainImageUUID, imgMap, tid, uuid)
 	for _, embeddedImgSet := range b.getAll(embeds) {
-		ir.resolveImageSet(embeddedImgSet, imgMap)
+		ir.resolveImageSet(embeddedImgSet, imgMap, tid, uuid)
 	}
 }
 
-func (ir *ImageResolver) resolveImageSet(imageSetUUID string, imgMap map[string]Content) {
+func (ir *ImageResolver) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) {
 	imageSet, found := ir.resolveContent(imageSetUUID, imgMap)
 	if !found {
 		imgMap[imageSetUUID] = Content{id: createID(ir.apiHost, "content", imageSetUUID)}
@@ -178,7 +193,12 @@ func (ir *ImageResolver) resolveImageSet(imageSetUUID string, imgMap map[string]
 		for _, m := range membList {
 			mData := fromMap(m.(map[string]interface{}))
 			mID := mData[id].(string)
-			mContent, found := ir.resolveContent(extractUUIDFromString(mID), imgMap)
+			u, err := extractUUIDFromString(mID)
+			if err != nil {
+				logger.Infof(tid, uuid, "Error while extrating UUID from %s: %v", mID, err.Error())
+				continue
+			}
+			mContent, found := ir.resolveContent(u, imgMap)
 			if !found {
 				expMembers = append(expMembers, mData)
 				continue
@@ -224,7 +244,11 @@ func (c Content) getMembersUUID() []string {
 		if !found {
 			continue
 		}
-		uuids = append(uuids, extractUUIDFromString(url))
+		u, err := extractUUIDFromString(url)
+		if err != nil {
+			continue
+		}
+		uuids = append(uuids, u)
 	}
 	return uuids
 }

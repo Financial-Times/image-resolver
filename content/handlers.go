@@ -50,7 +50,11 @@ func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
-	uuid := extractUUIDFromString(id)
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		return
+	}
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling images
@@ -92,7 +96,11 @@ func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
-	uuid := extractUUIDFromString(id)
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		return
+	}
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling lead images

@@ -35,7 +35,7 @@ func TestUnrollImages(t *testing.T) {
 			},
 		},
 		whitelist: ImageSetType,
-		apiHost: "test.api.ft.com",
+		apiHost:   "test.api.ft.com",
 	}
 
 	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
@@ -62,7 +62,7 @@ func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
 			},
 		},
 		whitelist: ImageSetType,
-		apiHost: "test.api.ft.com",
+		apiHost:   "test.api.ft.com",
 	}
 
 	var c Content
@@ -88,7 +88,7 @@ func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(
 			},
 		},
 		whitelist: ImageSetType,
-		apiHost: "test.api.ft.com",
+		apiHost:   "test.api.ft.com",
 	}
 
 	var c Content
@@ -154,6 +154,7 @@ func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
 }
 
 func TestExtractIDFromURL(t *testing.T) {
-	actual := extractUUIDFromString(ID)
+	actual, err := extractUUIDFromString(ID)
+	assert.NoError(t, err, "Test should not return error")
 	assert.Equal(t, expectedId, actual, "Response id should be equal")
 }

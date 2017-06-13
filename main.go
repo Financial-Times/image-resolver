@@ -40,8 +40,14 @@ func main() {
 	contentSourceURL := app.String(cli.StringOpt{
 		Name:   "contentSourceURL",
 		Value:  "http://localhost:8080/__content-public-read/content",
-		Desc:   "URL of the ",
+		Desc:   "URL of the content source app",
 		EnvVar: "CONTENT_SOURCE_URL",
+	})
+	contentSourceHealthURL := app.String(cli.StringOpt{
+		Name:   "contentSourceHealthURL",
+		Value:  "http://localhost:8080/__content-public-read/__health",
+		Desc:   "Health url of the content source app",
+		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
 		Name:   "graphiteTCPAddress",
@@ -86,7 +92,7 @@ func main() {
 
 		sc := content.ServiceConfig{
 			ContentSourceAppName: *contentSourceAppName,
-			ContentSourceURL:     *contentSourceURL,
+			ContentSourceURL:     *contentSourceHealthURL,
 			HttpClient:           httpClient,
 		}
 

@@ -39,9 +39,7 @@ func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 }
 
 func (sc *ServiceConfig) checkerContent() (string, error) {
-	healthUri := sc.ContentSourceURL + "/__health"
-	req, err := http.NewRequest(http.MethodGet, healthUri, nil)
-	req.Host = sc.ContentSourceAppName
+	req, err := http.NewRequest(http.MethodGet, sc.ContentSourceURL, nil)
 	resp, err := sc.HttpClient.Do(req)
 	if err != nil {
 		return "Error", errors.Errorf("%s service is unreachable: %v", sc.ContentSourceAppName, err)

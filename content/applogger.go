@@ -40,3 +40,7 @@ func (appLogger *appLogger) TransactionFinishedEvent(requestURL string, transact
 func (appLogger *appLogger) Infof(tid string, uuid string, format string, args ...interface{}) {
 	appLogger.log.WithFields(logrus.Fields{"tid": tid, "uuid": uuid}).Infof(format, args)
 }
+
+func (appLogger *appLogger) Errorf(tid string, format string, args ...interface{}) {
+	appLogger.log.WithFields(logrus.Fields{"tid": tid}).Errorf(format, args)
+}

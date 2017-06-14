@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Financial-Times/transactionid-utils-go"
+	"github.com/pkg/errors"
 )
 
 type ErrorMessage struct {
@@ -47,7 +48,7 @@ func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := article[id].(string)
 	if !ok {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
 		return
 	}
 	uuid, err := extractUUIDFromString(id)
@@ -93,7 +94,7 @@ func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := article[id].(string)
 	if !ok {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
 		return
 	}
 	uuid, err := extractUUIDFromString(id)
@@ -123,11 +124,12 @@ func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {
 	var errMsg string
 	if statusCode >= 400 && statusCode < 500 {
-		errMsg = fmt.Sprintf("Error getting expanding images because supplied content is invalid: %v", err.Error())
+		errMsg = fmt.Sprintf("Error getting expanding images because supplied content is invalid: %s", err.Error())
+		logger.Errorf(tid, "Error getting expanding images because supplied content is invalid: %s", err.Error())
 	} else if statusCode >= 500 {
 		errMsg = fmt.Sprintf("Error getting expanding images for: %v: %v", uuid, err.Error())
+		logger.TransactionFinishedEvent(r.RequestURI, tid, statusCode, uuid, err.Error())
 	}
-	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusInternalServerError, uuid, err.Error())
 	w.WriteHeader(statusCode)
 	w.Write([]byte(errMsg))
 }

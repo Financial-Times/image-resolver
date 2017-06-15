@@ -130,7 +130,7 @@ func TestShouldReturn400InvalidJsonContentEndpoint(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestShouldReturn500InvalidJsonContentEndpoint(t *testing.T) {
+func TestShouldReturn400InvalidArticleContentEndpoint(t *testing.T) {
 	startContentAPIMock(functionalEnrichedContentAPIMock, contentApiStatusOkHandler)
 	startImageResolverService()
 	defer stopServices()
@@ -140,7 +140,7 @@ func TestShouldReturn500InvalidJsonContentEndpoint(t *testing.T) {
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestShouldReturn400InvalidJsonInternalContentEndpoint(t *testing.T) {
@@ -156,7 +156,7 @@ func TestShouldReturn400InvalidJsonInternalContentEndpoint(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestShouldReturn500InvalidJsonInternalContentEndpoint(t *testing.T) {
+func TestShouldReturn400InvalidArticleInternalContentEndpoint(t *testing.T) {
 	startContentAPIMock(functionalEnrichedContentAPIMock, contentApiStatusOkHandler)
 	startImageResolverService()
 	defer stopServices()
@@ -166,7 +166,7 @@ func TestShouldReturn500InvalidJsonInternalContentEndpoint(t *testing.T) {
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestShouldBeHealthy(t *testing.T) {

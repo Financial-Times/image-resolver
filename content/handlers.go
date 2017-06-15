@@ -56,6 +56,12 @@ func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
+
+	if !validateContentImages(article) {
+		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
+		return
+	}
+
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling images
@@ -77,7 +83,6 @@ func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -102,6 +107,12 @@ func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
+
+	if !validateInternalContentImages(article) {
+		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
+		return
+	}
+
 	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
 
 	//unrolling lead images
@@ -132,4 +143,21 @@ func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter
 	}
 	w.WriteHeader(statusCode)
 	w.Write([]byte(errMsg))
+}
+
+func validateContentImages(article Content) bool {
+	_, hasMainImage := article[mainImage]
+	_, hasBody := article[bodyXML]
+	altImg, hasAltImg := article[altImages].(map[string]interface{})
+	var hasPromImg bool
+	if hasAltImg {
+		_, hasPromImg = altImg[promotionalImage]
+	}
+
+	return hasMainImage || hasBody || hasPromImg
+}
+
+func validateInternalContentImages(article Content) bool {
+	_, hasLeadImages := article[leadImages]
+	return hasLeadImages
 }

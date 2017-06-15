@@ -65,6 +65,8 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 		emImagesUUIDs, err := getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
 		if err != nil {
 			logger.Infof(req.tid, req.uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", req.uuid).Error())
+		} else if len(emImagesUUIDs) == 0 {
+			foundBody = false
 		} else {
 			is.putAll(embeds, emImagesUUIDs)
 		}
@@ -94,7 +96,8 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	if !foundMainImg && !foundBody && !foundPromImg {
-		return UnrollResult{req.c, errors.Errorf("Cannot read supplied content %v. Nothing to expand.", req.uuid)}
+		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		return UnrollResult{req.c, nil}
 	}
 
 	imgMap, err := ir.reader.Get(is.toArray())
@@ -127,7 +130,8 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		return UnrollResult{req.c, errors.Errorf("Nothing to expand for the supplied content %s", req.uuid)}
+		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		return UnrollResult{req.c, nil}
 	}
 
 	b := make(ImageSchema)

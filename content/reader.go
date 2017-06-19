@@ -2,58 +2,106 @@ package content
 
 import (
 	"encoding/json"
+	uuidutils "github.com/Financial-Times/uuid-utils-go"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
-	"fmt"
 )
 
 type Reader interface {
-	Get(uuid string) (Content, error)
+	Get([]string) (map[string]Content, error)
 }
 
 type ContentReader struct {
-	client      *http.Client
-	contentHost string
-	routingAddr string
+	client         *http.Client
+	contentAppName string
+	contentAppURL  string
 }
 
-func NewContentReader(ch string, routingAddr string) *ContentReader {
+func NewContentReader(appName string, URL string, client *http.Client) *ContentReader {
 	return &ContentReader{
-		client:      http.DefaultClient,
-		contentHost: ch,
-		routingAddr: routingAddr,
+		client:         client,
+		contentAppName: appName,
+		contentAppURL:  URL,
 	}
 }
 
-func (cr *ContentReader) Get(uuid string) (Content, error) {
-	var result Content
+func (cr *ContentReader) Get(uuids []string) (map[string]Content, error) {
+	var cm = make(map[string]Content)
 
-	url := "http://" + cr.routingAddr + "/content/" + uuid
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	imgBatch, err := cr.doGet(uuids)
 	if err != nil {
-		return result, fmt.Errorf("Error connecting to content-public-read for uuid=%s, err=%v", uuid, err)
+		return cm, err
 	}
-	req.Host = cr.contentHost
+
+	var imgModelUUIDs []string
+	for _, i := range imgBatch {
+		cr.addItemToMap(i, cm)
+		if _, foundMembers := i[members]; foundMembers {
+			imgModelUUIDs = append(imgModelUUIDs, i.getMembersUUID()...)
+		}
+	}
+
+	if len(imgModelUUIDs) == 0 {
+		return cm, nil
+	}
+
+	imgModelsList, err := cr.doGet(imgModelUUIDs)
+	if err != nil {
+		return cm, err
+	}
+
+	for _, i := range imgModelsList {
+		cr.addItemToMap(i, cm)
+	}
+
+	return cm, nil
+}
+
+func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
+	id, ok := c[id].(string)
+	if !ok {
+		return
+	}
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		return
+	}
+	cm[uuid] = c
+}
+
+func (cr *ContentReader) doGet(uuids []string) ([]Content, error) {
+	var cb []Content
+	req, err := http.NewRequest(http.MethodGet, cr.contentAppURL, nil)
+	if err != nil {
+		return cb, errors.Wrapf(err, "Error connecting to %v", cr.contentAppName)
+	}
+	q := req.URL.Query()
+	for _, uuid := range uuids {
+		if err = uuidutils.ValidateUUID(uuid); err == nil {
+			q.Add("uuid", uuid)
+		}
+	}
+	req.URL.RawQuery = q.Encode()
 
 	res, err := cr.client.Do(req)
 	if err != nil {
-		return result, fmt.Errorf("Error connecting to content-public-read for uuid=%s, err=%v", uuid, err)
+		return cb, errors.Wrapf(err, "Request to %v failed.", cr.contentAppName)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("Cannot read from content-public-read for uuid=%s, err=%v", uuid, err)
+		return cb, errors.Errorf("Request to %v failed with status code %d", cr.contentAppName, res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return result, fmt.Errorf("Error reading response from content-public-read for uuid=%s, err=%v", uuid, err)
+		return cb, errors.Wrapf(err, "Error reading response received from %v", cr.contentAppName)
 	}
 
-	err = json.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &cb)
 	if err != nil {
-		return result, fmt.Errorf("Error unmarshalling response from content-public-read for uuid=%s, err=%v", uuid, err)
+		return cb, errors.Wrapf(err, "Error unmarshalling response from %v", cr.contentAppName)
 	}
-
-	return result, nil
+	return cb, nil
 }

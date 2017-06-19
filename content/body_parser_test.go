@@ -6,34 +6,40 @@ import (
 	"testing"
 )
 
+const ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
+
 func TestShouldReturnImages(t *testing.T) {
-	var reader Reader
-	var parser Parser
-	var ir ImageResolver
-	var expectedOutput = []string{"http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/71231d3a-13c7-11e7-2ea7-a07ecd9ac73f", "http://api.ft.com/content/0261ea4a-1474-11e7-1e92-847abda1ac65"}
-	reader = NewContentReader("", "")
-	parser = NewBodyParser(ImageSetType)
-	ir = *NewImageResolver(&reader, &parser)
+	var expectedOutput = []string{
+			"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+			"71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
+			"0261ea4a-1474-11e7-1e92-847abda1ac65",
+	}
+
 	fileBytes, err := ioutil.ReadFile("../test-resources/bodyXml.xml")
 	if err != nil {
 		assert.Fail(t, "Cannot read test file")
 	}
 	str := string(fileBytes)
-	emImagesUUIDs, err := ir.parser.GetEmbedded(str)
+	emImagesUUIDs, err := getEmbedded(str, ImageSetType, "", "")
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
 	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids shoud be equal to expected images")
 }
 
-func TestBodyEmpty(t *testing.T) {
-	var reader Reader
-	var parser Parser
-	var ir ImageResolver
-	var str string
-	reader = NewContentReader("", "")
-	parser = NewBodyParser(ImageSetType)
-	ir = *NewImageResolver(&reader, &parser)
-	emImagesUUIDs, _ := ir.parser.GetEmbedded(str)
+func TestBodyNoEmbeddedImagesReturnsEmptyList(t *testing.T) {
+	emImagesUUIDs, err := getEmbedded("<body><p>Sample body</p></body>", ImageSetType, "", "")
+	assert.NoError(t, err, "Body parsing should be successful")
+	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
+}
+
+func TestMalformedBodyReturnsEmptyList(t *testing.T) {
+	emImagesUUIDs, err := getEmbedded("Sample body", ImageSetType, "", "")
+	assert.NoError(t, err, "Body parsing should be successful")
+	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
+}
+
+func TestEmptyBodyReturnsEmptyList(t *testing.T) {
+	emImagesUUIDs, _ := getEmbedded("", ImageSetType, "", "")
 	assert.Equal(t, 0, len(emImagesUUIDs), "Response should return zero images")
 }

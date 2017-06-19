@@ -1,12 +1,19 @@
 package content
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
+
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/service-status-go/gtg"
-	"net/http"
+	"github.com/pkg/errors"
 )
+
+type ServiceConfig struct {
+	ContentSourceAppName string
+	ContentSourceURL     string
+	HttpClient           *http.Client
+}
 
 func (sc *ServiceConfig) GtgCheck() gtg.Status {
 	msg, err := sc.checkerContent()
@@ -19,11 +26,11 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 
 func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 	return fthealth.Check{
-		ID:               "check-connect-content-public-read",
-		Name:             "Check connectivity to content-public-read",
+		ID:               fmt.Sprintf("check-connect-%s", sc.ContentSourceAppName),
+		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentSourceAppName),
 		Severity:         1,
 		BusinessImpact:   "Image unrolled won't be available",
-		TechnicalSummary: fmt.Sprintf(`Cannot connect to content-public-read.`),
+		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentSourceAppName),
 		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
 		Checker: func() (string, error) {
 			return sc.checkerContent()
@@ -32,17 +39,13 @@ func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 }
 
 func (sc *ServiceConfig) checkerContent() (string, error) {
-	healthUri := "http://" + sc.RouterAddress + "/__health"
-	req, err := http.NewRequest("GET", healthUri, nil)
-	req.Host = sc.Content_public_read
+	req, err := http.NewRequest(http.MethodGet, sc.ContentSourceURL, nil)
 	resp, err := sc.HttpClient.Do(req)
 	if err != nil {
-		msg := fmt.Sprintf("%s service is unreachable: %v", "content-public-read", err)
-		return msg, errors.New(msg)
+		return "Error", errors.Errorf("%s service is unreachable: %v", sc.ContentSourceAppName, err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("%s service is not responding with OK. status=%d", "content-public-read", resp.StatusCode)
-		return msg, errors.New(msg)
+		return "Error", errors.Errorf("%s service is not responding with OK. Status=%d", sc.ContentSourceAppName, resp.StatusCode)
 	}
 	return "Ok", nil
 }

@@ -1,6 +1,11 @@
 package main
 
 import (
+	"net"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/image-resolver/content"
@@ -10,66 +15,68 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
-	"net"
-	"net/http"
-	"os"
-	"time"
 )
 
 const (
-	AppCode        = "image-resolver"
-	AppName        = "Image Resolver"
-	AppDesc        = "Image Resolver - unroll images for a given content"
-	Port           = "port"
-	CprHost        = "cprHost"
-	RouterAddress  = "routerAddress"
-	EmbedsType     = "embedsType"
-	GraphiteTCP    = "graphite-tcp-address"
-	GraphitePrefix = "graphite-prefix"
-	LogMetrics     = "log-metrics"
+	AppCode = "image-resolver"
+	AppName = "Image Resolver"
+	AppDesc = "Image Resolver - unroll images for a given content"
 )
 
 func main() {
 	app := cli.App(AppCode, AppDesc)
 	port := app.String(cli.StringOpt{
-		Name:   Port,
+		Name:   "port",
 		Value:  "9090",
 		Desc:   "application port",
-		EnvVar: "PORT"})
-	cprHost := app.String(cli.StringOpt{
-		Name:   CprHost,
+		EnvVar: "PORT",
+	})
+	contentSourceAppName := app.String(cli.StringOpt{
+		Name:   "contentSourceApplicationName",
 		Value:  "content-public-read",
 		Desc:   "Content read app",
-		EnvVar: "CONTENT_READ_ENDPOINT",
+		EnvVar: "CONTENT_SOURCE_APP_NAME",
 	})
-	routerAddress := app.String(cli.StringOpt{
-		Name:   RouterAddress,
-		Value:  "localhost:8080",
-		Desc:   "Vulcan host",
-		EnvVar: "ROUTER_ADDRESS",
+	contentSourceURL := app.String(cli.StringOpt{
+		Name:   "contentSourceURL",
+		Value:  "http://localhost:8080/__content-public-read/content",
+		Desc:   "URL of the content source app",
+		EnvVar: "CONTENT_SOURCE_URL",
+	})
+	contentSourceHealthURL := app.String(cli.StringOpt{
+		Name:   "contentSourceHealthURL",
+		Value:  "http://localhost:8080/__content-public-read/__health",
+		Desc:   "Health url of the content source app",
+		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
-		Name:   GraphiteTCP,
+		Name:   "graphiteTCPAddress",
 		Desc:   "Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)",
 		EnvVar: "GRAPHITE_TCP_ADDRESS",
 	})
 	graphitePrefix := app.String(cli.StringOpt{
-		Name:   GraphitePrefix,
+		Name:   "graphitePrefix",
 		Value:  "coco.services.$ENV.image-resolver.0",
 		Desc:   "Prefix to use. Should start with content, include the environment, and the host name. e.g. coco.pre-prod.image-resolver.1",
 		EnvVar: "GRAPHITE_PREFIX",
 	})
 	logMetrics := app.Bool(cli.BoolOpt{
-		Name:   LogMetrics,
+		Name:   "logMetrics",
 		Value:  false,
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
 	})
-	embedsType := app.String(cli.StringOpt{
-		Name:    EmbedsType,
-		Value:  "http://www.ft.com/ontology/content/ImageSet",
-		Desc:   "The type suported for embedded images, ex ImageSet",
-		EnvVar: "EMBEDS_TYPE_WHITELIST",
+	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
+		Name:   "embeddedContentTypeWhitelist",
+		Value:  "^(http://www.ft.com/ontology/content/ImageSet)",
+		Desc:   "The type supported for embedded images, ex ImageSet",
+		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
+	})
+	apiHost := app.String(cli.StringOpt{
+		Name:   "apiHost",
+		Value:  "test.api.ft.com",
+		Desc:   "API host to use for URLs in responses",
+		EnvVar: "API_HOST",
 	})
 
 	app.Action = func() {
@@ -82,35 +89,18 @@ func main() {
 				}).Dial,
 			},
 		}
+
 		sc := content.ServiceConfig{
-			AppPort:             *port,
-			Content_public_read: *cprHost,
-			RouterAddress:       *routerAddress,
-			GraphiteTCPAddress:  *graphiteTCPAddress,
-			GraphitePrefix:      *graphitePrefix,
-			HttpClient:          httpClient,
+			ContentSourceAppName: *contentSourceAppName,
+			ContentSourceURL:     *contentSourceHealthURL,
+			HttpClient:           httpClient,
 		}
 
-		scMap := map[string]interface{}{
-			Port:          port,
-			CprHost:       cprHost,
-			RouterAddress: routerAddress,
-			GraphiteTCP:   graphiteTCPAddress,
-			GraphitePrefix:             graphitePrefix,
-		}
-
-		var reader content.Reader
-		var parser content.Parser
-		var ir content.Resolver
-		reader = content.NewContentReader(*cprHost, *routerAddress)
-		parser = content.NewBodyParser(*embedsType)
-		ir = content.NewImageResolver(&reader, &parser)
+		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
+		ir := content.NewImageResolver(reader, *embeddedContentTypeWhitelist, *apiHost)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
-		appLogger := content.NewAppLogger()
-		ch := &content.ContentHandler{ServiceConfig:&sc, Service: ir, Log: appLogger}
-		h := setupServiceHandler(sc, ch)
-		appLogger.ServiceStartedEvent(AppCode, scMap)
+		h := setupServiceHandler(ir, sc)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
@@ -122,8 +112,9 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(sc content.ServiceConfig, ch *content.ContentHandler) *mux.Router {
+func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
+	ch := &content.Handler{Service: s}
 	r.HandleFunc("/content/image", ch.GetContentImages).Methods("POST")
 	r.HandleFunc("/internalcontent/image", ch.GetLeadImages).Methods("POST")
 

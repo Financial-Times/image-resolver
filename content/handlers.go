@@ -5,119 +5,159 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
 	"github.com/Financial-Times/transactionid-utils-go"
+	"github.com/pkg/errors"
 )
 
 type ErrorMessage struct {
 	Message string `json:"message"`
 }
 
-type ServiceConfig struct {
-	AppPort             string
-	Content_public_read string
-	RouterAddress       string
-	GraphiteTCPAddress  string
-	GraphitePrefix      string
-	HttpClient          *http.Client
+var logger = NewAppLogger()
+
+type Handler struct {
+	Service Resolver
 }
 
-type ContentHandler struct {
-	ServiceConfig *ServiceConfig
-	Service       Resolver
-	Log           *appLogger
+type UnrollEvent struct {
+	c    Content
+	tid  string
+	uuid string
 }
 
-func (hh *ContentHandler) GetContentImages(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+type UnrollResult struct {
+	uc  Content
+	err error
+}
 
-	var article Content
-	var id string
+func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
-
-	hh.Log.TransactionStartedEvent(r.RequestURI, tid, id)
-
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
 
+	var article Content
 	err = json.Unmarshal(b, &article)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
 
-	contentUUID, ok := article[ID].(string)
-	if ok {
-		id = extractIdfromUrl(contentUUID)
+	id, ok := article[id].(string)
+	if !ok {
+		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
+		return
+	}
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		return
 	}
 
-	hh.Log.RequestEvent(AppName, r.RequestURI, tid, id)
+	if !validateContentImages(article) {
+		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
+		return
+	}
+
+	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
+
 	//unrolling images
-	content, err := json.Marshal(hh.Service.UnrollImages(article));
+	req := UnrollEvent{article, tid, uuid}
+	res := hh.Service.UnrollImages(req)
+	if res.err != nil {
+		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)
+		return
+	}
+	jsonRes, err := json.Marshal(res.uc)
 	if err != nil {
-		handleInternalServerError(hh, r, tid, id, w, err)
+		handleError(r, tid, uuid, w, err, http.StatusInternalServerError)
 		return
 	}
 
-	hh.Log.ResponseEvent(AppName, r.URL.String(), tid, http.StatusOK, id)
-	w.Write([]byte(content))
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
+	w.Write(jsonRes)
 }
 
-func (hh *ContentHandler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	var article Content
-	var id string
+func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
-
-	hh.Log.TransactionStartedEvent(r.RequestURI, tid, id)
-
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
 
+	var article Content
 	err = json.Unmarshal(b, &article)
 	if err != nil {
-		handleBadRequest(hh, r, tid, id, w, err)
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
 		return
 	}
 
-	contentUUID, ok := article[UUID].(string)
-	if ok {
-		id = extractIdfromUrl(contentUUID)
+	id, ok := article[id].(string)
+	if !ok {
+		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
+		return
+	}
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		return
 	}
 
-	hh.Log.RequestEvent(AppName, r.RequestURI, tid, id)
+	if !validateInternalContentImages(article) {
+		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
+		return
+	}
+
+	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
+
 	//unrolling lead images
-	content, err := json.Marshal(hh.Service.UnrollLeadImages(article));
-	if  err != nil {
-		handleInternalServerError(hh, r, tid, id, w, err)
+	req := UnrollEvent{article, tid, uuid}
+	res := hh.Service.UnrollLeadImages(req)
+	if res.err != nil {
+		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)
 		return
 	}
-
-	hh.Log.ResponseEvent(AppName, r.URL.String(), tid, http.StatusOK, id)
-	w.Write([]byte(content))
-}
-
-
-func handleBadRequest(hh *ContentHandler, r *http.Request, tid string, id string, w http.ResponseWriter, err error) {
-	hh.Log.RequestFailedEvent(AppName, r.RequestURI, tid, http.StatusBadRequest, id)
-	w.WriteHeader(http.StatusBadRequest)
-	msg, errm := json.Marshal(ErrorMessage{fmt.Sprintf("Error reading content, err=%v", err)})
-	if errm != nil {
-		w.Write([]byte(fmt.Sprintf("Error message couldn't be encoded in json: , err=%s", errm.Error())))
-	} else {
-		w.Write([]byte(msg))
+	jsonRes, err := json.Marshal(res.uc)
+	if err != nil {
+		handleError(r, tid, uuid, w, err, http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
+	w.Write(jsonRes)
 }
 
-func handleInternalServerError(hh *ContentHandler, r *http.Request, tid string, id string, w http.ResponseWriter, err error)  {
-	hh.Log.RequestFailedEvent(AppName, r.RequestURI, tid, http.StatusInternalServerError, id)
-	w.WriteHeader(http.StatusInternalServerError)
-	msg, _ := json.Marshal(ErrorMessage{fmt.Sprintf("Error parsing result for content with id %s, err=%v", id, err)})
-	w.Write([]byte(msg))
+func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {
+	var errMsg string
+	if statusCode >= 400 && statusCode < 500 {
+		errMsg = fmt.Sprintf("Error getting expanding images because supplied content is invalid: %s", err.Error())
+		logger.Errorf(tid, "Error getting expanding images because supplied content is invalid: %s", err.Error())
+	} else if statusCode >= 500 {
+		errMsg = fmt.Sprintf("Error getting expanding images for: %v: %v", uuid, err.Error())
+		logger.TransactionFinishedEvent(r.RequestURI, tid, statusCode, uuid, err.Error())
+	}
+	w.WriteHeader(statusCode)
+	w.Write([]byte(errMsg))
+}
+
+func validateContentImages(article Content) bool {
+	_, hasMainImage := article[mainImage]
+	_, hasBody := article[bodyXML]
+	altImg, hasAltImg := article[altImages].(map[string]interface{})
+	var hasPromImg bool
+	if hasAltImg {
+		_, hasPromImg = altImg[promotionalImage]
+	}
+
+	return hasMainImage || hasBody || hasPromImg
+}
+
+func validateInternalContentImages(article Content) bool {
+	_, hasLeadImages := article[leadImages]
+	return hasLeadImages
 }

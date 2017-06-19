@@ -2,7 +2,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/image-resolver/badge.svg)](https://coveralls.io/github/Financial-Times/image-resolver)
 # image-resolver
 
-Image resolver is an internally used API for retrieving unrolled images and leadimages. It receive a content and return the content plus images unrolled.
+Image resolver is an internally used API for expanding images of an article. It receives an article and returns the same article with each image UUID replaced by its actual data. The types of images that are expanded are:
+  * main image
+  * body embedded images
+  * alternative images
+  * lead images
 
 ## Usage
 ### Install
@@ -10,22 +14,15 @@ Image resolver is an internally used API for retrieving unrolled images and lead
 
 ## Running locally
 To run the service locally, you will need to run the following commands first to get the vendored dependencies for this project:
-  `go get github.com/kardianos/govendor` and
-  `govendor sync`
+  ```
+  go get github.com/kardianos/govendor
+  govendor sync
+  ```
+
+## Usage
 
 ```
-Usage: image-resolver [OPTIONS]
-
-Options:
-  --port="8080"                               Port to listen on ($PORT)
-  --cprHost="content-public-read"             The host to connect to content-public-read API
-  --routerAddress="localhost:8080"            Vulcan host
-  --graphiteTCPAddress=""                     Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you d
-o NOT want to output to graphite (e.g. if running locally) ($GRAPHITE_ADDRESS)
-  --graphitePrefix=""                         Prefix to use. Should start with content, include the environment, and the
- host name. e.g. coco.pre-prod.image-resolver.1 ($GRAPHITE_PREFIX)
-  --logMetrics=false                          Whether to log metrics. Set to true if running locally and you want metric
-s output ($LOG_METRICS)
+./image-resolver --help
 
 ```
 

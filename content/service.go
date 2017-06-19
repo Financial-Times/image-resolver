@@ -1,179 +1,318 @@
 package content
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"regexp"
+	"github.com/pkg/errors"
 )
 
 const (
-	MainImage  = "mainImage"
-	ID         = "id"
-	Embeds     = "embeds"
-	AltImages  = "alternativeImages"
-	LeadImages = "leadImages"
-	Members    = "members"
-	Type       = "type"
-	BodyXml    = "bodyXML"
-	PromoImage = "promotionalImage"
-	UUID       = "uuid"
-	AppName    = "image-resolver"
-	Image 	   = "image"
-	ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
+	mainImage        = "mainImage"
+	id               = "id"
+	embeds           = "embeds"
+	altImages        = "alternativeImages"
+	leadImages       = "leadImages"
+	members          = "members"
+	bodyXML          = "bodyXML"
+	promotionalImage = "promotionalImage"
+	image            = "image"
 )
 
-type Content map[string]interface{}
-
 type Resolver interface {
-	UnrollImages(Content) Content
-	UnrollLeadImages(Content) Content
+	UnrollImages(req UnrollEvent) UnrollResult
+	UnrollLeadImages(req UnrollEvent) UnrollResult
 }
 
 type ImageResolver struct {
-	reader Reader
-	parser Parser
+	reader    Reader
+	whitelist string
+	apiHost   string
 }
 
-func NewImageResolver(r *Reader, p *Parser) *ImageResolver {
+type Content map[string]interface{}
+
+type ImageSchema map[string][]string
+
+func NewImageResolver(r Reader, whitelist string, apiHost string) *ImageResolver {
 	return &ImageResolver{
-		reader: *r,
-		parser: *p,
+		reader:    r,
+		whitelist: whitelist,
+		apiHost:   apiHost,
 	}
 }
 
-func (ir *ImageResolver) UnrollImages(body Content) Content {
-	result := body
+func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
+	//make a copy of the content
+	cc := req.c.clone()
 
 	//mainImage
-	mi, found := body[MainImage].(map[string]interface{})
-	if found {
-		id, ok := mi[ID].(string)
-		if ok && id != "" {
-			mainImage := ir.getImage(id)
-			if len(mainImage) == 1 {
-				result[MainImage] = mainImage[0]
-			}
+	is := make(ImageSchema)
+	mi, foundMainImg := cc[mainImage].(map[string]interface{})
+	if foundMainImg {
+		u, err := extractUUIDFromString(mi[id].(string))
+		if err != nil {
+			logger.Infof(req.tid, req.uuid, "Cannot find main image for %v: %v. Skipping expanding main image", req.uuid, err.Error())
+			foundMainImg = false
+		} else {
+			is.put(mainImage, u)
 		}
+	} else {
+		logger.Infof(req.tid, req.uuid, "Cannot find main image for %v. Skipping expanding main image", req.uuid)
 	}
 
 	//embedded images
-	bodyXml, found := body[BodyXml].(string)
-	if found && bodyXml != "" {
-		emImagesUUIDs, err := ir.parser.GetEmbedded(bodyXml)
-		if err == nil {
-			embeddedImages := ir.getImageSets(emImagesUUIDs)
-			if len(embeddedImages) > 0 {
-				result[Embeds] = embeddedImages
-			}
+	body, foundBody := cc[bodyXML]
+	if foundBody {
+		bodyXML := body.(string)
+		emImagesUUIDs, err := getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
+		if err != nil {
+			logger.Infof(req.tid, req.uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", req.uuid).Error())
+		} else if len(emImagesUUIDs) == 0 {
+			foundBody = false
 		} else {
-			log.Errorf("Error parsing body for article uuid=%s, err=%v", body[ID].(string), err)
+			is.putAll(embeds, emImagesUUIDs)
 		}
+	} else {
+		logger.Infof(req.tid, req.uuid, "Missing body for %v.Skipping expanding embedded images.", req.uuid)
 	}
 
 	//promotional image
-	uuid, found := body[AltImages].(map[string]interface{})
+	var altImgMap map[string]interface{}
+	var foundPromImg bool
+	altImg, found := cc[altImages]
 	if found {
-		id, ok := uuid[PromoImage].(string)
-		if ok && id != "" {
-			promotionalImage, err := ir.reader.Get(extractIdfromUrl(id))
-			if err == nil {
-				result[AltImages] =  map[string]interface{}{PromoImage: promotionalImage}
+		var promImg interface{}
+		altImgMap = altImg.(map[string]interface{})
+		promImg, foundPromImg = altImgMap[promotionalImage]
+		if foundPromImg {
+			promImgID := promImg.(string)
+			u, err := extractUUIDFromString(promImgID)
+			if err != nil {
+				logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v: %v. Skipping expanding promotional image", req.uuid, err.Error())
 			} else {
-				log.Errorf("Error unrolling promotional image uuid =%s, err=%v", id, err)
+				is.put(promotionalImage, u)
 			}
+		} else {
+			logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v. Skipping expanding promotional image", req.uuid)
 		}
 	}
-	return result
+
+	if !foundMainImg && !foundBody && !foundPromImg {
+		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		return UnrollResult{req.c, nil}
+	}
+
+	imgMap, err := ir.reader.Get(is.toArray())
+	if err != nil {
+		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
+	}
+	ir.resolveModelsForSetsMembers(is, imgMap, req.tid, req.tid)
+
+	if foundMainImg {
+		cc[mainImage] = imgMap[is.get(mainImage)]
+	}
+
+	embeddedImgSets := is.getAll(embeds)
+	if foundBody && len(embeddedImgSets) > 0 {
+		embedded := []Content{}
+		for _, eis := range embeddedImgSets {
+			embedded = append(embedded, imgMap[eis])
+		}
+		cc[embeds] = embedded
+	}
+
+	if foundPromImg {
+		altImgMap[promotionalImage] = imgMap[is.get(promotionalImage)]
+	}
+
+	return UnrollResult{cc, nil}
 }
 
-func (ir *ImageResolver) UnrollLeadImages(body Content) Content {
-	result := body
-	//lead images
-	images, found := body[LeadImages].([]interface{})
+func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
+	cc := req.c.clone()
+	images, foundLeadImages := cc[leadImages].([]interface{})
+	if !foundLeadImages {
+		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		return UnrollResult{req.c, nil}
+	}
+
+	b := make(ImageSchema)
+	for _, item := range images {
+		li := item.(map[string]interface{})
+		uuid, err := extractUUIDFromString(li[id].(string))
+		if err != nil {
+			logger.Infof(req.tid, req.uuid, "Error while getting UUID for %s: %v", li[id].(string), err.Error())
+			continue
+		}
+		li[image] = uuid
+		b.put(leadImages, uuid)
+	}
+
+	imgMap, err := ir.reader.Get(b.toArray())
+	if err != nil {
+		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", req.uuid)}
+	}
+
+	expLeadImages := []Content{}
+	for _, li := range images {
+		rawLi := li.(map[string]interface{})
+		uuid := rawLi[image].(string)
+		liContent := fromMap(rawLi)
+		imageData, found := ir.resolveContent(uuid, imgMap)
+		if !found {
+			logger.Infof(req.tid, req.uuid, "Missing image model %s. Returning only de id.", uuid)
+			delete(liContent, image)
+			expLeadImages = append(expLeadImages, liContent)
+			continue
+		}
+		liContent[image] = imageData
+		expLeadImages = append(expLeadImages, liContent)
+	}
+
+	cc[leadImages] = expLeadImages
+	return UnrollResult{cc, nil}
+}
+
+func (ir *ImageResolver) resolveModelsForSetsMembers(b ImageSchema, imgMap map[string]Content, tid string, uuid string) {
+	mainImageUUID := b.get(mainImage)
+	ir.resolveImageSet(mainImageUUID, imgMap, tid, uuid)
+	for _, embeddedImgSet := range b.getAll(embeds) {
+		ir.resolveImageSet(embeddedImgSet, imgMap, tid, uuid)
+	}
+}
+
+func (ir *ImageResolver) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) {
+	imageSet, found := ir.resolveContent(imageSetUUID, imgMap)
+	if !found {
+		imgMap[imageSetUUID] = Content{id: createID(ir.apiHost, "content", imageSetUUID)}
+		return
+	}
+
+	rawMembers, found := imageSet[members]
 	if found {
-		result[LeadImages] = ir.getLeadImages(images)
-	}
-	return result
-}
+		membList, ok := rawMembers.([]interface{})
+		if !ok {
+			return
+		}
 
-func (ir *ImageResolver) getImage(uuid string) []Content {
-	return ir.getImageSets([]string{uuid})
-}
-
-func (ir *ImageResolver) getImageSets(uuids []string) []Content {
-	outputs := []Content{}
-	for _, uuid := range uuids {
-		id := extractIdfromUrl(uuid)
-		imageSet, err := ir.reader.Get(id)
-		if err != nil {
-			imageSet = make(map[string]interface{})
-			imageSet[ID] = uuid
-			outputs = append(outputs, imageSet)
-			log.Errorf("Error unrolling image uuid = %s, err: %v", id, err)
-		} else {
-			if imageSet[ID] != "" {
-				membersIDs := []string{}
-				membs, ok := imageSet[Members].([]interface{})
-				if ok {
-					for _, b := range membs {
-						b, ok := b.(map[string]interface{})
-						if !ok {
-							continue
-						}
-						membersIDs = append(membersIDs, b[ID].(string))
-					}
-					members := ir.getImageSetMembers(membersIDs)
-					imageSet[Members] = members
-					outputs = append(outputs, imageSet)
-				}
-			} else {
-				imageSet[ID] = uuid
-				outputs = append(outputs, imageSet)
+		expMembers := []Content{}
+		for _, m := range membList {
+			mData := fromMap(m.(map[string]interface{}))
+			mID := mData[id].(string)
+			u, err := extractUUIDFromString(mID)
+			if err != nil {
+				logger.Infof(tid, uuid, "Error while extrating UUID from %s: %v", mID, err.Error())
+				continue
 			}
+			mContent, found := ir.resolveContent(u, imgMap)
+			if !found {
+				expMembers = append(expMembers, mData)
+				continue
+			}
+			mData.merge(mContent)
+			expMembers = append(expMembers, mData)
 		}
+		imageSet[members] = expMembers
 	}
-	return outputs
+
 }
 
-func (ir *ImageResolver) getImageSetMembers(membersUUIDs []string) []Content {
-	members := []Content{}
-	for _, member := range membersUUIDs {
-		id := extractIdfromUrl(member)
-		im, err := ir.reader.Get(id)
+func (ir *ImageResolver) resolveContent(uuid string, imgMap map[string]Content) (Content, bool) {
+	c, found := imgMap[uuid]
+	if !found {
+		return Content{}, false
+	}
+	return c, true
+}
+
+func (c Content) clone() Content {
+	clone := make(Content)
+	for k, v := range c {
+		clone[k] = v
+	}
+	return clone
+}
+
+func (c Content) getMembersUUID() []string {
+	uuids := []string{}
+	members, found := c[members]
+	if !found {
+		return uuids
+	}
+
+	memList, ok := members.([]interface{})
+	if !ok {
+		return uuids
+	}
+	for _, m := range memList {
+		mData := m.(map[string]interface{})
+		url, found := mData[id].(string)
+		if !found {
+			continue
+		}
+		u, err := extractUUIDFromString(url)
 		if err != nil {
-			im[ID] = member
-			log.Errorf("Error unrolling image uuid =%s, err=%v", member, err)
+			continue
 		}
-		members = append(members, im)
+		uuids = append(uuids, u)
 	}
-	return members
+	return uuids
 }
 
-func (ir *ImageResolver) getLeadImages(leadImages []interface{}) []Content {
-	result := make([]Content, len(leadImages))
-	for index, leadImg := range leadImages {
-		result[index] = make(map[string]interface{})
-		img := leadImg.(map[string]interface{})
-		id := img[ID].(string)
-		im, err := ir.reader.Get(extractIdfromUrl(id))
-		if err != nil{
-			result[index][ID]= id
-			result[index][Type] = img[Type].(string)
-			log.Errorf("Error unrolling leadimage uuid =%s, err=%v", id, err)
-		} else {
-			result[index][Image] = im
-			result[index][Type] = img[Type].(string)
-			result[index][ID] = id
-		}
+func (c Content) merge(src Content) {
+	for k, v := range src {
+		c[k] = v
 	}
-	return result
 }
 
-func extractIdfromUrl(url string) string {
-	var id string
-	re, _ := regexp.Compile("([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
-	values := re.FindStringSubmatch(url)
-	if len(values) > 0 {
-		id = values[0]
+func (u ImageSchema) put(key string, value string) {
+	if key != mainImage && key != promotionalImage && key != leadImages {
+		return
 	}
-	return id
+	prev, found := u[key]
+	if !found {
+		u[key] = []string{value}
+		return
+	}
+	act := append(prev, value)
+	u[key] = act
+}
+
+func (u ImageSchema) get(key string) string {
+	if _, found := u[key]; key != mainImage && key != promotionalImage || !found {
+		return ""
+	}
+	return u[key][0]
+}
+
+func (u ImageSchema) putAll(key string, values []string) {
+	if key != embeds && key != leadImages {
+		return
+	}
+	prevValue, found := u[key]
+	if !found {
+		u[key] = values
+		return
+	}
+	u[key] = append(prevValue, values...)
+}
+
+func (u ImageSchema) getAll(key string) []string {
+	if key != embeds && key != leadImages {
+		return []string{}
+	}
+	return u[key]
+}
+
+func (u ImageSchema) toArray() (UUIDs []string) {
+	for _, v := range u {
+		UUIDs = append(UUIDs, v...)
+	}
+	return UUIDs
+}
+
+func fromMap(src map[string]interface{}) Content {
+	dest := Content{}
+	for k, v := range src {
+		dest[k] = v
+	}
+	return dest
 }

@@ -148,13 +148,9 @@ func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter
 func validateContentImages(article Content) bool {
 	_, hasMainImage := article[mainImage]
 	_, hasBody := article[bodyXML]
-	altImg, hasAltImg := article[altImages].(map[string]interface{})
-	var hasPromImg bool
-	if hasAltImg {
-		_, hasPromImg = altImg[promotionalImage]
-	}
+	_, hasAltImg := article[altImages].(map[string]interface{})
 
-	return hasMainImage || hasBody || hasPromImg
+	return hasMainImage || hasBody || hasAltImg
 }
 
 func validateInternalContentImages(article Content) bool {

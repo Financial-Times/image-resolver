@@ -120,7 +120,10 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	if foundPromImg {
-		altImgMap[promotionalImage] = imgMap[is.get(promotionalImage)]
+		pi, found := imgMap[is.get(promotionalImage)]
+		if found {
+			altImgMap[promotionalImage] = pi
+		}
 	}
 
 	return UnrollResult{cc, nil}

@@ -1,0 +1,60 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }} 
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}" 
+    visualize: "true" 
+    app: {{ .Values.service.name }} 
+spec:
+  replicas: {{ .Values.replicaCount }} 
+  selector: 
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        visualize: "true" 
+    spec:
+      containers: 
+      - name: {{ .Values.service.name }} 
+        image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env: 
+        - name: PORT 
+          value: "8080"
+        - name: CONTENT_SOURCE_APP_NAME
+          value:  {{ .Values.env.CONTENT_SOURCE_APP_NAME }}
+        - name: CONTENT_SOURCE_URL
+          value:  {{ .Values.env.CONTENT_SOURCE_URL }}
+        - name: CONTENT_SOURCE_HEALTH_URL
+          value:  {{ .Values.env.CONTENT_SOURCE_HEALTH_URL }}
+        - name: EMBEDS_CONTENT_TYPE_WHITELIST
+          value:  {{ .Values.env.EMBEDS_CONTENT_TYPE_WHITELIST }}
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: api.host
+        - name: GRAPHITE_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: graphite.address
+        - name: GRAPHITE_PREFIX
+          value: "coco.services.k8s.{{ .Values.service.name }}"
+        ports: 
+        - containerPort: 8080 
+        livenessProbe: 
+          tcpSocket: 
+            port: 8080 
+          initialDelaySeconds: 10 
+        readinessProbe: 
+          httpGet: 
+            path: "/__gtg" 
+            port: 8080 
+          initialDelaySeconds: 15 
+          periodSeconds: 30 
+        resources: 
+{{ toYaml .Values.resources | indent 12 }}

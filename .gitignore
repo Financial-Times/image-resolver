@@ -3,4 +3,4 @@
 vendor/*/
 .vscode
 .project
-image-resolver*
+/image-resolver*

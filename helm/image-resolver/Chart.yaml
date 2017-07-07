@@ -1,0 +1,4 @@
+apiVersion: v1
+description: image-resolver Helm chart for Kubernetes
+name: image-resolver
+version: 0.0.0  # this entry can be left untouched as it is automatically handled by Jenkins pipeline

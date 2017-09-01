@@ -1,0 +1,18 @@
+# Default values for image-resolver.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+service:
+  name: "" # The name of the service, should be defined in the specific app-configs folder.
+  hasHealthcheck: "true"
+replicaCount: 2
+image:
+  repository: coco/image-resolver
+  pullPolicy: IfNotPresent
+resources:
+  limits:
+    memory: 256Mi
+env: # env vars for the app
+  CONTENT_SOURCE_APP_NAME: ""
+  CONTENT_SOURCE_URL: ""
+  CONTENT_SOURCE_HEALTH_URL: ""
+  EMBEDS_CONTENT_TYPE_WHITELIST: ""

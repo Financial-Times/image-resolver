@@ -75,18 +75,16 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	//promotional image
-	var altImgMap map[string]interface{}
 	var foundPromImg bool
-	altImg, found := cc[altImages]
+	altImg, found := cc[altImages].(map[string]interface{})
 	if found {
-		var promImg interface{}
-		altImgMap = altImg.(map[string]interface{})
-		promImg, foundPromImg = altImgMap[promotionalImage]
+		var promImg map[string]interface{}
+		promImg, foundPromImg = altImg[promotionalImage].(map[string]interface{})
 		if foundPromImg {
-			promImgID := promImg.(string)
-			u, err := extractUUIDFromString(promImgID)
+			u, err := extractUUIDFromString(promImg[id].(string))
 			if err != nil {
 				logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v: %v. Skipping expanding promotional image", req.uuid, err.Error())
+				foundPromImg = false
 			} else {
 				is.put(promotionalImage, u)
 			}
@@ -122,7 +120,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	if foundPromImg {
 		pi, found := imgMap[is.get(promotionalImage)]
 		if found {
-			altImgMap[promotionalImage] = pi
+			cc[altImages].(map[string]interface{})[promotionalImage] = pi
 		}
 	}
 

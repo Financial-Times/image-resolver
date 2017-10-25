@@ -41,6 +41,10 @@ func (appLogger *appLogger) Infof(tid string, uuid string, format string, args .
 	appLogger.log.WithFields(logrus.Fields{"tid": tid, "uuid": uuid}).Infof(format, args)
 }
 
+func (appLogger *appLogger) Info(tid string, uuid string, message string) {
+	appLogger.log.WithFields(logrus.Fields{"tid": tid, "uuid": uuid}).Info(message)
+}
+
 func (appLogger *appLogger) Errorf(tid string, format string, args ...interface{}) {
 	appLogger.log.WithFields(logrus.Fields{"tid": tid}).Errorf(format, args)
 }

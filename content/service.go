@@ -49,13 +49,13 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	if foundMainImg {
 		u, err := extractUUIDFromString(mi[id].(string))
 		if err != nil {
-			logger.Infof(req.tid, req.uuid, "Cannot find main image for %v: %v. Skipping expanding main image", req.uuid, err.Error())
+			logger.Infof(req.tid, req.uuid, "Cannot find main image: %v. Skipping expanding main image", err.Error())
 			foundMainImg = false
 		} else {
 			is.put(mainImage, u)
 		}
 	} else {
-		logger.Infof(req.tid, req.uuid, "Cannot find main image for %v. Skipping expanding main image", req.uuid)
+		logger.Info(req.tid, req.uuid, "Cannot find main image. Skipping expanding main image")
 	}
 
 	//embedded images
@@ -71,7 +71,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 			is.putAll(embeds, emImagesUUIDs)
 		}
 	} else {
-		logger.Infof(req.tid, req.uuid, "Missing body for %v.Skipping expanding embedded images.", req.uuid)
+		logger.Info(req.tid, req.uuid, "Missing body. Skipping expanding embedded images.")
 	}
 
 	//promotional image
@@ -81,15 +81,20 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 		var promImg map[string]interface{}
 		promImg, foundPromImg = altImg[promotionalImage].(map[string]interface{})
 		if foundPromImg {
-			u, err := extractUUIDFromString(promImg[id].(string))
-			if err != nil {
-				logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v: %v. Skipping expanding promotional image", req.uuid, err.Error())
-				foundPromImg = false
+			if id, ok := promImg[id].(string); ok {
+				u, err := extractUUIDFromString(id)
+				if err != nil {
+					logger.Infof(req.tid, req.uuid, "Cannot find promotional image: %v. Skipping expanding promotional image", err.Error())
+					foundPromImg = false
+				} else {
+					is.put(promotionalImage, u)
+				}
 			} else {
-				is.put(promotionalImage, u)
+				logger.Info(req.tid, req.uuid, "Promotional image is missing the id field. Skipping expanding promotional image")
+				foundPromImg = false
 			}
 		} else {
-			logger.Infof(req.tid, req.uuid, "Cannot find promotional image for %v. Skipping expanding promotional image", req.uuid)
+			logger.Info(req.tid, req.uuid, "Cannot find promotional image. Skipping expanding promotional image")
 		}
 	}
 
@@ -131,7 +136,7 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		logger.Info(req.tid, req.uuid, "Nothing to expand for supplied content")
 		return UnrollResult{req.c, nil}
 	}
 
@@ -200,7 +205,7 @@ func (ir *ImageResolver) resolveImageSet(imageSetUUID string, imgMap map[string]
 			mID := mData[id].(string)
 			u, err := extractUUIDFromString(mID)
 			if err != nil {
-				logger.Infof(tid, uuid, "Error while extrating UUID from %s: %v", mID, err.Error())
+				logger.Infof(tid, uuid, "Error while extracting UUID from %s: %v", mID, err.Error())
 				continue
 			}
 			mContent, found := ir.resolveContent(u, imgMap)

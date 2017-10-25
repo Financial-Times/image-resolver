@@ -54,6 +54,76 @@ func TestUnrollImages(t *testing.T) {
 	assert.JSONEq(t, string(actualJson), string(expected))
 }
 
+func TestImageResolver_UnrollImages_SkipPromotionalImageWhenIdIsMissing(t *testing.T) {
+	expectedAltImages := map[string]interface{}{
+		"promotionalImage": map[string]interface{}{
+			"": "http://api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
+		},
+	}
+
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c []string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		whitelist: ImageSetType,
+		apiHost:   "test.api.ft.com",
+	}
+
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/invalid-article-missing-promotionalImage-id.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollImages(req)
+
+	assert.NoError(t, actual.err, "Should not get an error when expanding images")
+	assert.Equal(t, expectedAltImages, actual.uc[altImages])
+}
+
+func TestImageResolver_UnrollImages_SkipPromotionalImageWhenUUIDIsInvalid(t *testing.T) {
+	expectedAltImages := map[string]interface{}{
+		"promotionalImage": map[string]interface{}{
+			"id": "http://api.ft.com/content/not-uuid",
+		},
+	}
+
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c []string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		whitelist: ImageSetType,
+		apiHost:   "test.api.ft.com",
+	}
+
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/invalid-article-invalid-promotionalImage-uuid.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := ir.UnrollImages(req)
+
+	assert.NoError(t, actual.err, "Should not get an error when expanding images")
+	assert.Equal(t, expectedAltImages, actual.uc[altImages])
+}
+
 func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
 	ir := ImageResolver{
 		reader: &ReaderMock{

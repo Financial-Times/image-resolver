@@ -10,9 +10,9 @@ const ImageSetType = "http://www.ft.com/ontology/content/ImageSet"
 
 func TestShouldReturnImages(t *testing.T) {
 	var expectedOutput = []string{
-			"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
-			"71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
-			"0261ea4a-1474-11e7-1e92-847abda1ac65",
+		"639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+		"71231d3a-13c7-11e7-2ea7-a07ecd9ac73f",
+		"0261ea4a-1474-11e7-1e92-847abda1ac65",
 	}
 
 	fileBytes, err := ioutil.ReadFile("../test-resources/bodyXml.xml")

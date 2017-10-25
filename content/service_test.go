@@ -76,7 +76,6 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenIdIsMissing(t *testi
 		apiHost:   "test.api.ft.com",
 	}
 
-
 	var c Content
 	fileBytes, err := ioutil.ReadFile("../test-resources/invalid-article-missing-promotionalImage-id.json")
 	assert.NoError(t, err, "Cannot read necessary test file")
@@ -110,7 +109,6 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenUUIDIsInvalid(t *tes
 		whitelist: ImageSetType,
 		apiHost:   "test.api.ft.com",
 	}
-
 
 	var c Content
 	fileBytes, err := ioutil.ReadFile("../test-resources/invalid-article-invalid-promotionalImage-uuid.json")

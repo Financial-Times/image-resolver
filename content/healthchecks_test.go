@@ -1,10 +1,10 @@
 package content
 
 import (
-	"testing"
-	"net/http/httptest"
-	"net/http"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func startFunctionalService() *httptest.Server {

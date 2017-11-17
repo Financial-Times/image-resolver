@@ -59,7 +59,7 @@ func TestContentReader_Get(t *testing.T) {
 	err = json.Unmarshal(b, &expected)
 	assert.NoError(t, err, "Cannot read expected response for test case.")
 
-	actual, err := cr.Get(testData)
+	actual, err := cr.Get(testData, "tid_1")
 	assert.NoError(t, err, "Error while getting content data")
 	assert.Equal(t, expected, actual)
 }
@@ -70,7 +70,7 @@ func TestContentReader_Get_ContentSourceReturns500(t *testing.T) {
 
 	cr := readerForTest(ts.URL, "/content")
 
-	_, err := cr.Get(testData)
+	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 
@@ -80,21 +80,21 @@ func TestContentReader_Get_ContentSourceReturns404(t *testing.T) {
 
 	cr := readerForTest(ts.URL, "/content")
 
-	_, err := cr.Get(testData)
+	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 
 func TestContentReader_Get_ContentSourceCannotBeResolved(t *testing.T) {
 	cr := readerForTest("http://sampleAddress:8080", "/content")
 
-	_, err := cr.Get(testData)
+	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 
 func TestContentReader_Get_ContentSourceHasInvalidURL(t *testing.T) {
 	cr := readerForTest("&&^%&&^", "@$@")
 
-	_, err := cr.Get(testData)
+	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 

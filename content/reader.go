@@ -6,10 +6,16 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+	"github.com/Financial-Times/transactionid-utils-go"
+)
+
+const (
+	userAgent = "User-Agent"
+	userAgentValue = "UPP_image-resolver"
 )
 
 type Reader interface {
-	Get([]string) (map[string]Content, error)
+	Get([]string, string) (map[string]Content, error)
 }
 
 type ContentReader struct {
@@ -26,10 +32,10 @@ func NewContentReader(appName string, URL string, client *http.Client) *ContentR
 	}
 }
 
-func (cr *ContentReader) Get(uuids []string) (map[string]Content, error) {
+func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
-	imgBatch, err := cr.doGet(uuids)
+	imgBatch, err := cr.doGet(uuids, tid)
 	if err != nil {
 		return cm, err
 	}
@@ -46,7 +52,7 @@ func (cr *ContentReader) Get(uuids []string) (map[string]Content, error) {
 		return cm, nil
 	}
 
-	imgModelsList, err := cr.doGet(imgModelUUIDs)
+	imgModelsList, err := cr.doGet(imgModelUUIDs, tid)
 	if err != nil {
 		return cm, err
 	}
@@ -70,12 +76,14 @@ func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
 	cm[uuid] = c
 }
 
-func (cr *ContentReader) doGet(uuids []string) ([]Content, error) {
+func (cr *ContentReader) doGet(uuids []string, tid string) ([]Content, error) {
 	var cb []Content
 	req, err := http.NewRequest(http.MethodGet, cr.contentAppURL, nil)
 	if err != nil {
 		return cb, errors.Wrapf(err, "Error connecting to %v", cr.contentAppName)
 	}
+	req.Header.Add(transactionidutils.TransactionIDHeader, tid)
+	req.Header.Set(userAgent, userAgentValue)
 	q := req.URL.Query()
 	for _, uuid := range uuids {
 		if err = uuidutils.ValidateUUID(uuid); err == nil {

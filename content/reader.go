@@ -2,10 +2,11 @@ package content
 
 import (
 	"encoding/json"
-	uuidutils "github.com/Financial-Times/uuid-utils-go"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
+	"github.com/Financial-Times/uuid-utils-go"
 	"github.com/Financial-Times/transactionid-utils-go"
 )
 

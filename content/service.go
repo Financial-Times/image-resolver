@@ -99,7 +99,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	if !foundMainImg && !foundBody && !foundPromImg {
-		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		logger.Infof(req.tid, req.uuid, "No main image or body images or promotional image to expand for supplied content %s", req.uuid)
 		return UnrollResult{req.c, nil}
 	}
 
@@ -136,7 +136,7 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		logger.Info(req.tid, req.uuid, "Nothing to expand for supplied content")
+		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
 		return UnrollResult{req.c, nil}
 	}
 

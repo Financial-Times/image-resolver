@@ -88,6 +88,7 @@ func TestShouldReturn200ForContentImages(t *testing.T) {
 	body, err := ioutil.ReadFile("test-resources/valid-article.json")
 	assert.NoError(t, err, "Cannot read file necessary for test case")
 	resp, err := http.Post(imageResolver.URL+"/content/image", "application/json", bytes.NewReader(body))
+	assert.NoError(t, err, "Should not fail")
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -108,6 +109,7 @@ func TestShouldReturn200ForInternalContentImages(t *testing.T) {
 	body, err := ioutil.ReadFile("test-resources/valid-article-internalcontent.json")
 	assert.NoError(t, err, "Cannot read file necessary for test case")
 	resp, err := http.Post(imageResolver.URL+"/internalcontent/image", "application/json", bytes.NewReader(body))
+	assert.NoError(t, err, "Should not fail")
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)

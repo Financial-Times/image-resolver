@@ -99,11 +99,11 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	if !foundMainImg && !foundBody && !foundPromImg {
-		logger.Infof(req.tid, req.uuid, "Nothing to expand for supplied content %s", req.uuid)
+		logger.Infof(req.tid, req.uuid, "No main image or body images or promotional image to expand for supplied content %s", req.uuid)
 		return UnrollResult{req.c, nil}
 	}
 
-	imgMap, err := ir.reader.Get(is.toArray())
+	imgMap, err := ir.reader.Get(is.toArray(), req.tid)
 	if err != nil {
 		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
 	}
@@ -136,10 +136,14 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		logger.Info(req.tid, req.uuid, "Nothing to expand for supplied content")
+		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
 		return UnrollResult{req.c, nil}
 	}
 
+	if len(images) == 0 {
+		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
+		return UnrollResult{req.c, nil}
+	}
 	b := make(ImageSchema)
 	for _, item := range images {
 		li := item.(map[string]interface{})
@@ -152,7 +156,7 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 		b.put(leadImages, uuid)
 	}
 
-	imgMap, err := ir.reader.Get(b.toArray())
+	imgMap, err := ir.reader.Get(b.toArray(), req.tid)
 	if err != nil {
 		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", req.uuid)}
 	}

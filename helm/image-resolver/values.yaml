@@ -9,8 +9,10 @@ image:
   repository: coco/image-resolver
   pullPolicy: IfNotPresent
 resources:
+  requests:
+    memory: 60Mi
   limits:
-    memory: 256Mi
+    memory: 128Mi
 env: # env vars for the app
   CONTENT_SOURCE_APP_NAME: ""
   CONTENT_SOURCE_URL: ""

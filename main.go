@@ -122,7 +122,11 @@ func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mu
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
 	checks := []fthealth.Check{sc.ContentCheck()}
-	hc := fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks}
+	hc := fthealth.TimedHealthCheck{
+		HealthCheck: fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks},
+		Timeout:     10 * time.Second,
+	}
+
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(&hc))})
 	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})

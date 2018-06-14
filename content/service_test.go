@@ -256,3 +256,37 @@ func TestExtractIDFromURL(t *testing.T) {
 	assert.NoError(t, err, "Test should not return error")
 	assert.Equal(t, expectedId, actual, "Response id should be equal")
 }
+
+func TestUnrollDynamicContent(t *testing.T) {
+	ir := ImageResolver{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile(testResourcesRoot + "valid-dynamic-content-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article-dynamic-content.json")
+	assert.NoError(t, err, "Cannot read test file")
+
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot unmarshal test file")
+
+	expected, err := ioutil.ReadFile("../test-resources/valid-dynamic-content-result.json")
+	assert.NoError(t, err, "File necessary for building expected output not found.")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+
+	actual := ir.UnrollImages(req)
+	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(expected), string(actualJSON))
+}

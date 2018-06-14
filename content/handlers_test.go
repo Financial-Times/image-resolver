@@ -44,11 +44,11 @@ func TestContentHandler_GetContentImages(t *testing.T) {
 
 	body, err := ioutil.ReadFile("../test-resources/valid-article.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/content/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/content", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -65,11 +65,11 @@ func TestContentHandler_GetContentImagesWhenBodyNotValid(t *testing.T) {
 		Service: nil,
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "/content/image", strings.NewReader("sample body"))
+	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader("sample body"))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -88,11 +88,11 @@ func TestContentHandler_GetContentImages_InternalServerErrorWhenServiceReturnsEr
 
 	body, err := ioutil.ReadFile("../test-resources/valid-article.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/content/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/content", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -116,11 +116,11 @@ func TestContentHandler_GetLeadImages(t *testing.T) {
 
 	body, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetInternalContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -137,11 +137,11 @@ func TestContentHandler_GetLeadImagesWhenBodyNotValid(t *testing.T) {
 		Service: nil,
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", strings.NewReader("sample body"))
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", strings.NewReader("sample body"))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetInternalContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -160,11 +160,11 @@ func TestHandler_GetLeadImages_InternalServerErrorWhenServiceReturnsError(t *tes
 
 	body, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetInternalContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)

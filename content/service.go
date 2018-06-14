@@ -29,7 +29,7 @@ type ImageResolver struct {
 
 type Content map[string]interface{}
 
-type ImageSchema map[string][]string
+type ContentSchema map[string][]string
 
 func NewImageResolver(r Reader, whitelist string, apiHost string) *ImageResolver {
 	return &ImageResolver{
@@ -44,7 +44,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 
 	//mainImage
-	is := make(ImageSchema)
+	schema := make(ContentSchema)
 	mi, foundMainImg := cc[mainImage].(map[string]interface{})
 	if foundMainImg {
 		u, err := extractUUIDFromString(mi[id].(string))
@@ -52,26 +52,26 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 			logger.Infof(req.tid, req.uuid, "Cannot find main image: %v. Skipping expanding main image", err.Error())
 			foundMainImg = false
 		} else {
-			is.put(mainImage, u)
+			schema.put(mainImage, u)
 		}
 	} else {
 		logger.Info(req.tid, req.uuid, "Cannot find main image. Skipping expanding main image")
 	}
 
-	//embedded images
+	//embedded - images and dynamic content
 	body, foundBody := cc[bodyXML]
 	if foundBody {
 		bodyXML := body.(string)
-		emImagesUUIDs, err := getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
+		emContentUUIDs, err := getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
 		if err != nil {
 			logger.Infof(req.tid, req.uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", req.uuid).Error())
-		} else if len(emImagesUUIDs) == 0 {
+		} else if len(emContentUUIDs) == 0 {
 			foundBody = false
 		} else {
-			is.putAll(embeds, emImagesUUIDs)
+			schema.putAll(embeds, emContentUUIDs)
 		}
 	} else {
-		logger.Info(req.tid, req.uuid, "Missing body. Skipping expanding embedded images.")
+		logger.Info(req.tid, req.uuid, "Missing body. Skipping expanding embedded content and images.")
 	}
 
 	//promotional image
@@ -87,7 +87,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 					logger.Infof(req.tid, req.uuid, "Cannot find promotional image: %v. Skipping expanding promotional image", err.Error())
 					foundPromImg = false
 				} else {
-					is.put(promotionalImage, u)
+					schema.put(promotionalImage, u)
 				}
 			} else {
 				logger.Info(req.tid, req.uuid, "Promotional image is missing the id field. Skipping expanding promotional image")
@@ -103,27 +103,27 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 		return UnrollResult{req.c, nil}
 	}
 
-	imgMap, err := ir.reader.Get(is.toArray(), req.tid)
+	contentMap, err := ir.reader.Get(schema.toArray(), req.tid)
 	if err != nil {
 		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
 	}
-	ir.resolveModelsForSetsMembers(is, imgMap, req.tid, req.tid)
+	ir.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
 
 	if foundMainImg {
-		cc[mainImage] = imgMap[is.get(mainImage)]
+		cc[mainImage] = contentMap[schema.get(mainImage)]
 	}
 
-	embeddedImgSets := is.getAll(embeds)
-	if foundBody && len(embeddedImgSets) > 0 {
+	embeddedContent := schema.getAll(embeds)
+	if foundBody && len(embeddedContent) > 0 {
 		embedded := []Content{}
-		for _, eis := range embeddedImgSets {
-			embedded = append(embedded, imgMap[eis])
+		for _, eis := range embeddedContent {
+			embedded = append(embedded, contentMap[eis])
 		}
 		cc[embeds] = embedded
 	}
 
 	if foundPromImg {
-		pi, found := imgMap[is.get(promotionalImage)]
+		pi, found := contentMap[schema.get(promotionalImage)]
 		if found {
 			cc[altImages].(map[string]interface{})[promotionalImage] = pi
 		}
@@ -144,7 +144,7 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
 		return UnrollResult{req.c, nil}
 	}
-	b := make(ImageSchema)
+	schema := make(ContentSchema)
 	for _, item := range images {
 		li := item.(map[string]interface{})
 		uuid, err := extractUUIDFromString(li[id].(string))
@@ -153,10 +153,10 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 			continue
 		}
 		li[image] = uuid
-		b.put(leadImages, uuid)
+		schema.put(leadImages, uuid)
 	}
 
-	imgMap, err := ir.reader.Get(b.toArray(), req.tid)
+	imgMap, err := ir.reader.Get(schema.toArray(), req.tid)
 	if err != nil {
 		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", req.uuid)}
 	}
@@ -181,7 +181,7 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (ir *ImageResolver) resolveModelsForSetsMembers(b ImageSchema, imgMap map[string]Content, tid string, uuid string) {
+func (ir *ImageResolver) resolveModelsForSetsMembers(b ContentSchema, imgMap map[string]Content, tid string, uuid string) {
 	mainImageUUID := b.get(mainImage)
 	ir.resolveImageSet(mainImageUUID, imgMap, tid, uuid)
 	for _, embeddedImgSet := range b.getAll(embeds) {
@@ -273,7 +273,7 @@ func (c Content) merge(src Content) {
 	}
 }
 
-func (u ImageSchema) put(key string, value string) {
+func (u ContentSchema) put(key string, value string) {
 	if key != mainImage && key != promotionalImage && key != leadImages {
 		return
 	}
@@ -286,14 +286,14 @@ func (u ImageSchema) put(key string, value string) {
 	u[key] = act
 }
 
-func (u ImageSchema) get(key string) string {
+func (u ContentSchema) get(key string) string {
 	if _, found := u[key]; key != mainImage && key != promotionalImage || !found {
 		return ""
 	}
 	return u[key][0]
 }
 
-func (u ImageSchema) putAll(key string, values []string) {
+func (u ContentSchema) putAll(key string, values []string) {
 	if key != embeds && key != leadImages {
 		return
 	}
@@ -305,14 +305,14 @@ func (u ImageSchema) putAll(key string, values []string) {
 	u[key] = append(prevValue, values...)
 }
 
-func (u ImageSchema) getAll(key string) []string {
+func (u ContentSchema) getAll(key string) []string {
 	if key != embeds && key != leadImages {
 		return []string{}
 	}
 	return u[key]
 }
 
-func (u ImageSchema) toArray() (UUIDs []string) {
+func (u ContentSchema) toArray() (UUIDs []string) {
 	for _, v := range u {
 		UUIDs = append(UUIDs, v...)
 	}

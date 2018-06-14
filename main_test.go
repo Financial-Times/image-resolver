@@ -87,7 +87,7 @@ func TestShouldReturn200ForContentImages(t *testing.T) {
 
 	body, err := ioutil.ReadFile("test-resources/valid-article.json")
 	assert.NoError(t, err, "Cannot read file necessary for test case")
-	resp, err := http.Post(imageResolver.URL+"/content/image", "application/json", bytes.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/content", "application/json", bytes.NewReader(body))
 	assert.NoError(t, err, "Should not fail")
 	defer resp.Body.Close()
 
@@ -108,7 +108,7 @@ func TestShouldReturn200ForInternalContentImages(t *testing.T) {
 
 	body, err := ioutil.ReadFile("test-resources/valid-article-internalcontent.json")
 	assert.NoError(t, err, "Cannot read file necessary for test case")
-	resp, err := http.Post(imageResolver.URL+"/internalcontent/image", "application/json", bytes.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/internalcontent", "application/json", bytes.NewReader(body))
 	assert.NoError(t, err, "Should not fail")
 	defer resp.Body.Close()
 
@@ -125,7 +125,7 @@ func TestShouldReturn400InvalidJsonContentEndpoint(t *testing.T) {
 	defer stopServices()
 
 	body := `{"body":"invalid""body"}`
-	resp, err := http.Post(imageResolver.URL+"/content/image", "application/json", strings.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/content", "application/json", strings.NewReader(body))
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 
@@ -138,7 +138,7 @@ func TestShouldReturn400InvalidArticleContentEndpoint(t *testing.T) {
 	defer stopServices()
 
 	body := `{"id":"36037ab1-da3b-35bf-b5ee-4fc23723b635"}`
-	resp, err := http.Post(imageResolver.URL+"/content/image", "application/json", strings.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/content", "application/json", strings.NewReader(body))
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 
@@ -151,7 +151,7 @@ func TestShouldReturn400InvalidJsonInternalContentEndpoint(t *testing.T) {
 	defer stopServices()
 
 	body := `{"body":"invalid""body"}`
-	resp, err := http.Post(imageResolver.URL+"/internalcontent/image", "application/json", strings.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/internalcontent", "application/json", strings.NewReader(body))
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 
@@ -164,7 +164,7 @@ func TestShouldReturn400InvalidArticleInternalContentEndpoint(t *testing.T) {
 	defer stopServices()
 
 	body := `{"id":"36037ab1-da3b-35bf-b5ee-4fc23723b635"}`
-	resp, err := http.Post(imageResolver.URL+"/internalcontent/image", "application/json", strings.NewReader(body))
+	resp, err := http.Post(imageResolver.URL+"/internalcontent", "application/json", strings.NewReader(body))
 	assert.NoError(t, err, "")
 	defer resp.Body.Close()
 

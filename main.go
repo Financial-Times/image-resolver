@@ -115,8 +115,11 @@ func main() {
 func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	r.HandleFunc("/content/image", ch.GetContentImages).Methods("POST")
-	r.HandleFunc("/internalcontent/image", ch.GetLeadImages).Methods("POST")
+	r.HandleFunc("/content", ch.GetContent).Methods("POST")
+	r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
+	r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
+	r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
+
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)

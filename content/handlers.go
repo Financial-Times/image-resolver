@@ -31,105 +31,97 @@ type UnrollResult struct {
 	err error
 }
 
-func (hh *Handler) GetContentImages(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	event, err := createUnrollEvent(r, tid)
+	if (err != nil) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
+	}
+
+	if !validateContentImages(event.c) {
+		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
 		return
 	}
 
-	var article Content
-	err = json.Unmarshal(b, &article)
-	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-		return
-	}
-
-	id, ok := article[id].(string)
-	if !ok {
-		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
-		return
-	}
-	uuid, err := extractUUIDFromString(id)
-	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-		return
-	}
-
-	if !validateContentImages(article) {
-		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
-		return
-	}
-
-	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
+	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
 	//unrolling images
-	req := UnrollEvent{article, tid, uuid}
-	res := hh.Service.UnrollImages(req)
+	res := hh.Service.UnrollImages(event)
 	if res.err != nil {
-		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)
+		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return
 	}
 	jsonRes, err := json.Marshal(res.uc)
 	if err != nil {
-		handleError(r, tid, uuid, w, err, http.StatusInternalServerError)
+		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
 	w.Write(jsonRes)
 }
 
-func (hh *Handler) GetLeadImages(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
+	event, err := createUnrollEvent(r, tid)
+	if (err != nil) {
+		handleError(r, tid, "", w, err, http.StatusBadRequest)
+	}
+
+	if !validateInternalContentImages(event.c) {
+		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
+		return
+	}
+
+	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
+
+	//unrolling lead images
+	res := hh.Service.UnrollLeadImages(event)
+	if res.err != nil {
+		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
+		return
+	}
+	jsonRes, err := json.Marshal(res.uc)
+	if err != nil {
+		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
+	w.Write(jsonRes)
+}
+
+func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
+}
+
+func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {
+}
+
+func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
+	var unrollEvent UnrollEvent
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-		return
+		return unrollEvent, err
 	}
 
 	var article Content
 	err = json.Unmarshal(b, &article)
 	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-		return
+		return unrollEvent, err
 	}
 
 	id, ok := article[id].(string)
 	if !ok {
-		handleError(r, tid, "", w, errors.New("Missing or invalid id field"), http.StatusBadRequest)
-		return
+		return unrollEvent, errors.New("Missing or invalid id field")
 	}
 	uuid, err := extractUUIDFromString(id)
 	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-		return
+		return unrollEvent, err
 	}
-
-	if !validateInternalContentImages(article) {
-		handleError(r, tid, uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
-		return
-	}
-
-	logger.TransactionStartedEvent(r.RequestURI, tid, uuid)
-
-	//unrolling lead images
-	req := UnrollEvent{article, tid, uuid}
-	res := hh.Service.UnrollLeadImages(req)
-	if res.err != nil {
-		handleError(r, tid, uuid, w, res.err, http.StatusInternalServerError)
-		return
-	}
-	jsonRes, err := json.Marshal(res.uc)
-	if err != nil {
-		handleError(r, tid, uuid, w, err, http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, uuid, "success")
-	w.Write(jsonRes)
+	unrollEvent = UnrollEvent{article, tid, uuid}
+	
+	return unrollEvent, nil
 }
 
 func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {

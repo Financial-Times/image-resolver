@@ -4,6 +4,7 @@ service:
   name: image-resolver
 env:
   CONTENT_SOURCE_APP_NAME: "content-public-read"
-  CONTENT_SOURCE_URL: "http://content-public-read:8080/content"
-  CONTENT_SOURCE_HEALTH_URL: "http://content-public-read:8080/__health"
+  #CONTENT_SOURCE_URL: "http://content-public-read:8080/content"
+  CONTENT_SOURCE_URL: "http://document-store-api:8080/content"
+  CONTENT_SOURCE_HEALTH_URL: "http://document-store-api:8080/__health"
   EMBEDS_CONTENT_TYPE_WHITELIST: "^http://www.ft.com/ontology/content/(ImageSet|DynamicContent)"

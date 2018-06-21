@@ -15,11 +15,16 @@ const (
 )
 
 type ReaderMock struct {
-	mockGet func(c []string, tid string) (map[string]Content, error)
+	mockGet         func(c []string, tid string) (map[string]Content, error)
+	mockGetInternal func(uuids []string, tid string) (map[string]Content, error)
 }
 
 func (rm *ReaderMock) Get(c []string, tid string) (map[string]Content, error) {
 	return rm.mockGet(c, tid)
+}
+
+func (rm *ReaderMock) GetInternal(c []string, tid string) (map[string]Content, error) {
+	return rm.mockGetInternal(c, tid)
 }
 
 func TestUnrollImages(t *testing.T) {
@@ -195,7 +200,7 @@ func TestImageResolver_UnrollLeadImages(t *testing.T) {
 	assert.NoError(t, err, "File necessary for building expected output not found.")
 
 	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
-	actual := ir.UnrollLeadImages(req)
+	actual := ir.UnrollInternalContent(req)
 	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
 	actualJson, err := json.Marshal(actual.uc)
 	assert.JSONEq(t, string(actualJson), string(expected))
@@ -225,13 +230,13 @@ func TestImageResolver_UnrollLeadImages_ReturnWhenNone(t *testing.T) {
 	assert.NoError(t, err, "File necessary for building expected output not found.")
 
 	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
-	actual := ir.UnrollLeadImages(req)
+	actual := ir.UnrollInternalContent(req)
 	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
 	actualJson, err := json.Marshal(actual.uc)
 	assert.JSONEq(t, string(actualJson), string(expected))
 }
 
-func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
+/*func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
 	ir := ImageResolver{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
@@ -247,9 +252,9 @@ func TestImageResolver_UnrollLeadImages_ErrorWhenReaderFails(t *testing.T) {
 	err = json.Unmarshal(fileBytes, &c)
 
 	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
-	actual := ir.UnrollLeadImages(req)
+	actual := ir.UnrollInternalContent(req)
 	assert.Error(t, actual.err)
-}
+}*/
 
 func TestExtractIDFromURL(t *testing.T) {
 	actual, err := extractUUIDFromString(ID)

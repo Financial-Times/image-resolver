@@ -14,16 +14,16 @@ import (
 )
 
 type ImageResolverMock struct {
-	mockUnrollImages     func(req UnrollEvent) UnrollResult
-	mockUnrollLeadImages func(req UnrollEvent) UnrollResult
+	mockUnrollImages          func(req UnrollEvent) UnrollResult
+	mockUnrollInternalContent func(req UnrollEvent) UnrollResult
 }
 
 func (irm *ImageResolverMock) UnrollImages(req UnrollEvent) UnrollResult {
 	return irm.mockUnrollImages(req)
 }
 
-func (irm *ImageResolverMock) UnrollLeadImages(req UnrollEvent) UnrollResult {
-	return irm.mockUnrollLeadImages(req)
+func (irm *ImageResolverMock) UnrollInternalContent(req UnrollEvent) UnrollResult {
+	return irm.mockUnrollInternalContent(req)
 }
 
 func TestContentHandler_GetContentImages(t *testing.T) {
@@ -100,7 +100,7 @@ func TestContentHandler_GetContentImages_InternalServerErrorWhenServiceReturnsEr
 
 func TestContentHandler_GetLeadImages(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(req UnrollEvent) UnrollResult {
+		mockUnrollInternalContent: func(req UnrollEvent) UnrollResult {
 			var r Content
 			fileBytes, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
 			assert.NoError(t, err, "Cannot read test file")
@@ -149,7 +149,7 @@ func TestContentHandler_GetLeadImagesWhenBodyNotValid(t *testing.T) {
 
 func TestHandler_GetLeadImages_InternalServerErrorWhenServiceReturnsError(t *testing.T) {
 	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(req UnrollEvent) UnrollResult {
+		mockUnrollInternalContent: func(req UnrollEvent) UnrollResult {
 			return UnrollResult{nil, errors.New("Image resolver failed")}
 		},
 	}

@@ -34,7 +34,7 @@ type UnrollResult struct {
 func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
-	if (err != nil) {
+	if err != nil {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 	}
 
@@ -65,7 +65,7 @@ func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
-	if (err != nil) {
+	if err != nil {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 	}
 
@@ -77,7 +77,7 @@ func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
 	//unrolling lead images
-	res := hh.Service.UnrollLeadImages(event)
+	res := hh.Service.UnrollInternalContent(event)
 	if res.err != nil {
 		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return
@@ -120,7 +120,7 @@ func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
 		return unrollEvent, err
 	}
 	unrollEvent = UnrollEvent{article, tid, uuid}
-	
+
 	return unrollEvent, nil
 }
 

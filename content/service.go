@@ -18,7 +18,7 @@ const (
 
 type Resolver interface {
 	UnrollImages(req UnrollEvent) UnrollResult
-	UnrollLeadImages(req UnrollEvent) UnrollResult
+	UnrollInternalContent(req UnrollEvent) UnrollResult
 }
 
 type ImageResolver struct {
@@ -59,19 +59,9 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	//embedded - images and dynamic content
-	body, foundBody := cc[bodyXML]
-	if foundBody {
-		bodyXML := body.(string)
-		emContentUUIDs, err := getEmbedded(bodyXML, ir.whitelist, req.tid, req.uuid)
-		if err != nil {
-			logger.Infof(req.tid, req.uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", req.uuid).Error())
-		} else if len(emContentUUIDs) == 0 {
-			foundBody = false
-		} else {
-			schema.putAll(embeds, emContentUUIDs)
-		}
-	} else {
-		logger.Info(req.tid, req.uuid, "Missing body. Skipping expanding embedded content and images.")
+	emContentUUIDs, foundEmbedded := ir.extractEmbeddedContentByType(cc, ir.whitelist, req.tid, req.uuid)
+	if foundEmbedded {
+		schema.putAll(embeds, emContentUUIDs)
 	}
 
 	//promotional image
@@ -98,7 +88,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 		}
 	}
 
-	if !foundMainImg && !foundBody && !foundPromImg {
+	if !foundMainImg && !foundEmbedded && !foundPromImg {
 		logger.Infof(req.tid, req.uuid, "No main image or body images or promotional image to expand for supplied content %s", req.uuid)
 		return UnrollResult{req.c, nil}
 	}
@@ -114,7 +104,7 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	}
 
 	embeddedContent := schema.getAll(embeds)
-	if foundBody && len(embeddedContent) > 0 {
+	if foundEmbedded && len(embeddedContent) > 0 {
 		embedded := []Content{}
 		for _, eis := range embeddedContent {
 			embedded = append(embedded, contentMap[eis])
@@ -132,43 +122,58 @@ func (ir *ImageResolver) UnrollImages(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
+func (ir *ImageResolver) UnrollInternalContent(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
+	expLeadImages, foundImages := ir.unrollLeadImages(cc, req.tid, req.uuid)
+	if foundImages {
+		cc[leadImages] = expLeadImages
+	}
+
+	embedded, foundEmbedded := ir.unrollEmbeddedDynamicContent(cc, req.tid, req.uuid)
+	if foundEmbedded {
+		cc[embeds] = embedded
+	}
+
+	return UnrollResult{cc, nil}
+}
+
+func (ir *ImageResolver) unrollLeadImages(cc Content, tid string, uuid string) ([]Content, bool) {
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
-		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
-		return UnrollResult{req.c, nil}
+		logger.Info(tid, uuid, "No lead images to expand for supplied content")
+		return nil, false
 	}
 
 	if len(images) == 0 {
-		logger.Info(req.tid, req.uuid, "No lead images to expand for supplied content")
-		return UnrollResult{req.c, nil}
+		logger.Info(tid, uuid, "No lead images to expand for supplied content")
+		return nil, false
 	}
 	schema := make(ContentSchema)
 	for _, item := range images {
 		li := item.(map[string]interface{})
 		uuid, err := extractUUIDFromString(li[id].(string))
 		if err != nil {
-			logger.Infof(req.tid, req.uuid, "Error while getting UUID for %s: %v", li[id].(string), err.Error())
+			logger.Infof(tid, uuid, "Error while getting UUID for %s: %v", li[id].(string), err.Error())
 			continue
 		}
 		li[image] = uuid
 		schema.put(leadImages, uuid)
 	}
 
-	imgMap, err := ir.reader.Get(schema.toArray(), req.tid)
+	imgMap, err := ir.reader.Get(schema.toArray(), tid)
 	if err != nil {
-		return UnrollResult{req.c, errors.Wrapf(err, "Error while getting content for expanded images uuid:%v", req.uuid)}
+		logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting content for expanded images uuid"))
+		return nil, false
 	}
 
 	expLeadImages := []Content{}
 	for _, li := range images {
 		rawLi := li.(map[string]interface{})
-		uuid := rawLi[image].(string)
+		rawLiUUID := rawLi[image].(string)
 		liContent := fromMap(rawLi)
-		imageData, found := ir.resolveContent(uuid, imgMap)
+		imageData, found := ir.resolveContent(rawLiUUID, imgMap)
 		if !found {
-			logger.Infof(req.tid, req.uuid, "Missing image model %s. Returning only de id.", uuid)
+			logger.Infof(tid, uuid, "Missing image model %s. Returning only de id.", rawLiUUID)
 			delete(liContent, image)
 			expLeadImages = append(expLeadImages, liContent)
 			continue
@@ -178,7 +183,27 @@ func (ir *ImageResolver) UnrollLeadImages(req UnrollEvent) UnrollResult {
 	}
 
 	cc[leadImages] = expLeadImages
-	return UnrollResult{cc, nil}
+	return expLeadImages, true
+}
+
+func (ir *ImageResolver) unrollEmbeddedDynamicContent(cc Content, tid string, uuid string) ([]Content, bool) {
+	emContentUUIDs, foundEmbedded := ir.extractEmbeddedContentByType(cc, "^http://www.ft.com/ontology/content/DynamicContent", tid, uuid)
+	if !foundEmbedded {
+		return nil, false
+	}
+
+	contentMap, err := ir.reader.GetInternal(emContentUUIDs, tid)
+	if err != nil {
+		logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting embedded dynamic content"))
+		return nil, false
+	}
+
+	embedded := []Content{}
+	for _, ec := range emContentUUIDs {
+		embedded = append(embedded, contentMap[ec])
+	}
+
+	return embedded, true
 }
 
 func (ir *ImageResolver) resolveModelsForSetsMembers(b ContentSchema, imgMap map[string]Content, tid string, uuid string) {
@@ -231,6 +256,27 @@ func (ir *ImageResolver) resolveContent(uuid string, imgMap map[string]Content) 
 		return Content{}, false
 	}
 	return c, true
+}
+
+func (ir *ImageResolver) extractEmbeddedContentByType(cc Content, acceptedType string, tid string, uuid string) ([]string, bool) {
+	body, foundBody := cc[bodyXML]
+	if !foundBody {
+		logger.Info(tid, uuid, "Missing body. Skipping expanding embedded content and images.")
+		return nil, false
+	}
+
+	bodyXML := body.(string)
+	emContentUUIDs, err := getEmbedded(bodyXML, acceptedType, tid, uuid)
+	if err != nil {
+		logger.Errorf(tid, uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", uuid))
+		return nil, false
+	}
+
+	if len(emContentUUIDs) == 0 {
+		return nil, false
+	}
+
+	return emContentUUIDs, true
 }
 
 func (c Content) clone() Content {

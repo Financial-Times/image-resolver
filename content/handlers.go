@@ -17,7 +17,7 @@ type ErrorMessage struct {
 var logger = NewAppLogger()
 
 type Handler struct {
-	Service Resolver
+	Service Unroller
 }
 
 type UnrollEvent struct {
@@ -38,64 +38,72 @@ func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 	}
 
-	if !validateContentImages(event.c) {
+	if !validateContent(event.c) {
 		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
 		return
 	}
 
 	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
-	//unrolling images
-	res := hh.Service.UnrollImages(event)
+	res := hh.Service.UnrollContent(event)
 	if res.err != nil {
 		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return
 	}
+
 	jsonRes, err := json.Marshal(res.uc)
 	if err != nil {
 		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(jsonRes)
 }
 
 func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
-	tid := transactionidutils.GetTransactionIDFromRequest(r)
+	/*tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
 	}
 
-	if !validateInternalContentImages(event.c) {
+	if !validateInternalContent(event.c) {
 		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
 		return
 	}
 
 	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
-	//unrolling lead images
 	res := hh.Service.UnrollInternalContent(event)
 	if res.err != nil {
 		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return
 	}
+
 	jsonRes, err := json.Marshal(res.uc)
 	if err != nil {
 		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
-	w.Write(jsonRes)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write(jsonRes)*/
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write([]byte("Work in progress..."))
 }
 
 func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write([]byte("Work in progress..."))
 }
 
 func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write([]byte("Work in progress..."))
 }
 
 func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
@@ -127,17 +135,17 @@ func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
 func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {
 	var errMsg string
 	if statusCode >= 400 && statusCode < 500 {
-		errMsg = fmt.Sprintf("Error getting expanding images because supplied content is invalid: %s", err.Error())
-		logger.Errorf(tid, "Error getting expanding images because supplied content is invalid: %s", err.Error())
+		errMsg = fmt.Sprintf("Error expanding internal content because supplied content is invalid: %s", err.Error())
+		logger.Errorf(tid, "Error expanding internal content because supplied content is invalid: %s", err.Error())
 	} else if statusCode >= 500 {
-		errMsg = fmt.Sprintf("Error getting expanding images for: %v: %v", uuid, err.Error())
+		errMsg = fmt.Sprintf("Error expanding internal content for: %v: %v", uuid, err.Error())
 		logger.TransactionFinishedEvent(r.RequestURI, tid, statusCode, uuid, err.Error())
 	}
 	w.WriteHeader(statusCode)
 	w.Write([]byte(errMsg))
 }
 
-func validateContentImages(article Content) bool {
+func validateContent(article Content) bool {
 	_, hasMainImage := article[mainImage]
 	_, hasBody := article[bodyXML]
 	_, hasAltImg := article[altImages].(map[string]interface{})
@@ -145,7 +153,9 @@ func validateContentImages(article Content) bool {
 	return hasMainImage || hasBody || hasAltImg
 }
 
-func validateInternalContentImages(article Content) bool {
+func validateInternalContent(article Content) bool {
 	_, hasLeadImages := article[leadImages]
-	return hasLeadImages
+	_, hasBody := article[bodyXML]
+
+	return hasLeadImages || hasBody
 }

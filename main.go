@@ -97,10 +97,10 @@ func main() {
 		}
 
 		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
-		ir := content.NewImageResolver(reader, *embeddedContentTypeWhitelist, *apiHost)
+		unroller := content.NewContentUnroller(reader, *embeddedContentTypeWhitelist, *apiHost)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
-		h := setupServiceHandler(ir, sc)
+		h := setupServiceHandler(unroller, sc)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
@@ -112,14 +112,13 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mux.Router {
+func setupServiceHandler(s *content.ContentUnroller, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
 	r.HandleFunc("/content", ch.GetContent).Methods("POST")
 	r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
 	r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
 	r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
-
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)

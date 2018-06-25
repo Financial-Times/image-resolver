@@ -66,7 +66,7 @@ func startImageResolverService() {
 	}
 
 	r := content.NewContentReader("content-source-app-name", contentAPIMock.URL, http.DefaultClient)
-	ir := content.NewImageResolver(r, "http://www.ft.com/ontology/content/ImageSet", "test.api.ft.com")
+	ir := content.NewContentUnroller(r, "http://www.ft.com/ontology/content/ImageSet", "test.api.ft.com")
 
 	h := setupServiceHandler(ir, sc)
 	imageResolver = httptest.NewServer(h)

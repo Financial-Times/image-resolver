@@ -20,24 +20,33 @@ type Reader interface {
 	GetInternal(uuids []string, tid string) (map[string]Content, error)
 }
 
-type ContentReader struct {
-	client         *http.Client
-	contentAppName string
-	contentAppURL  string
+type ReaderConfig struct {
+	ContentSourceAppName         string
+	ContentSourceAppURL          string
+	InternalContentSourceAppName string
+	InternalContentSourceAppURL  string
+	NativeContentSourceAppName   string
+	NativeContentSourceAppURL    string
+	NativeContentSourceAppAuth   string
 }
 
-func NewContentReader(appName string, URL string, client *http.Client) *ContentReader {
+type ContentReader struct {
+	client *http.Client
+	config ReaderConfig
+}
+
+func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader {
 	return &ContentReader{
-		client:         client,
-		contentAppName: appName,
-		contentAppURL:  URL,
+		client: client,
+		config: rConfig,
 	}
 }
 
+// Get content from content-public-read
 func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
-	imgBatch, err := cr.doGet(uuids, tid)
+	imgBatch, err := cr.doGet(uuids, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -54,7 +63,7 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 		return cm, nil
 	}
 
-	imgModelsList, err := cr.doGet(imgModelUUIDs, tid)
+	imgModelsList, err := cr.doGet(imgModelUUIDs, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -66,10 +75,11 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 	return cm, nil
 }
 
+// GetInternal internal components from document-store-api
 func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
-	internalContent, err := cr.doGet(uuids, tid, "http://document-store-api:8080/internalcomponents")
+	internalContent, err := cr.doGet(uuids, tid, cr.config.InternalContentSourceAppURL, cr.config.InternalContentSourceAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -81,30 +91,14 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 	return cm, nil
 }
 
-func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
-	id, ok := c[id].(string)
-	if !ok {
-		return
-	}
-	uuid, err := extractUUIDFromString(id)
-	if err != nil {
-		return
-	}
-	cm[uuid] = c
-}
-
-func (cr *ContentReader) doGet(uuids []string, tid string, url ...string) ([]Content, error) {
+func (cr *ContentReader) doGet(uuids []string, tid string, url string, appName string) ([]Content, error) {
 	var cb []Content
-	contentAppURL := cr.contentAppURL
 
-	if url != nil {
-		contentAppURL = url[1]
-	}
-
-	req, err := http.NewRequest(http.MethodGet, contentAppURL, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return cb, errors.Wrapf(err, "Error connecting to %v", cr.contentAppName)
+		return cb, errors.Wrapf(err, "Error connecting to %v", appName)
 	}
+
 	req.Header.Add(transactionidutils.TransactionIDHeader, tid)
 	req.Header.Set(userAgent, userAgentValue)
 	q := req.URL.Query()
@@ -117,22 +111,34 @@ func (cr *ContentReader) doGet(uuids []string, tid string, url ...string) ([]Con
 
 	res, err := cr.client.Do(req)
 	if err != nil {
-		return cb, errors.Wrapf(err, "Request to %v failed.", cr.contentAppName)
+		return cb, errors.Wrapf(err, "Request to %v failed.", appName)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return cb, errors.Errorf("Request to %v failed with status code %d", cr.contentAppName, res.StatusCode)
+		return cb, errors.Errorf("Request to %v failed with status code %d", appName, res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return cb, errors.Wrapf(err, "Error reading response received from %v", cr.contentAppName)
+		return cb, errors.Wrapf(err, "Error reading response received from %v", appName)
 	}
 
 	err = json.Unmarshal(body, &cb)
 	if err != nil {
-		return cb, errors.Wrapf(err, "Error unmarshalling response from %v", cr.contentAppName)
+		return cb, errors.Wrapf(err, "Error unmarshalling response from %v", appName)
 	}
 	return cb, nil
+}
+
+func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
+	id, ok := c[id].(string)
+	if !ok {
+		return
+	}
+	uuid, err := extractUUIDFromString(id)
+	if err != nil {
+		return
+	}
+	cm[uuid] = c
 }

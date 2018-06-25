@@ -22,20 +22,22 @@ type Unroller interface {
 }
 
 type ContentUnroller struct {
-	reader    Reader
-	whitelist string
-	apiHost   string
+	reader                   Reader
+	apiHost                  string
+	contentWhitelist         string
+	internalContentWhitelist string
 }
 
 type Content map[string]interface{}
 
 type ContentSchema map[string][]string
 
-func NewContentUnroller(r Reader, whitelist string, apiHost string) *ContentUnroller {
+func NewContentUnroller(r Reader, apiHost string, contentWhitelist string, internalContentWhitelist string) *ContentUnroller {
 	return &ContentUnroller{
-		reader:    r,
-		whitelist: whitelist,
-		apiHost:   apiHost,
+		reader:                   r,
+		contentWhitelist:         contentWhitelist,
+		internalContentWhitelist: internalContentWhitelist,
+		apiHost:                  apiHost,
 	}
 }
 
@@ -59,7 +61,7 @@ func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
 	}
 
 	//embedded - images and dynamic content
-	emContentUUIDs, foundEmbedded := u.extractEmbeddedContentByType(cc, u.whitelist, req.tid, req.uuid)
+	emContentUUIDs, foundEmbedded := u.extractEmbeddedContentByType(cc, u.contentWhitelist, req.tid, req.uuid)
 	if foundEmbedded {
 		schema.putAll(embeds, emContentUUIDs)
 	}
@@ -187,7 +189,7 @@ func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) 
 }
 
 func (u *ContentUnroller) unrollEmbeddedDynamicContent(cc Content, tid string, uuid string) ([]Content, bool) {
-	emContentUUIDs, foundEmbedded := u.extractEmbeddedContentByType(cc, "^http://www.ft.com/ontology/content/DynamicContent", tid, uuid)
+	emContentUUIDs, foundEmbedded := u.extractEmbeddedContentByType(cc, u.internalContentWhitelist, tid, uuid)
 	if !foundEmbedded {
 		return nil, false
 	}

@@ -43,6 +43,29 @@ spec:
           value:  {{ .Values.env.CONTENT_SOURCE_HEALTH_URL }}
         - name: EMBEDS_CONTENT_TYPE_WHITELIST
           value:  {{ .Values.env.EMBEDS_CONTENT_TYPE_WHITELIST }}
+        - name: INTERNAL_COMPONENTS_SOURCE_APP_NAME
+          value: {{ .Values.env.INTERNAL_COMPONENTS_SOURCE_APP_NAME }}
+        - name: INTERNAL_COMPONENTS_SOURCE_URL
+          value: {{ .Values.env.INTERNAL_COMPONENTS_SOURCE_URL }}
+        - name: INTERNAL_COMPONENTS_SOURCE_HEALTH_URL
+          value: {{ .Values.env.INTERNAL_COMPONENTS_SOURCE_HEALTH_URL }}
+        - name: INTERNAL_COMPONENTS_EMBEDDED_TYPE_WHITELIST
+          value: {{ .Values.env.INTERNAL_COMPONENTS_EMBEDDED_TYPE_WHITELIST }}
+        - name: NATIVE_CONTENT_SOURCE_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: methode.api_uri
+        - name: NATIVE_CONTENT_SOURCE_HEALTH_URI
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: methode.health_uri
+        - name: NATIVE_CONTENT_SOURCE_APP_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: methode.authorization_key
         - name: API_HOST
           valueFrom:
             configMapKeyRef:

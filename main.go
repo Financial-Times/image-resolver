@@ -72,6 +72,48 @@ func main() {
 		Desc:   "The type supported for embedded images, ex ImageSet",
 		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
 	})
+	internalContentSourceAppName := app.String(cli.StringOpt{
+		Name:   "internalComponentsSourceAppName",
+		Value:  "document-store-api",
+		Desc:   "Document Store API app",
+		EnvVar: "INTERNAL_CONTENT_SOURCE_APP_NAME",
+	})
+	internalContentSourceURL := app.String(cli.StringOpt{
+		Name:   "internalComponentsSourceURL",
+		Value:  "http://localhost:8080/__document-store-api/internalcomponents",
+		Desc:   "URL of Document Store API app",
+		EnvVar: "INTERNAL_CONTENT_SOURCE_URL",
+	})
+	/*internalContentSourceHealthURL := app.String(cli.StringOpt{
+		Name:   "internalComponentsSourceHealthURL",
+		Value:  "http://document-store-api:8080/__health",
+		Desc:   "Health URL of Document Store API app",
+		EnvVar: "INTERNAL_CONTENT_SOURCE_HEALTH_URL",
+	})*/
+	internalContentEmbeddedTypeWhitelist := app.String(cli.StringOpt{
+		Name:   "internalCompomentsEmbeddedTypeWhitelist",
+		Value:  "^http://www.ft.com/ontology/content/DynamicContent",
+		Desc:   "The type supported for dynamic content",
+		EnvVar: "INTERNAL_CONTENT_EMBEDDED_TYPE_WHITELIST",
+	})
+	nativeContentSourceAppName := app.String(cli.StringOpt{
+		Name:   "nativeContentSourceAppName",
+		Value:  "methode-api",
+		Desc:   "Service name of the Native Content Source Application endpoint",
+		EnvVar: "NATIVE_CONTENT_SOURCE_APP_NAME",
+	})
+	nativeContentSourceAppURL := app.String(cli.StringOpt{
+		Name:   "nativeContentSourceAppURL",
+		Value:  "http://methode-api-uk-p.svc.ft.com/eom-file/",
+		Desc:   "URI of the Native Content Source Application endpoint",
+		EnvVar: "NATIVE_CONTENT_SOURCE_APP_URL",
+	})
+	nativeContentSourceAppAuth := app.String(cli.StringOpt{
+		Name:   "nativeContentSourceAppAuth",
+		Value:  "default",
+		Desc:   "Basic auth for Native Content Source Application",
+		EnvVar: "NATIVE_CONTENT_SOURCE_APP_AUTH",
+	})
 	apiHost := app.String(cli.StringOpt{
 		Name:   "apiHost",
 		Value:  "test.api.ft.com",
@@ -96,8 +138,18 @@ func main() {
 			HttpClient:           httpClient,
 		}
 
-		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
-		unroller := content.NewContentUnroller(reader, *embeddedContentTypeWhitelist, *apiHost)
+		readerConfig := content.ReaderConfig{
+			ContentSourceAppName:         *contentSourceAppName,
+			ContentSourceAppURL:          *contentSourceURL,
+			InternalContentSourceAppName: *internalContentSourceAppName,
+			InternalContentSourceAppURL:  *internalContentSourceURL,
+			NativeContentSourceAppName:   *nativeContentSourceAppName,
+			NativeContentSourceAppURL:    *nativeContentSourceAppURL,
+			NativeContentSourceAppAuth:   *nativeContentSourceAppAuth,
+		}
+
+		reader := content.NewContentReader(readerConfig, httpClient)
+		unroller := content.NewContentUnroller(reader, *apiHost, *embeddedContentTypeWhitelist, *internalContentEmbeddedTypeWhitelist)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 		h := setupServiceHandler(unroller, sc)

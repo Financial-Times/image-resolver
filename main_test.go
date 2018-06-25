@@ -17,7 +17,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const contentSourceAppMame = "content-source-app-name"
+const (
+	contentSourceAppName     = "content-source-app-name"
+	contentWhitelist         = "http://www.ft.com/ontology/content/ImageSet"
+	internalContentWhitelist = "http://www.ft.com/ontology/content/DynamicContent"
+)
 
 var (
 	imageResolver  *httptest.Server
@@ -60,13 +64,23 @@ func contentApiStatusOkHandler(w http.ResponseWriter, r *http.Request) {
 
 func startImageResolverService() {
 	sc := content.ServiceConfig{
-		ContentSourceAppName: contentSourceAppMame,
+		ContentSourceAppName: contentSourceAppName,
 		ContentSourceURL:     contentAPIMock.URL,
 		HttpClient:           http.DefaultClient,
 	}
 
-	r := content.NewContentReader("content-source-app-name", contentAPIMock.URL, http.DefaultClient)
-	ir := content.NewContentUnroller(r, "http://www.ft.com/ontology/content/ImageSet", "test.api.ft.com")
+	rc := content.ReaderConfig{
+		ContentSourceAppName:         contentSourceAppName,
+		ContentSourceAppURL:          contentAPIMock.URL,
+		InternalContentSourceAppName: "",
+		InternalContentSourceAppURL:  "",
+		NativeContentSourceAppName:   "",
+		NativeContentSourceAppURL:    "",
+		NativeContentSourceAppAuth:   "",
+	}
+
+	r := content.NewContentReader(rc, http.DefaultClient)
+	ir := content.NewContentUnroller(r, "test.api.ft.com", contentWhitelist, internalContentWhitelist)
 
 	h := setupServiceHandler(ir, sc)
 	imageResolver = httptest.NewServer(h)
@@ -192,7 +206,7 @@ func TestShouldNotBeHealthyWhenContentApiIsNotHappy(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 503")
 	respBody, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err, "")
-	assertMsg := fmt.Sprintf(`"id":"check-connect-%v","name":"Check connectivity to %v","ok":false`, contentSourceAppMame, contentSourceAppMame)
+	assertMsg := fmt.Sprintf(`"id":"check-connect-%v","name":"Check connectivity to %v","ok":false`, contentSourceAppName, contentSourceAppName)
 	assert.Contains(t, string(respBody), assertMsg)
 
 }

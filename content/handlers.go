@@ -63,7 +63,7 @@ func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
-	/*tid := transactionidutils.GetTransactionIDFromRequest(r)
+	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
@@ -90,19 +90,16 @@ func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 
 	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write(jsonRes)*/
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write([]byte("Work in progress..."))
+	w.Write(jsonRes)
 }
 
 func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(200)
 	w.Write([]byte("Work in progress..."))
 }
 
 func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(200)
 	w.Write([]byte("Work in progress..."))
 }
 
@@ -135,10 +132,10 @@ func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
 func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {
 	var errMsg string
 	if statusCode >= 400 && statusCode < 500 {
-		errMsg = fmt.Sprintf("Error expanding internal content because supplied content is invalid: %s", err.Error())
-		logger.Errorf(tid, "Error expanding internal content because supplied content is invalid: %s", err.Error())
+		errMsg = fmt.Sprintf("Error expanding content, supplied UUID is invalid: %s", err.Error())
+		logger.Errorf(tid, errMsg)
 	} else if statusCode >= 500 {
-		errMsg = fmt.Sprintf("Error expanding internal content for: %v: %v", uuid, err.Error())
+		errMsg = fmt.Sprintf("Error expanding content for: %v: %v", uuid, err.Error())
 		logger.TransactionFinishedEvent(r.RequestURI, tid, statusCode, uuid, err.Error())
 	}
 	w.WriteHeader(statusCode)

@@ -3,6 +3,7 @@ package content
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/Financial-Times/transactionid-utils-go"
@@ -84,8 +85,13 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 		return cm, err
 	}
 
-	for _, i := range internalContent {
-		cr.addItemToMap(i, cm)
+	for _, c := range internalContent {
+		uuid, ok := c["uuid"].(string)
+		if !ok {
+			log.Printf("Cannot extract uuid for content: %v", c)
+			continue
+		}
+		cm[uuid] = c
 	}
 
 	return cm, nil

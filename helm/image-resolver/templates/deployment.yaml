@@ -52,6 +52,8 @@ spec:
         - name: TRANSFORM_CONTENT_SOURCE_APP_NAME
           value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_NAME }}
         - name: NATIVE_CONTENT_SOURCE_APP_NAME
+          value: methode-api
+        - name: NATIVE_CONTENT_SOURCE_APP_URL
           valueFrom:
             configMapKeyRef:
               name: global-config

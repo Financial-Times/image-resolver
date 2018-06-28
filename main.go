@@ -66,12 +66,7 @@ func main() {
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
 	})
-	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
-		Name:   "embeddedContentTypeWhitelist",
-		Value:  "^(http://www.ft.com/ontology/content/ImageSet)",
-		Desc:   "The type supported for embedded images, ex ImageSet",
-		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
-	})
+
 	internalContentSourceAppName := app.String(cli.StringOpt{
 		Name:   "internalComponentsSourceAppName",
 		Value:  "document-store-api",
@@ -90,12 +85,7 @@ func main() {
 		Desc:   "Health URL of Document Store API app",
 		EnvVar: "INTERNAL_CONTENT_SOURCE_HEALTH_URL",
 	})*/
-	internalContentEmbeddedTypeWhitelist := app.String(cli.StringOpt{
-		Name:   "internalCompomentsEmbeddedTypeWhitelist",
-		Value:  "^http://www.ft.com/ontology/content/DynamicContent",
-		Desc:   "The type supported for dynamic content",
-		EnvVar: "INTERNAL_CONTENT_EMBEDDED_TYPE_WHITELIST",
-	})
+
 	nativeContentSourceAppName := app.String(cli.StringOpt{
 		Name:   "nativeContentSourceAppName",
 		Value:  "methode-api",
@@ -104,7 +94,7 @@ func main() {
 	})
 	nativeContentSourceAppURL := app.String(cli.StringOpt{
 		Name:   "nativeContentSourceAppURL",
-		Value:  "http://methode-api-uk-p.svc.ft.com/eom-file/",
+		Value:  "http://methode-api-uk-t.svc.ft.com/eom-file/",
 		Desc:   "URI of the Native Content Source Application endpoint",
 		EnvVar: "NATIVE_CONTENT_SOURCE_APP_URL",
 	})
@@ -113,6 +103,18 @@ func main() {
 		Value:  "default",
 		Desc:   "Basic auth for Native Content Source Application",
 		EnvVar: "NATIVE_CONTENT_SOURCE_APP_AUTH",
+	})
+	transformContentSourceURL := app.String(cli.StringOpt{
+		Name:   "transformContentSourceURL",
+		Value:  "http://localhost:8080/__methode-article-mapper/map",
+		Desc:   "Methode Article Mapper URL",
+		EnvVar: "TRANSFORM_CONTENT_SOURCE_APP_URL",
+	})
+	transformContentSourceAppName := app.String(cli.StringOpt{
+		Name:   "transformContentSourceAppName",
+		Value:  "methode-article-mapper",
+		Desc:   "Methode Article Mapper app",
+		EnvVar: "TRANSFORM_CONTENT_SOURCE_APP_NAME",
 	})
 	apiHost := app.String(cli.StringOpt{
 		Name:   "apiHost",
@@ -139,17 +141,19 @@ func main() {
 		}
 
 		readerConfig := content.ReaderConfig{
-			ContentSourceAppName:         *contentSourceAppName,
-			ContentSourceAppURL:          *contentSourceURL,
-			InternalContentSourceAppName: *internalContentSourceAppName,
-			InternalContentSourceAppURL:  *internalContentSourceURL,
-			NativeContentSourceAppName:   *nativeContentSourceAppName,
-			NativeContentSourceAppURL:    *nativeContentSourceAppURL,
-			NativeContentSourceAppAuth:   *nativeContentSourceAppAuth,
+			ContentSourceAppName:          *contentSourceAppName,
+			ContentSourceAppURL:           *contentSourceURL,
+			InternalContentSourceAppName:  *internalContentSourceAppName,
+			InternalContentSourceAppURL:   *internalContentSourceURL,
+			NativeContentSourceAppName:    *nativeContentSourceAppName,
+			NativeContentSourceAppURL:     *nativeContentSourceAppURL,
+			NativeContentSourceAppAuth:    *nativeContentSourceAppAuth,
+			TransformContentSourceURL:     *transformContentSourceURL,
+			TransformContentSourceAppName: *transformContentSourceAppName,
 		}
 
 		reader := content.NewContentReader(readerConfig, httpClient)
-		unroller := content.NewContentUnroller(reader, *apiHost, *embeddedContentTypeWhitelist, *internalContentEmbeddedTypeWhitelist)
+		unroller := content.NewContentUnroller(reader, *apiHost)
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 		h := setupServiceHandler(unroller, sc)

@@ -51,6 +51,10 @@ spec:
           value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_URL }}
         - name: TRANSFORM_CONTENT_SOURCE_APP_NAME
           value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_NAME }}
+        - name: TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL
+          value: {{ .Values.env.TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL }}
+        - name: TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME
+          value: {{ .Values.env.TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME }}
         - name: NATIVE_CONTENT_SOURCE_APP_NAME
           value: methode-api
         - name: NATIVE_CONTENT_SOURCE_APP_URL

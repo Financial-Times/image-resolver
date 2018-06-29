@@ -11,3 +11,5 @@ env:
   INTERNAL_CONTENT_SOURCE_HEALTH_URL: "http://document-store-api:8080/__health"
   TRANSFORM_CONTENT_SOURCE_APP_URL: "http://methode-article-mapper:8080/map"
   TRANSFORM_CONTENT_SOURCE_APP_NAME: "methode-article-mapper"
+  TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL: "http://methode-article-internal-components-mapper:8080/map"
+  TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME: "methode-article-internal-components-mapper"

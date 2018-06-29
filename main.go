@@ -116,6 +116,18 @@ func main() {
 		Desc:   "Methode Article Mapper app",
 		EnvVar: "TRANSFORM_CONTENT_SOURCE_APP_NAME",
 	})
+	transformInternalContentSourceURL := app.String(cli.StringOpt{
+		Name:   "transformContentSourceURL",
+		Value:  "http://localhost:8080/__methode-article-internal-components-mapper/map",
+		Desc:   "Methode Article Mapper URL",
+		EnvVar: "TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL",
+	})
+	transformInternalContentSourceAppName := app.String(cli.StringOpt{
+		Name:   "transformContentSourceAppName",
+		Value:  "methode-article-internal-components-mapper",
+		Desc:   "Methode Article Mapper app",
+		EnvVar: "TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME",
+	})
 	apiHost := app.String(cli.StringOpt{
 		Name:   "apiHost",
 		Value:  "test.api.ft.com",
@@ -141,15 +153,17 @@ func main() {
 		}
 
 		readerConfig := content.ReaderConfig{
-			ContentSourceAppName:          *contentSourceAppName,
-			ContentSourceAppURL:           *contentSourceURL,
-			InternalContentSourceAppName:  *internalContentSourceAppName,
-			InternalContentSourceAppURL:   *internalContentSourceURL,
-			NativeContentSourceAppName:    *nativeContentSourceAppName,
-			NativeContentSourceAppURL:     *nativeContentSourceAppURL,
-			NativeContentSourceAppAuth:    *nativeContentSourceAppAuth,
-			TransformContentSourceURL:     *transformContentSourceURL,
-			TransformContentSourceAppName: *transformContentSourceAppName,
+			ContentSourceAppName:                  *contentSourceAppName,
+			ContentSourceAppURL:                   *contentSourceURL,
+			InternalContentSourceAppName:          *internalContentSourceAppName,
+			InternalContentSourceAppURL:           *internalContentSourceURL,
+			NativeContentSourceAppName:            *nativeContentSourceAppName,
+			NativeContentSourceAppURL:             *nativeContentSourceAppURL,
+			NativeContentSourceAppAuth:            *nativeContentSourceAppAuth,
+			TransformContentSourceURL:             *transformContentSourceURL,
+			TransformContentSourceAppName:         *transformContentSourceAppName,
+			TransformInternalContentSourceURL:     *transformInternalContentSourceURL,
+			TransformInternalContentSourceAppName: *transformInternalContentSourceAppName,
 		}
 
 		reader := content.NewContentReader(readerConfig, httpClient)

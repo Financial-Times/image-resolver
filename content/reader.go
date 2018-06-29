@@ -22,6 +22,7 @@ type Reader interface {
 	Get([]string, string) (map[string]Content, error)
 	GetInternal([]string, string) (map[string]Content, error)
 	GetNative([]string, string) (map[string]Content, error)
+	GetNativeInternal([]string, string) (map[string]Content, error)
 }
 
 type ReaderFunc func([]string, string) (map[string]Content, error)

@@ -151,7 +151,7 @@ func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollRe
 		cc[leadImages] = expLeadImages
 	}
 
-	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetNative)
+	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetNativeInternal)
 	if foundDyn {
 		cc[embeds] = dynContents
 	}

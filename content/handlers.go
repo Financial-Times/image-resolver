@@ -139,7 +139,7 @@ func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Requ
 
 	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
-	res := hh.Service.UnrollContentPreview(event)
+	res := hh.Service.UnrollInternalContentPreview(event)
 	if res.err != nil {
 		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return

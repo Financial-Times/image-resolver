@@ -14,16 +14,26 @@ import (
 )
 
 type ContentUnrollerMock struct {
-	mockUnrollContent         func(req UnrollEvent) UnrollResult
-	mockUnrollInternalContent func(req UnrollEvent) UnrollResult
+	mockUnrollContent                func(req UnrollEvent) UnrollResult
+	mockUnrollContentPreview         func(UnrollEvent) UnrollResult
+	mockUnrollInternalContent        func(UnrollEvent) UnrollResult
+	mockUnrollInternalContentPreview func(UnrollEvent) UnrollResult
 }
 
 func (cu *ContentUnrollerMock) UnrollContent(req UnrollEvent) UnrollResult {
 	return cu.mockUnrollContent(req)
 }
 
+func (cu *ContentUnrollerMock) UnrollContentPreview(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollContentPreview(req)
+}
+
 func (cu *ContentUnrollerMock) UnrollInternalContent(req UnrollEvent) UnrollResult {
 	return cu.mockUnrollInternalContent(req)
+}
+
+func (cu *ContentUnrollerMock) UnrollInternalContentPreview(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollInternalContentPreview(req)
 }
 
 func TestContentHandler_GetContentImages(t *testing.T) {
@@ -168,5 +178,4 @@ func TestHandler_GetLeadImages_InternalServerErrorWhenServiceReturnsError(t *tes
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-
 }

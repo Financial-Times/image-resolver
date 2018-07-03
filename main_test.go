@@ -80,7 +80,7 @@ func startImageResolverService() {
 	}
 
 	r := content.NewContentReader(rc, http.DefaultClient)
-	ir := content.NewContentUnroller(r, "test.api.ft.com", contentWhitelist, internalContentWhitelist)
+	ir := content.NewContentUnroller(r, "test.api.ft.com")
 
 	h := setupServiceHandler(ir, sc)
 	imageResolver = httptest.NewServer(h)

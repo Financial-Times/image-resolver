@@ -3,13 +3,14 @@ package content
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testResourcesRoot = "../test-resources/"
@@ -39,11 +40,10 @@ func errorContentServerMock(t *testing.T, statusCode int) *httptest.Server {
 	}))
 }
 
-func readerForTest(URL string, path string) *ContentReader {
+func readerForTest(cfg ReaderConfig) *ContentReader {
 	return &ContentReader{
-		contentAppName: "content-source-app-name",
-		contentAppURL:  URL,
-		client:         http.DefaultClient,
+		config: cfg,
+		client: http.DefaultClient,
 	}
 }
 
@@ -51,7 +51,11 @@ func TestContentReader_Get(t *testing.T) {
 	ts := successfulContentServerMock(t, testResourcesRoot+"valid-content-source-response.json")
 	defer ts.Close()
 
-	cr := readerForTest(ts.URL, "/content")
+	cfg := ReaderConfig{
+		ContentSourceAppName: "content-source-app-name",
+		ContentSourceAppURL:  ts.URL,
+	}
+	cr := readerForTest(cfg)
 
 	b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
 	assert.NoError(t, err, "Cannot read file necessary for running test case.")
@@ -68,7 +72,11 @@ func TestContentReader_Get_ContentSourceReturns500(t *testing.T) {
 	ts := errorContentServerMock(t, http.StatusInternalServerError)
 	defer ts.Close()
 
-	cr := readerForTest(ts.URL, "/content")
+	cfg := ReaderConfig{
+		ContentSourceAppName: "content-source-app-name",
+		ContentSourceAppURL:  ts.URL,
+	}
+	cr := readerForTest(cfg)
 
 	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
@@ -78,32 +86,34 @@ func TestContentReader_Get_ContentSourceReturns404(t *testing.T) {
 	ts := errorContentServerMock(t, http.StatusNotFound)
 	defer ts.Close()
 
-	cr := readerForTest(ts.URL, "/content")
+	cfg := ReaderConfig{
+		ContentSourceAppName: "content-source-app-name",
+		ContentSourceAppURL:  ts.URL,
+	}
+	cr := readerForTest(cfg)
 
 	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 
 func TestContentReader_Get_ContentSourceCannotBeResolved(t *testing.T) {
-	cr := readerForTest("http://sampleAddress:8080", "/content")
+	cfg := ReaderConfig{
+		ContentSourceAppName: "content-source-app-name",
+		ContentSourceAppURL:  "http://sampleAddress:8080/content",
+	}
+	cr := readerForTest(cfg)
 
 	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
 }
 
 func TestContentReader_Get_ContentSourceHasInvalidURL(t *testing.T) {
-	cr := readerForTest("&&^%&&^", "@$@")
+	cfg := ReaderConfig{
+		ContentSourceAppName: "&&^%&&^",
+		ContentSourceAppURL:  "@$@",
+	}
+	cr := readerForTest(cfg)
 
 	_, err := cr.Get(testData, "tid_1")
 	assert.Error(t, err, "There should an error thrown")
-}
-
-func TestNewContentReader(t *testing.T) {
-	actual := NewContentReader("content-source-app", "http://localhost:8080", http.DefaultClient)
-	expected := &ContentReader{
-		contentAppName: "content-source-app",
-		contentAppURL:  "http://localhost:8080",
-		client:         http.DefaultClient,
-	}
-	assert.Equal(t, expected, actual)
 }

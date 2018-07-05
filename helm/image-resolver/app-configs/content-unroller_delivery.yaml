@@ -5,10 +5,8 @@ service:
 env:
   CONTENT_SOURCE_APP_NAME: "content-public-read"
   CONTENT_SOURCE_URL: "http://content-public-read:8080/content"
+  CONTENT_SOURCE_INTERNAL_URL: "http://content-public-read:8080/internalcontent"
   CONTENT_SOURCE_HEALTH_URL: "http://content-public-read:8080/__health"
-  INTERNAL_CONTENT_SOURCE_APP_NAME: "document-store-api"
-  INTERNAL_CONTENT_SOURCE_URL: "http://document-store-api:8080/internalcomponents"
-  INTERNAL_CONTENT_SOURCE_HEALTH_URL: "http://document-store-api:8080/__health"
   TRANSFORM_CONTENT_SOURCE_APP_URL: "http://methode-article-mapper:8080/map"
   TRANSFORM_CONTENT_SOURCE_APP_NAME: "methode-article-mapper"
   TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL: "http://methode-article-internal-components-mapper:8080/map"

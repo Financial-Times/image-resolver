@@ -41,12 +41,8 @@ spec:
           value:  {{ .Values.env.CONTENT_SOURCE_URL }}
         - name: CONTENT_SOURCE_HEALTH_URL
           value:  {{ .Values.env.CONTENT_SOURCE_HEALTH_URL }}
-        - name: INTERNAL_CONTENT_SOURCE_APP_NAME
-          value: {{ .Values.env.INTERNAL_CONTENT_SOURCE_APP_NAME }}
-        - name: INTERNAL_CONTENT_SOURCE_URL
-          value: {{ .Values.env.INTERNAL_CONTENT_SOURCE_URL }}
-        - name: INTERNAL_CONTENT_SOURCE_HEALTH_URL
-          value: {{ .Values.env.INTERNAL_CONTENT_SOURCE_HEALTH_URL }}
+        - name: CONTENT_SOURCE_INTERNAL_URL
+          value: {{ .Values.env.CONTENT_SOURCE_INTERNAL_URL }}
         - name: TRANSFORM_CONTENT_SOURCE_APP_URL
           value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_URL }}
         - name: TRANSFORM_CONTENT_SOURCE_APP_NAME

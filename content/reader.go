@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/Financial-Times/transactionid-utils-go"
@@ -30,8 +29,7 @@ type ReaderFunc func([]string, string) (map[string]Content, error)
 type ReaderConfig struct {
 	ContentSourceAppName                  string
 	ContentSourceAppURL                   string
-	InternalContentSourceAppName          string
-	InternalContentSourceAppURL           string
+	ContentSourceInternalURL              string
 	NativeContentSourceAppName            string
 	NativeContentSourceAppURL             string
 	NativeContentSourceAppAuth            string
@@ -57,16 +55,16 @@ func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader 
 func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
-	imgBatch, err := cr.doGet(uuids, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
+	contentBatch, err := cr.doGet(uuids, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
 	if err != nil {
 		return cm, err
 	}
 
 	var imgModelUUIDs []string
-	for _, i := range imgBatch {
-		cr.addItemToMap(i, cm)
-		if _, foundMembers := i[members]; foundMembers {
-			imgModelUUIDs = append(imgModelUUIDs, i.getMembersUUID()...)
+	for _, c := range contentBatch {
+		cr.addItemToMap(c, cm)
+		if _, foundMembers := c[members]; foundMembers {
+			imgModelUUIDs = append(imgModelUUIDs, c.getMembersUUID()...)
 		}
 	}
 
@@ -90,18 +88,13 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
-	internalContent, err := cr.doGet(uuids, tid, cr.config.InternalContentSourceAppURL, cr.config.InternalContentSourceAppName)
+	internalContent, err := cr.doGet(uuids, tid, cr.config.ContentSourceInternalURL, cr.config.ContentSourceAppName)
 	if err != nil {
 		return cm, err
 	}
 
 	for _, c := range internalContent {
-		uuid, ok := c["uuid"].(string)
-		if !ok {
-			log.Printf("Cannot extract uuid for content: %v", c)
-			continue
-		}
-		cm[uuid] = c
+		cr.addItemToMap(c, cm)
 	}
 
 	return cm, nil

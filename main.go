@@ -43,6 +43,12 @@ func main() {
 		Desc:   "URL of the content source app",
 		EnvVar: "CONTENT_SOURCE_URL",
 	})
+	contentSourceInternalURL := app.String(cli.StringOpt{
+		Name:   "contentSourceInternalURL",
+		Value:  "http://localhost:8080/__content-public-read/internalcontent",
+		Desc:   "URL of Document Store API app",
+		EnvVar: "CONTENT_SOURCE_INTERNAL_URL",
+	})
 	contentSourceHealthURL := app.String(cli.StringOpt{
 		Name:   "contentSourceHealthURL",
 		Value:  "http://localhost:8080/__content-public-read/__health",
@@ -66,26 +72,6 @@ func main() {
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
 	})
-
-	internalContentSourceAppName := app.String(cli.StringOpt{
-		Name:   "internalComponentsSourceAppName",
-		Value:  "document-store-api",
-		Desc:   "Document Store API app",
-		EnvVar: "INTERNAL_CONTENT_SOURCE_APP_NAME",
-	})
-	internalContentSourceURL := app.String(cli.StringOpt{
-		Name:   "internalComponentsSourceURL",
-		Value:  "http://localhost:8080/__document-store-api/internalcomponents",
-		Desc:   "URL of Document Store API app",
-		EnvVar: "INTERNAL_CONTENT_SOURCE_URL",
-	})
-	/*internalContentSourceHealthURL := app.String(cli.StringOpt{
-		Name:   "internalComponentsSourceHealthURL",
-		Value:  "http://document-store-api:8080/__health",
-		Desc:   "Health URL of Document Store API app",
-		EnvVar: "INTERNAL_CONTENT_SOURCE_HEALTH_URL",
-	})*/
-
 	nativeContentSourceAppName := app.String(cli.StringOpt{
 		Name:   "nativeContentSourceAppName",
 		Value:  "methode-api",
@@ -155,8 +141,7 @@ func main() {
 		readerConfig := content.ReaderConfig{
 			ContentSourceAppName:                  *contentSourceAppName,
 			ContentSourceAppURL:                   *contentSourceURL,
-			InternalContentSourceAppName:          *internalContentSourceAppName,
-			InternalContentSourceAppURL:           *internalContentSourceURL,
+			ContentSourceInternalURL:              *contentSourceInternalURL,
 			NativeContentSourceAppName:            *nativeContentSourceAppName,
 			NativeContentSourceAppURL:             *nativeContentSourceAppURL,
 			NativeContentSourceAppAuth:            *nativeContentSourceAppAuth,

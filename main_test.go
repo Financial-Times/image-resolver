@@ -70,13 +70,12 @@ func startImageResolverService() {
 	}
 
 	rc := content.ReaderConfig{
-		ContentSourceAppName:         contentSourceAppName,
-		ContentSourceAppURL:          contentAPIMock.URL,
-		InternalContentSourceAppName: "",
-		InternalContentSourceAppURL:  "",
-		NativeContentSourceAppName:   "",
-		NativeContentSourceAppURL:    "",
-		NativeContentSourceAppAuth:   "",
+		ContentSourceAppName:       contentSourceAppName,
+		ContentSourceAppURL:        contentAPIMock.URL,
+		ContentSourceInternalURL:   "",
+		NativeContentSourceAppName: "",
+		NativeContentSourceAppURL:  "",
+		NativeContentSourceAppAuth: "",
 	}
 
 	r := content.NewContentReader(rc, http.DefaultClient)

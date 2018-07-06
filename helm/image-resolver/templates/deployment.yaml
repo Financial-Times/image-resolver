@@ -36,25 +36,25 @@ spec:
         - name: PORT 
           value: "8080"
         - name: CONTENT_STORE_APP_NAME
-          value:  {{ .Values.env.content_store.app_name }}
+          value:  {{ .Values.content_store.app_name }}
         - name: CONTENT_STORE_HOST
-          value:  {{ .Values.env.content_store.host }}
+          value:  {{ .Values.content_store.host }}
         - name: CONTENT_PATH
-          value:  {{ .Values.env.content_store.content_path }}
+          value:  {{ .Values.content_store.content_path }}
         - name: INTERNAL_CONTENT_PATH
-          value: {{ .Values.env.content_store.internal_content_path }}
+          value: {{ .Values.content_store.internal_content_path }}
         - name: CONTENT_PREVIEW_APP_NAME
-          value: {{ .Values.env.content_preview.app_name }}
+          value: {{ .Values.content_preview.app_name }}
         - name: CONTENT_PREVIEW_HOST
-          value: {{ .Values.env.content_preview.host }}
+          value: {{ .Values.content_preview.host }}
         - name: CONTENT_PREVIEW_PATH
-          value: {{ .Values.env.content_preview.path }}
+          value: {{ .Values.content_preview.path }}
         - name: INTERNAL_CONTENT_PREVIEW_APP_NAME
-          value: {{ .Values.env.internal_content_preview.app_name }}
+          value: {{ .Values.internal_content_preview.app_name }}
         - name: INTERNAL_CONTENT_PREVIEW_HOST
-          value: {{ .Values.env.internal_content_preview.host }}
+          value: {{ .Values.internal_content_preview.host }}
         - name: INTERNAL_CONTENT_PREVIEW_PATH
-          value: {{ .Values.env.internal_content_preview.path }}
+          value: {{ .Values.internal_content_preview.path }}
         - name: API_HOST
           valueFrom:
             configMapKeyRef:

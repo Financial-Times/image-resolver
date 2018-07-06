@@ -22,9 +22,9 @@ func startNotFunctionalService() *httptest.Server {
 
 func initTestServiceConfig(URL string) ServiceConfig {
 	return ServiceConfig{
-		ContentSourceAppName: "content-source-app",
-		ContentSourceURL:     URL,
-		HttpClient:           http.DefaultClient,
+		ContentStoreAppName: "content-source-app",
+		ContentStoreHost:    URL,
+		HttpClient:          http.DefaultClient,
 	}
 }
 
@@ -45,7 +45,7 @@ func TestServiceConfig_ContentCheck_NotHealthy(t *testing.T) {
 
 	check := sc.ContentCheck()
 	_, err := check.Checker()
-	assert.Error(t, err, sc.ContentSourceAppName+" service is not responding with OK. Status=502")
+	assert.Error(t, err, sc.ContentStoreAppName+" service is not responding with OK. Status=502")
 }
 
 func TestServiceConfig_ContentCheck_InvalidAddress(t *testing.T) {

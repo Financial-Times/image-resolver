@@ -3,7 +3,6 @@ package content
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -20,23 +19,23 @@ const (
 type Reader interface {
 	Get([]string, string) (map[string]Content, error)
 	GetInternal([]string, string) (map[string]Content, error)
-	GetNative([]string, string) (map[string]Content, error)
-	GetNativeInternal([]string, string) (map[string]Content, error)
+	GetPreview([]string, string) (map[string]Content, error)
+	GetInternalPreview([]string, string) (map[string]Content, error)
 }
 
 type ReaderFunc func([]string, string) (map[string]Content, error)
 
 type ReaderConfig struct {
-	ContentSourceAppName                  string
-	ContentSourceAppURL                   string
-	ContentSourceInternalURL              string
-	NativeContentSourceAppName            string
-	NativeContentSourceAppURL             string
-	NativeContentSourceAppAuth            string
-	TransformContentSourceURL             string
-	TransformContentSourceAppName         string
-	TransformInternalContentSourceURL     string
-	TransformInternalContentSourceAppName string
+	ContentStoreAppName           string
+	ContentStoreHost              string
+	ContentStorePath              string
+	ContentStoreInternalPath      string
+	ContentPreviewAppName         string
+	ContentPreviewHost            string
+	ContentPreviewPath            string
+	InternalContentPreviewAppName string
+	InternalContentPreviewHost    string
+	InternalContentPreviewPath    string
 }
 
 type ContentReader struct {
@@ -54,8 +53,9 @@ func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader 
 // Get content from content-public-read
 func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
+	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.ContentStorePath)
 
-	contentBatch, err := cr.doGet(uuids, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
+	contentBatch, err := cr.doGet(uuids, tid, requestURL, cr.config.ContentStoreAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -72,7 +72,7 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 		return cm, nil
 	}
 
-	imgModelsList, err := cr.doGet(imgModelUUIDs, tid, cr.config.ContentSourceAppURL, cr.config.ContentSourceAppName)
+	imgModelsList, err := cr.doGet(imgModelUUIDs, tid, cr.config.ContentStoreHost, cr.config.ContentStoreAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -87,8 +87,9 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 // GetInternal internal components from document-store-api
 func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
+	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.ContentStoreInternalPath)
 
-	internalContent, err := cr.doGet(uuids, tid, cr.config.ContentSourceInternalURL, cr.config.ContentSourceAppName)
+	internalContent, err := cr.doGet(uuids, tid, requestURL, cr.config.ContentStoreAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -100,56 +101,44 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 	return cm, nil
 }
 
-// GetNative from Methode API
-func (cr *ContentReader) GetNative(uuids []string, tid string) (map[string]Content, error) {
+// GetPreview from Methode API
+func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
 	for _, uuid := range uuids {
-		nativeResponse, err := cr.doGetNative(uuid, tid)
+		requestURL := fmt.Sprintf("%s%s/%s", cr.config.ContentPreviewHost, cr.config.ContentPreviewPath, uuid)
+		content, err := cr.doGetPreview(uuid, tid, requestURL, cr.config.ContentPreviewAppName)
 		if err != nil {
 			return nil, err
 		}
 
-		transformedBody, err := cr.doGetTransformedContent(nativeResponse.Body, cr.config.TransformContentSourceURL, cr.config.TransformContentSourceAppName, uuid, tid)
-		if err != nil {
-			return nil, err
-		}
-
-		defer nativeResponse.Body.Close()
-
-		cm[uuid] = transformedBody
+		cm[uuid] = content
 	}
 
 	return cm, nil
 }
 
-// GetNativeInternal reads internalcomponents from Methode API
-func (cr *ContentReader) GetNativeInternal(uuids []string, tid string) (map[string]Content, error) {
+// GetInternalPreview reads internalcomponents from Methode API
+func (cr *ContentReader) GetInternalPreview(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
 	for _, uuid := range uuids {
-		nativeResponse, err := cr.doGetNative(uuid, tid)
+		requestURL := fmt.Sprintf("%s%s/%s", cr.config.InternalContentPreviewHost, cr.config.InternalContentPreviewPath, uuid)
+		content, err := cr.doGetPreview(uuid, tid, requestURL, cr.config.InternalContentPreviewAppName)
 		if err != nil {
 			return nil, err
 		}
 
-		transformedBody, err := cr.doGetTransformedContent(nativeResponse.Body, cr.config.TransformInternalContentSourceURL, cr.config.TransformInternalContentSourceAppName, uuid, tid)
-		if err != nil {
-			return nil, err
-		}
-
-		defer nativeResponse.Body.Close()
-
-		cm[uuid] = transformedBody
+		cm[uuid] = content
 	}
 
 	return cm, nil
 }
 
-func (cr *ContentReader) doGet(uuids []string, tid string, url string, appName string) ([]Content, error) {
+func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appName string) ([]Content, error) {
 	var cb []Content
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return cb, errors.Wrapf(err, "Error connecting to %v", appName)
 	}
@@ -186,62 +175,36 @@ func (cr *ContentReader) doGet(uuids []string, tid string, url string, appName s
 	return cb, nil
 }
 
-func (cr *ContentReader) doGetNative(uuid string, tid string) (*http.Response, error) {
-	requestURL := fmt.Sprintf("%s%s", cr.config.NativeContentSourceAppURL, uuid)
-	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+func (cr *ContentReader) doGetPreview(uuid string, tid string, reqURL string, appName string) (Content, error) {
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error connecting to %v for uuid: %s", cr.config.NativeContentSourceAppName, uuid)
+		return nil, errors.Wrapf(err, "Error connecting to %v for uuid: %s", appName, uuid)
 	}
 
 	req.Header.Set(transactionidutils.TransactionIDHeader, tid)
-	req.Header.Set("Authorization", "Basic "+cr.config.NativeContentSourceAppAuth)
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", userAgentValue)
 
 	res, err := cr.client.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Request to %v failed for uuid: %s", cr.config.NativeContentSourceAppName, uuid)
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("Request to %v failed for uuid: %s with status code %d", cr.config.NativeContentSourceAppName, uuid, res.StatusCode)
-	}
-
-	return res, nil
-}
-
-func (cr *ContentReader) doGetTransformedContent(nativeContent io.Reader, transformerURL string, trasformerSourceApp string, uuid string, tid string) (Content, error) {
-	req, err := http.NewRequest(http.MethodPost, transformerURL, nativeContent)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error connecting to %v for uuid: %s", trasformerSourceApp, uuid)
-	}
-
-	req.Header.Add(transactionidutils.TransactionIDHeader, tid)
-	req.Header.Set(userAgent, userAgentValue)
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := cr.client.Do(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Request to %v failed for uuid: %s", trasformerSourceApp, uuid)
+		return nil, errors.Wrapf(err, "Request to %v failed for uuid: %s", appName, uuid)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("Request to %v failed for uuid: %s with status code %d", trasformerSourceApp, uuid, res.StatusCode)
+		return nil, errors.Errorf("Request to %v failed for uuid: %s with status code %d", appName, uuid, res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error reading response received from %v", trasformerSourceApp)
+		return nil, errors.Wrapf(err, "Error reading response received from %v", appName)
 	}
 
-	var c Content
-	err = json.Unmarshal(body, &c)
+	var content Content
+	err = json.Unmarshal(body, &content)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error unmarshalling response from %v for uuid %s", trasformerSourceApp, uuid)
+		return content, errors.Wrapf(err, "Error unmarshalling response from %v", appName)
 	}
-
-	return c, nil
+	return content, nil
 }
 
 func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {

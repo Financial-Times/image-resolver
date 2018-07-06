@@ -15,10 +15,10 @@ const (
 )
 
 type ReaderMock struct {
-	mockGet               func(c []string, tid string) (map[string]Content, error)
-	mockGetInternal       func(uuids []string, tid string) (map[string]Content, error)
-	mockGetNative         func([]string, string) (map[string]Content, error)
-	mockGetNativeInternal func([]string, string) (map[string]Content, error)
+	mockGet                func(c []string, tid string) (map[string]Content, error)
+	mockGetInternal        func(uuids []string, tid string) (map[string]Content, error)
+	mockGetPreview         func([]string, string) (map[string]Content, error)
+	mockGetInternalPreview func([]string, string) (map[string]Content, error)
 }
 
 func (rm *ReaderMock) Get(c []string, tid string) (map[string]Content, error) {
@@ -29,12 +29,12 @@ func (rm *ReaderMock) GetInternal(c []string, tid string) (map[string]Content, e
 	return rm.mockGetInternal(c, tid)
 }
 
-func (rm *ReaderMock) GetNative(c []string, tid string) (map[string]Content, error) {
-	return rm.mockGetNative(c, tid)
+func (rm *ReaderMock) GetPreview(c []string, tid string) (map[string]Content, error) {
+	return rm.mockGetPreview(c, tid)
 }
 
-func (rm *ReaderMock) GetNativeInternal(c []string, tid string) (map[string]Content, error) {
-	return rm.mockGetNativeInternal(c, tid)
+func (rm *ReaderMock) GetInternalPreview(c []string, tid string) (map[string]Content, error) {
+	return rm.mockGetInternalPreview(c, tid)
 }
 
 func TestUnrollImages(t *testing.T) {

@@ -52,8 +52,8 @@ func TestContentReader_Get(t *testing.T) {
 	defer ts.Close()
 
 	cfg := ReaderConfig{
-		ContentSourceAppName: "content-source-app-name",
-		ContentSourceAppURL:  ts.URL,
+		ContentStoreAppName: "content-source-app-name",
+		ContentStoreHost:    ts.URL,
 	}
 	cr := readerForTest(cfg)
 
@@ -73,8 +73,8 @@ func TestContentReader_Get_ContentSourceReturns500(t *testing.T) {
 	defer ts.Close()
 
 	cfg := ReaderConfig{
-		ContentSourceAppName: "content-source-app-name",
-		ContentSourceAppURL:  ts.URL,
+		ContentStoreAppName: "content-source-app-name",
+		ContentStoreHost:    ts.URL,
 	}
 	cr := readerForTest(cfg)
 
@@ -87,8 +87,8 @@ func TestContentReader_Get_ContentSourceReturns404(t *testing.T) {
 	defer ts.Close()
 
 	cfg := ReaderConfig{
-		ContentSourceAppName: "content-source-app-name",
-		ContentSourceAppURL:  ts.URL,
+		ContentStoreAppName: "content-source-app-name",
+		ContentStoreHost:    ts.URL,
 	}
 	cr := readerForTest(cfg)
 
@@ -98,8 +98,8 @@ func TestContentReader_Get_ContentSourceReturns404(t *testing.T) {
 
 func TestContentReader_Get_ContentSourceCannotBeResolved(t *testing.T) {
 	cfg := ReaderConfig{
-		ContentSourceAppName: "content-source-app-name",
-		ContentSourceAppURL:  "http://sampleAddress:8080/content",
+		ContentStoreAppName: "content-source-app-name",
+		ContentStoreHost:    "http://sampleAddress:8080/content",
 	}
 	cr := readerForTest(cfg)
 
@@ -109,8 +109,8 @@ func TestContentReader_Get_ContentSourceCannotBeResolved(t *testing.T) {
 
 func TestContentReader_Get_ContentSourceHasInvalidURL(t *testing.T) {
 	cfg := ReaderConfig{
-		ContentSourceAppName: "&&^%&&^",
-		ContentSourceAppURL:  "@$@",
+		ContentStoreAppName: "&&^%&&^",
+		ContentStoreHost:    "@$@",
 	}
 	cr := readerForTest(cfg)
 

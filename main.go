@@ -31,29 +31,71 @@ func main() {
 		Desc:   "application port",
 		EnvVar: "PORT",
 	})
-	contentSourceAppName := app.String(cli.StringOpt{
-		Name:   "contentSourceApplicationName",
+	contentStoreApplicationName := app.String(cli.StringOpt{
+		Name:   "contentSourceAppName",
 		Value:  "content-public-read",
 		Desc:   "Content read app",
-		EnvVar: "CONTENT_SOURCE_APP_NAME",
+		EnvVar: "CONTENT_STORE_APP_NAME",
 	})
-	contentSourceURL := app.String(cli.StringOpt{
-		Name:   "contentSourceURL",
-		Value:  "http://localhost:8080/__content-public-read/content",
-		Desc:   "URL of the content source app",
-		EnvVar: "CONTENT_SOURCE_URL",
+	contentStoreHost := app.String(cli.StringOpt{
+		Name:   "contentStoreHost",
+		Value:  "http://localhost:8080/__content-public-read",
+		Desc:   "Content source hostname",
+		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentSourceInternalURL := app.String(cli.StringOpt{
-		Name:   "contentSourceInternalURL",
-		Value:  "http://localhost:8080/__content-public-read/internalcontent",
-		Desc:   "URL of Document Store API app",
-		EnvVar: "CONTENT_SOURCE_INTERNAL_URL",
+	contentStorePath := app.String(cli.StringOpt{
+		Name:   "contentStorePath",
+		Value:  "/content",
+		Desc:   "/content path",
+		EnvVar: "CONTENT_PATH",
+	})
+	contentStoreInternalPath := app.String(cli.StringOpt{
+		Name:   "contentStoreInternalPath",
+		Value:  "/internalcontent",
+		Desc:   "/internalcontent path",
+		EnvVar: "INTERNAL_CONTENT_PATH",
 	})
 	contentSourceHealthURL := app.String(cli.StringOpt{
 		Name:   "contentSourceHealthURL",
 		Value:  "http://localhost:8080/__content-public-read/__health",
 		Desc:   "Health url of the content source app",
 		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
+	})
+	contentPreviewAppName := app.String(cli.StringOpt{
+		Name:   "contentPreviewAppName",
+		Value:  "content-preview",
+		Desc:   "Content Preview app",
+		EnvVar: "CONTENT_PREVIEW_APP_NAME",
+	})
+	contentPreviewHost := app.String(cli.StringOpt{
+		Name:   "contentPreviewHost",
+		Value:  "http://localhost:8080/__content-preview",
+		Desc:   "Content Preview hostname",
+		EnvVar: "CONTENT_PREVIEW_HOST",
+	})
+	contentPreviewPath := app.String(cli.StringOpt{
+		Name:   "contentPreviewPath",
+		Value:  "/content-preview",
+		Desc:   "Content Preview path",
+		EnvVar: "CONTENT_PREVIEW_PATH",
+	})
+	internalContentPreviewAppName := app.String(cli.StringOpt{
+		Name:   "internalContentPreviewAppName",
+		Value:  "internal-components-preview",
+		Desc:   "Internal Content Preview app",
+		EnvVar: "INTERNAL_CONTENT_PREVIEW_APP_NAME",
+	})
+	internalContentPreviewHost := app.String(cli.StringOpt{
+		Name:   "internalContentPreviewHost",
+		Value:  "http://localhost:8080/__internal-components-preview",
+		Desc:   "Internal Content Preview hostname",
+		EnvVar: "INTERNAL_CONTENT_PREVIEW_HOST",
+	})
+	internalContentPreviewPath := app.String(cli.StringOpt{
+		Name:   "contentPreviewPath",
+		Value:  "/content-preview",
+		Desc:   "Intenal Content Preview path",
+		EnvVar: "INTERNAL_CONTENT_PREVIEW_PATH",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
 		Name:   "graphiteTCPAddress",
@@ -71,48 +113,6 @@ func main() {
 		Value:  false,
 		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
 		EnvVar: "LOG_METRICS",
-	})
-	nativeContentSourceAppName := app.String(cli.StringOpt{
-		Name:   "nativeContentSourceAppName",
-		Value:  "methode-api",
-		Desc:   "Service name of the Native Content Source Application endpoint",
-		EnvVar: "NATIVE_CONTENT_SOURCE_APP_NAME",
-	})
-	nativeContentSourceAppURL := app.String(cli.StringOpt{
-		Name:   "nativeContentSourceAppURL",
-		Value:  "http://methode-api-uk-t.svc.ft.com/eom-file/",
-		Desc:   "URI of the Native Content Source Application endpoint",
-		EnvVar: "NATIVE_CONTENT_SOURCE_APP_URL",
-	})
-	nativeContentSourceAppAuth := app.String(cli.StringOpt{
-		Name:   "nativeContentSourceAppAuth",
-		Value:  "default",
-		Desc:   "Basic auth for Native Content Source Application",
-		EnvVar: "NATIVE_CONTENT_SOURCE_APP_AUTH",
-	})
-	transformContentSourceURL := app.String(cli.StringOpt{
-		Name:   "transformContentSourceURL",
-		Value:  "http://localhost:8080/__methode-article-mapper/map",
-		Desc:   "Methode Article Mapper URL",
-		EnvVar: "TRANSFORM_CONTENT_SOURCE_APP_URL",
-	})
-	transformContentSourceAppName := app.String(cli.StringOpt{
-		Name:   "transformContentSourceAppName",
-		Value:  "methode-article-mapper",
-		Desc:   "Methode Article Mapper app",
-		EnvVar: "TRANSFORM_CONTENT_SOURCE_APP_NAME",
-	})
-	transformInternalContentSourceURL := app.String(cli.StringOpt{
-		Name:   "transformContentSourceURL",
-		Value:  "http://localhost:8080/__methode-article-internal-components-mapper/map",
-		Desc:   "Methode Article Mapper URL",
-		EnvVar: "TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL",
-	})
-	transformInternalContentSourceAppName := app.String(cli.StringOpt{
-		Name:   "transformContentSourceAppName",
-		Value:  "methode-article-internal-components-mapper",
-		Desc:   "Methode Article Mapper app",
-		EnvVar: "TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME",
 	})
 	apiHost := app.String(cli.StringOpt{
 		Name:   "apiHost",
@@ -133,22 +133,22 @@ func main() {
 		}
 
 		sc := content.ServiceConfig{
-			ContentSourceAppName: *contentSourceAppName,
-			ContentSourceURL:     *contentSourceHealthURL,
-			HttpClient:           httpClient,
+			ContentStoreAppName: *contentStoreApplicationName,
+			ContentStoreHost:    *contentSourceHealthURL,
+			HttpClient:          httpClient,
 		}
 
 		readerConfig := content.ReaderConfig{
-			ContentSourceAppName:                  *contentSourceAppName,
-			ContentSourceAppURL:                   *contentSourceURL,
-			ContentSourceInternalURL:              *contentSourceInternalURL,
-			NativeContentSourceAppName:            *nativeContentSourceAppName,
-			NativeContentSourceAppURL:             *nativeContentSourceAppURL,
-			NativeContentSourceAppAuth:            *nativeContentSourceAppAuth,
-			TransformContentSourceURL:             *transformContentSourceURL,
-			TransformContentSourceAppName:         *transformContentSourceAppName,
-			TransformInternalContentSourceURL:     *transformInternalContentSourceURL,
-			TransformInternalContentSourceAppName: *transformInternalContentSourceAppName,
+			ContentStoreAppName:           *contentStoreApplicationName,
+			ContentStoreHost:              *contentStoreHost,
+			ContentStorePath:              *contentStorePath,
+			ContentStoreInternalPath:      *contentStoreInternalPath,
+			ContentPreviewAppName:         *contentPreviewAppName,
+			ContentPreviewHost:            *contentPreviewHost,
+			ContentPreviewPath:            *contentPreviewPath,
+			InternalContentPreviewAppName: *internalContentPreviewAppName,
+			InternalContentPreviewHost:    *internalContentPreviewHost,
+			InternalContentPreviewPath:    *internalContentPreviewPath,
 		}
 
 		reader := content.NewContentReader(readerConfig, httpClient)

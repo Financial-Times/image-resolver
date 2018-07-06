@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	contentSourceAppName     = "content-source-app-name"
+	contentStoreAppName      = "content-source-app-name"
 	contentWhitelist         = "http://www.ft.com/ontology/content/ImageSet"
 	internalContentWhitelist = "http://www.ft.com/ontology/content/DynamicContent"
 )
@@ -64,18 +64,15 @@ func contentApiStatusOkHandler(w http.ResponseWriter, r *http.Request) {
 
 func startImageResolverService() {
 	sc := content.ServiceConfig{
-		ContentSourceAppName: contentSourceAppName,
-		ContentSourceURL:     contentAPIMock.URL,
-		HttpClient:           http.DefaultClient,
+		ContentStoreAppName: contentStoreAppName,
+		ContentStoreHost:    contentAPIMock.URL,
+		HttpClient:          http.DefaultClient,
 	}
 
 	rc := content.ReaderConfig{
-		ContentSourceAppName:       contentSourceAppName,
-		ContentSourceAppURL:        contentAPIMock.URL,
-		ContentSourceInternalURL:   "",
-		NativeContentSourceAppName: "",
-		NativeContentSourceAppURL:  "",
-		NativeContentSourceAppAuth: "",
+		ContentStoreAppName:      contentStoreAppName,
+		ContentStoreHost:         contentAPIMock.URL,
+		ContentStoreInternalPath: "",
 	}
 
 	r := content.NewContentReader(rc, http.DefaultClient)
@@ -205,7 +202,7 @@ func TestShouldNotBeHealthyWhenContentApiIsNotHappy(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 503")
 	respBody, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err, "")
-	assertMsg := fmt.Sprintf(`"id":"check-connect-%v","name":"Check connectivity to %v","ok":false`, contentSourceAppName, contentSourceAppName)
+	assertMsg := fmt.Sprintf(`"id":"check-connect-%v","name":"Check connectivity to %v","ok":false`, contentStoreAppName, contentStoreAppName)
 	assert.Contains(t, string(respBody), assertMsg)
 
 }

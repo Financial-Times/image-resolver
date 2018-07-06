@@ -35,39 +35,26 @@ spec:
         env: 
         - name: PORT 
           value: "8080"
-        - name: CONTENT_SOURCE_APP_NAME
-          value:  {{ .Values.env.CONTENT_SOURCE_APP_NAME }}
-        - name: CONTENT_SOURCE_URL
-          value:  {{ .Values.env.CONTENT_SOURCE_URL }}
-        - name: CONTENT_SOURCE_HEALTH_URL
-          value:  {{ .Values.env.CONTENT_SOURCE_HEALTH_URL }}
-        - name: CONTENT_SOURCE_INTERNAL_URL
-          value: {{ .Values.env.CONTENT_SOURCE_INTERNAL_URL }}
-        - name: TRANSFORM_CONTENT_SOURCE_APP_URL
-          value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_URL }}
-        - name: TRANSFORM_CONTENT_SOURCE_APP_NAME
-          value: {{ .Values.env.TRANSFORM_CONTENT_SOURCE_APP_NAME }}
-        - name: TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL
-          value: {{ .Values.env.TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL }}
-        - name: TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME
-          value: {{ .Values.env.TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME }}
-        - name: NATIVE_CONTENT_SOURCE_APP_NAME
-          value: methode-api
-        - name: NATIVE_CONTENT_SOURCE_APP_URL
-          valueFrom:
-            configMapKeyRef:
-              name: global-config
-              key: methode.api_uri
-        - name: NATIVE_CONTENT_SOURCE_HEALTH_URI
-          valueFrom:
-            configMapKeyRef:
-              name: global-config
-              key: methode.health_uri
-        - name: NATIVE_CONTENT_SOURCE_APP_AUTH
-          valueFrom:
-            secretKeyRef:
-              name: global-secrets
-              key: methode.authorization_key
+        - name: CONTENT_STORE_APP_NAME
+          value:  {{ .Values.env.content_store.app_name }}
+        - name: CONTENT_STORE_HOST
+          value:  {{ .Values.env.content_store.host }}
+        - name: CONTENT_PATH
+          value:  {{ .Values.env.content_store.content_path }}
+        - name: INTERNAL_CONTENT_PATH
+          value: {{ .Values.env.content_store.internal_content_path }}
+        - name: CONTENT_PREVIEW_APP_NAME
+          value: {{ .Values.env.content_preview.app_name }}
+        - name: CONTENT_PREVIEW_HOST
+          value: {{ .Values.env.content_preview.host }}
+        - name: CONTENT_PREVIEW_PATH
+          value: {{ .Values.env.content_preview.path }}
+        - name: INTERNAL_CONTENT_PREVIEW_APP_NAME
+          value: {{ .Values.env.internal_content_preview.app_name }}
+        - name: INTERNAL_CONTENT_PREVIEW_HOST
+          value: {{ .Values.env.internal_content_preview.host }}
+        - name: INTERNAL_CONTENT_PREVIEW_PATH
+          value: {{ .Values.env.internal_content_preview.path }}
         - name: API_HOST
           valueFrom:
             configMapKeyRef:

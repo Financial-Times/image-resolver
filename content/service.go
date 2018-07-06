@@ -115,7 +115,7 @@ func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
 	}
 
 	// unroll dynamic content from Native content source
-	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetNative)
+	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetPreview)
 	if foundDyn {
 		for _, dynC := range dynContents {
 			unrolledEmbedded = append(unrolledEmbedded, dynC)
@@ -151,7 +151,7 @@ func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollRe
 		cc[leadImages] = expLeadImages
 	}
 
-	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetNativeInternal)
+	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetInternalPreview)
 	if foundDyn {
 		cc[embeds] = dynContents
 	}

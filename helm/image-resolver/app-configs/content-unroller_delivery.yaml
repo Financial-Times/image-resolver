@@ -2,12 +2,19 @@
 replicaCount: 2
 service:
   name: content-unroller
-env:
-  CONTENT_SOURCE_APP_NAME: "content-public-read"
-  CONTENT_SOURCE_URL: "http://content-public-read:8080/content"
-  CONTENT_SOURCE_INTERNAL_URL: "http://content-public-read:8080/internalcontent"
-  CONTENT_SOURCE_HEALTH_URL: "http://content-public-read:8080/__health"
-  TRANSFORM_CONTENT_SOURCE_APP_URL: "http://methode-article-mapper:8080/map"
-  TRANSFORM_CONTENT_SOURCE_APP_NAME: "methode-article-mapper"
-  TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_URL: "http://methode-article-internal-components-mapper:8080/map"
-  TRANSFORM_INTERNAL_CONTENT_SOURCE_APP_NAME: "methode-article-internal-components-mapper"
+
+content_store:
+  app_name: content-public-read
+  host: http://content-public-read:8080
+  content_path: /content
+  internal_content_path: /internalcontent
+
+content_preview:
+  app_name: content-preview
+  host: http://content-preview:8080
+  path: /content-preview
+
+internal_content_preview:
+  app_name: internal-components-preview
+  host: http://internal-components-preview:8080
+  path: /content-preview

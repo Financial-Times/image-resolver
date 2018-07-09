@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -54,12 +55,6 @@ func main() {
 		Value:  "/internalcontent",
 		Desc:   "/internalcontent path",
 		EnvVar: "INTERNAL_CONTENT_PATH",
-	})
-	contentSourceHealthURL := app.String(cli.StringOpt{
-		Name:   "contentSourceHealthURL",
-		Value:  "http://localhost:8080/__content-public-read/__health",
-		Desc:   "Health url of the content source app",
-		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
 	})
 	contentPreviewAppName := app.String(cli.StringOpt{
 		Name:   "contentPreviewAppName",
@@ -134,7 +129,7 @@ func main() {
 
 		sc := content.ServiceConfig{
 			ContentStoreAppName: *contentStoreApplicationName,
-			ContentStoreHost:    *contentSourceHealthURL,
+			ContentStoreHost:    getServiceHealthURI(*contentStoreHost),
 			HttpClient:          httpClient,
 		}
 
@@ -188,4 +183,8 @@ func setupServiceHandler(s *content.ContentUnroller, sc content.ServiceConfig) *
 	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})
 	return r
+}
+
+func getServiceHealthURI(hostname string) string {
+	return fmt.Sprintf("%s%s", hostname, "/__health")
 }

@@ -85,5 +85,4 @@ func TestShouldReturnImagesAndDynamicContent(t *testing.T) {
 		assert.Fail(t, err.Error())
 	}
 	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids shoud be equal to expected images")
-
 }

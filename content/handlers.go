@@ -36,6 +36,7 @@ func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
 		handleError(r, tid, "", w, err, http.StatusBadRequest)
+		return
 	}
 
 	if !validateContent(event.c) {

@@ -24,7 +24,7 @@
     "alternativeTitles": {
         "promotionalTitle": "Brexit begins as Theresa May triggers Article 50"
     },
-    "bodyXML": "<body><ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f\" data-embedded=\"true\"></ft-content><p>But the government’s approach drew some criticism at home. Nick Macpherson, the former Treasury permanent secretary, tweeted: “Crime and terrorism don’t respect borders. It is not a credible threat to link co-operation to a trade deal.”</p>\n<ft-related type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/1888b166-13b9-11e7-80f4-13e067d5072c\"><title>Read more</title><headline>Brexit Article 50 letter — annotated transcript\n</headline><media><ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/71231d3a-13c7-11e7-2ea7-a07ecd9ac73f\" data-embedded=\"true\"></ft-content></media><intro><p>FT journalists explain the key passages of the UK government’s letter triggering the exit process</p></intro></ft-related>\n<p>Germany said the negotiations would not be easy for either side. Chancellor Angela Merkel took a<ft-content type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/4855afce-10a4-11e7-b030-768954394623\">hard line</ft-content> on the sequencing of the talks, saying Britain’s future relationship with the EU could be discussed only after a divorce settlement is reached on the terms of Britain’s exit, which is expected to include the €60bn Brussels believes the UK still owes the EU.</p>\n<ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/0261ea4a-1474-11e7-1e92-847abda1ac65\" data-embedded=\"true\"></ft-content>\n<p>The prime minister of Croatia — the last country to join the EU, in 2013 — said Brexit was a “big, huge mistake” with negative consequences that will be felt primarily in Britain. Andrej Plenkovic said “no one can tell at this moment” when the negotiation would end, and what kind of agreement it would produce.</p>\n<ft-content type=\"http://www.ft.com/ontology/content/MediaResource\" url=\"http://api.ft.com/content/da0e3d5d-ccf0-3b40-b865-f648189fb849\" data-embedded=\"true\"></ft-content>\n\n\n<p>Germany’s chief diplomat added: “We will work towards securing a future for this agreement, which is the successful product of long and difficult diplomatic negotiations over many years. Most importantly, the agreement works.”</p><ft-content type=\"http://www.ft.com/ontology/content/DynamicContent\" url=\"http://api.ft.com/content/ccac6b68-d688-41f8-9209-31e4b4900b1b\" data-embedded=\"true\"></ft-content><p>In a statement the EU said: “The lifting of nuclear-related sanctions is an essential part of the agreement. The EU has repeatedly stressed that the sanctions lifting has a positive impact on trade and economic relations with Iran.”</p></body>",
+    "bodyXML": "<body><ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f\" data-embedded=\"true\"></ft-content><p>But the government’s approach drew some criticism at home. Nick Macpherson, the former Treasury permanent secretary, tweeted: “Crime and terrorism don’t respect borders. It is not a credible threat to link co-operation to a trade deal.”</p>\n<ft-related type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/1888b166-13b9-11e7-80f4-13e067d5072c\"><title>Read more</title><headline>Brexit Article 50 letter — annotated transcript\n</headline><media><ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/71231d3a-13c7-11e7-2ea7-a07ecd9ac73f\" data-embedded=\"true\"></ft-content></media><intro><p>FT journalists explain the key passages of the UK government’s letter triggering the exit process</p></intro></ft-related>\n<p>Germany said the negotiations would not be easy for either side. Chancellor Angela Merkel took a<ft-content type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/4855afce-10a4-11e7-b030-768954394623\">hard line</ft-content> on the sequencing of the talks, saying Britain’s future relationship with the EU could be discussed only after a divorce settlement is reached on the terms of Britain’s exit, which is expected to include the €60bn Brussels believes the UK still owes the EU.</p>\n<ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/0261ea4a-1474-11e7-1e92-847abda1ac65\" data-embedded=\"true\"></ft-content>\n<p>The prime minister of Croatia — the last country to join the EU, in 2013 — said Brexit was a “big, huge mistake” with negative consequences that will be felt primarily in Britain. Andrej Plenkovic said “no one can tell at this moment” when the negotiation would end, and what kind of agreement it would produce.</p>\n<ft-content type=\"http://www.ft.com/ontology/content/MediaResource\" url=\"http://api.ft.com/content/da0e3d5d-ccf0-3b40-b865-f648189fb849\" data-embedded=\"true\"></ft-content><ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/DynamicContent\" url=\"http://test.api.ft.com/content/d02886fc-58ff-11e8-9859-6668838a4c10\"></ft-content>\n\n\n</body>",
     "brands": [
         "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
     ],
@@ -180,26 +180,65 @@
             "type": "http://www.ft.com/ontology/content/ImageSet"
         },
         {
-            "id": "http://test.api.ft.com/content/da0e3d5d-ccf0-3b40-b865-f648189fb849"
-        },
-        {
-            "alternativeStandfirsts": {},
-            "alternativeTitles": {},
-            "bodyXML": "\u003cp\u003eAnother potential risk to the deal is that \u003ca href=\"https://www.ft.com/topics/organisations/Takeda_Pharmaceutical_Co_Ltd\" title=\"www.ft.com\"\u003eTakeda\u003c/a\u003e could fail to secure a green light from its shareholders. \u003c/p\u003e\n\u003cp\u003eIn order to issue new shares to acquire Shire, Takeda needs to secure a two-thirds approval from shareholders holding one-third or more of the voting rights.\u003c/p\u003e\n\u003cp\u003eInvestor sentiment towards the deal has also been chilled by the fact that Takeda would have to take on debt equal to nearly five times its earnings before interest, tax, depreciation and amortisation.\u003c/p\u003e\n\u003crecommended\u003e\u003crecommended-title\u003eRecommended\u003c/recommended-title\u003e\u003cul\u003e\u003cli\u003e\u003cft-content type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/8176beee-4963-11e8-8ae9-4b5ddcca99b3\"\u003eWhy Japan Inc is gambling on M\u0026amp;A growth\u003c/ft-content\u003e\u003c/li\u003e\u003c/ul\u003e\u003c/recommended\u003e\n\u003cp\u003e",
-            "description": "sample description",
-            "id": "http://www.ft.com/thing/ccac6b68-d688-41f8-9209-31e4b4900b1b",
-            "identifiers": [
+            "uuid": "d02886fc-58ff-11e8-9859-6668838a4c10",
+            "title": "Test IG Story (optional headline)",
+            "alternativeTitles": {
+                "promotionalTitle": null,
+                "contentPackageTitle": null
+            },
+            "type": "DynamicContent",
+            "byline": "",
+            "brands": [
                 {
-                    "authority": "http://api.ft.com/system/FTCOM-METHODE",
-                    "identifierValue": "ccac6b68-d688-41f8-9209-31e4b4900b1b"
+                    "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
                 }
             ],
-            "lastModified": "2018-05-29T18:28:00.000Z",
-            "publishReference": "tid_axufgrmrhm",
-            "publishedDate": "2018-05-29T18:28:00.000Z",
-            "requestUrl": "http://api.ft.com/content/0261ea4a-1474-11e7-80f4-13e067d5072c",
-            "title": "Interactive Graphic Title 1 about rolling globes",
-            "type": "http://www.ft.com/ontology/content/DynamicContent"
+            "identifiers": [
+                {
+                    "authority": "http://api.ft.com/system/FTCOM-IG",
+                    "identifierValue": "ccac6b68-d688-41f8-9209-31e4b4900b1b"
+                },
+                {
+                    "authority": "http://api.ft.com/system/FTCOM-METHODE",
+                    "identifierValue": "d02886fc-58ff-11e8-9859-6668838a4c10"
+                }
+            ],
+            "publishedDate": "2018-05-16T16:23:06.000Z",
+            "standfirst": null,
+            "body": "<body><p>”Fallback content” for this IG story will be contained within the body.</p>\n</body>",
+            "description": null,
+            "mediaType": null,
+            "pixelWidth": null,
+            "pixelHeight": null,
+            "internalBinaryUrl": null,
+            "externalBinaryUrl": null,
+            "members": null,
+            "mainImage": null,
+            "storyPackage": null,
+            "contentPackage": null,
+            "standout": {
+                "editorsChoice": false,
+                "exclusive": false,
+                "scoop": false
+            },
+            "comments": {
+                "enabled": true
+            },
+            "copyright": null,
+            "webUrl": "https://www.ft.com/content/d02886fc-58ff-11e8-9859-6668838a4c10",
+            "canonicalWebUrl": "https://www.ft.com/content/d02886fc-58ff-11e8-9859-6668838a4c10",
+            "lastModified": "2018-07-11T14:08:29.761Z",
+            "canBeSyndicated": "verify",
+            "firstPublishedDate": "2018-05-16T16:23:06.000Z",
+            "accessLevel": "subscribed",
+            "canBeDistributed": "yes",
+            "rightsGroup": null,
+            "masterSource": null,
+            "alternativeStandfirsts": {
+                "promotionalStandfirst": null
+            },
+            "editorialDesk": "/FT/WorldNews",
+            "publishReference": "tid_w3vmoogotb"
         }
     ],
     "id": "http://www.ft.com/thing/22c0d426-1466-11e7-b0c1-37e417ee6c76",

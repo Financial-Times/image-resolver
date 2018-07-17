@@ -20,55 +20,127 @@ func startNotFunctionalService() *httptest.Server {
 	}))
 }
 
-func initTestServiceConfig(URL string) ServiceConfig {
+func initTestServiceConfig(contentStoreURL string, contentPreviewURL string, internalContentPreviewURL string) ServiceConfig {
 	return ServiceConfig{
-		ContentStoreAppName: "content-source-app",
-		ContentStoreHost:    URL,
-		HttpClient:          http.DefaultClient,
+		ContentStoreAppName:                "content-source-app",
+		ContentStoreAppHealthURI:           contentStoreURL,
+		ContentPreviewAppName:              "content-preview-app",
+		ContentPreviewAppHealthURI:         contentPreviewURL,
+		InternalContentPreviewAppName:      "internal-content-preview-app",
+		InternalContentPreviewAppHealthURI: internalContentPreviewURL,
+		HTTPClient:                         http.DefaultClient,
 	}
 }
 
-func TestServiceConfig_ContentCheck(t *testing.T) {
+func TestServiceConfig_ContentStoreCheck(t *testing.T) {
 	ts := startFunctionalService()
 	defer ts.Close()
-	sc := initTestServiceConfig(ts.URL)
+	sc := initTestServiceConfig(ts.URL, "", "")
 
-	check := sc.ContentCheck()
+	check := sc.ContentStoreCheck()
 	out, _ := check.Checker()
 	assert.Equal(t, out, "Ok")
 }
 
-func TestServiceConfig_ContentCheck_NotHealthy(t *testing.T) {
+func TestServiceConfig_ContentStoreCheck_NotHealthy(t *testing.T) {
 	ts := startNotFunctionalService()
 	defer ts.Close()
-	sc := initTestServiceConfig(ts.URL)
+	sc := initTestServiceConfig(ts.URL, "", "")
 
-	check := sc.ContentCheck()
+	check := sc.ContentStoreCheck()
 	_, err := check.Checker()
 	assert.Error(t, err, sc.ContentStoreAppName+" service is not responding with OK. Status=502")
 }
 
-func TestServiceConfig_ContentCheck_InvalidAddress(t *testing.T) {
-	sc := initTestServiceConfig("http://sampleHost:8080")
-	check := sc.ContentCheck()
+func TestServiceConfig_ContentStoreCheck_InvalidAddress(t *testing.T) {
+	sc := initTestServiceConfig("http://sampleHost:8080", "", "")
+	check := sc.ContentStoreCheck()
+	_, err := check.Checker()
+	assert.Error(t, err, "dial tcp: lookup sampleHost: no such host")
+}
+
+func TestServiceConfig_ContentPreviewCheck(t *testing.T) {
+	ts := startFunctionalService()
+	defer ts.Close()
+	sc := initTestServiceConfig("", ts.URL, "")
+
+	check := sc.ContentPreviewCheck()
+	out, _ := check.Checker()
+	assert.Equal(t, out, "Ok")
+}
+
+func TestServiceConfig_ContentPreviewCheck_NotHealthy(t *testing.T) {
+	ts := startNotFunctionalService()
+	defer ts.Close()
+	sc := initTestServiceConfig("", ts.URL, "")
+
+	check := sc.ContentPreviewCheck()
+	_, err := check.Checker()
+	assert.Error(t, err, sc.ContentStoreAppName+" service is not responding with OK. Status=502")
+}
+
+func TestServiceConfig_ContentPreviewCheck_InvalidAddress(t *testing.T) {
+	sc := initTestServiceConfig("http://sampleHost:8080", "", "")
+	check := sc.ContentPreviewCheck()
+	_, err := check.Checker()
+	assert.Error(t, err, "dial tcp: lookup sampleHost: no such host")
+}
+
+func TestServiceConfig_InternalContentPreviewCheck(t *testing.T) {
+	ts := startFunctionalService()
+	defer ts.Close()
+	sc := initTestServiceConfig("", "", ts.URL)
+
+	check := sc.InternalContentPreviewCheck()
+	out, _ := check.Checker()
+	assert.Equal(t, out, "Ok")
+}
+
+func TestServiceConfig_InternalContentPreviewCheck_NotHealthy(t *testing.T) {
+	ts := startNotFunctionalService()
+	defer ts.Close()
+	sc := initTestServiceConfig("", "", ts.URL)
+
+	check := sc.InternalContentPreviewCheck()
+	_, err := check.Checker()
+	assert.Error(t, err, sc.ContentStoreAppName+" service is not responding with OK. Status=502")
+}
+
+func TestServiceConfig_InternalContentPreviewCheck_InvalidAddress(t *testing.T) {
+	sc := initTestServiceConfig("http://sampleHost:8080", "", "")
+	check := sc.InternalContentPreviewCheck()
 	_, err := check.Checker()
 	assert.Error(t, err, "dial tcp: lookup sampleHost: no such host")
 }
 
 func TestServiceConfig_GtgCheck(t *testing.T) {
-	ts := startFunctionalService()
-	defer ts.Close()
-	sc := initTestServiceConfig(ts.URL)
+	contentStoreTestService := startFunctionalService()
+	defer contentStoreTestService.Close()
+
+	contentPreviewTestService := startFunctionalService()
+	defer contentPreviewTestService.Close()
+
+	internalContentPreviewTestService := startFunctionalService()
+	defer internalContentPreviewTestService.Close()
+
+	sc := initTestServiceConfig(contentStoreTestService.URL, contentPreviewTestService.URL, internalContentPreviewTestService.URL)
 
 	status := sc.GtgCheck()
-	assert.Equal(t, status.GoodToGo, true)
+	assert.Equal(t, true, status.GoodToGo)
 }
 
 func TestServiceConfig_GtgCheck_NotGtg(t *testing.T) {
-	ts := startNotFunctionalService()
-	defer ts.Close()
-	sc := initTestServiceConfig(ts.URL)
+	contentStoreTestService := startNotFunctionalService()
+	defer contentStoreTestService.Close()
+
+	contentPreviewTestService := startNotFunctionalService()
+	defer contentPreviewTestService.Close()
+
+	internalContentPreviewTestService := startNotFunctionalService()
+	defer internalContentPreviewTestService.Close()
+
+	sc := initTestServiceConfig(contentStoreTestService.URL, contentPreviewTestService.URL, internalContentPreviewTestService.URL)
 
 	status := sc.GtgCheck()
-	assert.Equal(t, status.GoodToGo, false)
+	assert.Equal(t, false, status.GoodToGo)
 }

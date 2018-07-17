@@ -49,7 +49,7 @@ func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
 	if schema != nil {
 		contentMap, err := u.reader.Get(schema.toArray(), req.tid)
 		if err != nil {
-			return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
+			return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded content for uuid: %v", req.uuid)}
 		}
 		u.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
 
@@ -88,28 +88,29 @@ func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
 	if schema != nil {
 		contentMap, err := u.reader.Get(schema.toArray(), req.tid)
 		if err != nil {
-			return UnrollResult{req.c, errors.Wrapf(err, "Error while getting expanded images for uuid:%v", req.uuid)}
-		}
-		u.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
+			logger.Errorf(req.tid, "Error while getting expanded images for uuid: %v", req.uuid)
+		} else {
+			u.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
 
-		mainImageUUID := schema.get(mainImage)
-		if mainImageUUID != "" {
-			cc[mainImage] = contentMap[mainImageUUID]
-		}
-
-		// this is only for embedded images
-		embeddedContentUUIDs := schema.getAll(embeds)
-		if len(embeddedContentUUIDs) > 0 {
-			for _, emb := range embeddedContentUUIDs {
-				unrolledEmbedded = append(unrolledEmbedded, contentMap[emb])
+			mainImageUUID := schema.get(mainImage)
+			if mainImageUUID != "" {
+				cc[mainImage] = contentMap[mainImageUUID]
 			}
-		}
 
-		promImgUUID := schema.get(promotionalImage)
-		if promImgUUID != "" {
-			pi, found := contentMap[promImgUUID]
-			if found {
-				cc[altImages].(map[string]interface{})[promotionalImage] = pi
+			// this is only for embedded images
+			embeddedContentUUIDs := schema.getAll(embeds)
+			if len(embeddedContentUUIDs) > 0 {
+				for _, emb := range embeddedContentUUIDs {
+					unrolledEmbedded = append(unrolledEmbedded, contentMap[emb])
+				}
+			}
+
+			promImgUUID := schema.get(promotionalImage)
+			if promImgUUID != "" {
+				pi, found := contentMap[promImgUUID]
+				if found {
+					cc[altImages].(map[string]interface{})[promotionalImage] = pi
+				}
 			}
 		}
 	}
@@ -206,7 +207,7 @@ func (u *ContentUnroller) createContentSchema(cc Content, acceptedTypes []string
 	}
 
 	if !foundMainImg && !foundEmbedded && !foundPromImg {
-		logger.Infof(tid, uuid, "No main image or body images or promotional image to expand for supplied content %s", uuid)
+		logger.Infof(tid, uuid, "No main image or promotional image or embedded content to expand for supplied content %s", uuid)
 		return nil
 	}
 
@@ -239,6 +240,13 @@ func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) 
 	imgMap, err := u.reader.Get(schema.toArray(), tid)
 	if err != nil {
 		logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting content for expanded images uuid"))
+
+		// couldn't get the images so we have to delete the additional uuid field (previously added)
+		for _, li := range images {
+			rawLi := li.(map[string]interface{})
+			delete(rawLi, image)
+		}
+
 		return nil, false
 	}
 
@@ -249,7 +257,7 @@ func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) 
 		liContent := fromMap(rawLi)
 		imageData, found := u.resolveContent(rawLiUUID, imgMap)
 		if !found {
-			logger.Infof(tid, uuid, "Missing image model %s. Returning only de id.", rawLiUUID)
+			logger.Infof(tid, uuid, "Missing image model %s. Returning only the id.", rawLiUUID)
 			delete(liContent, image)
 			expLeadImages = append(expLeadImages, liContent)
 			continue

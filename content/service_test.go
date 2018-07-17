@@ -37,11 +37,11 @@ func (rm *ReaderMock) GetInternalPreview(c []string, tid string) (map[string]Con
 	return rm.mockGetInternalPreview(c, tid)
 }
 
-func TestUnrollImages(t *testing.T) {
+func TestUnrollContent(t *testing.T) {
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				b, err := ioutil.ReadFile("../test-resources/reader-content-valid-response.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -52,11 +52,11 @@ func TestUnrollImages(t *testing.T) {
 		apiHost: "test.api.ft.com",
 	}
 
-	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
+	expected, err := ioutil.ReadFile("../test-resources/content-valid-response.json")
 	assert.NoError(t, err, "Cannot read necessary test file")
 
 	var c Content
-	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
 	assert.NoError(t, err, "Cannot read necessary test file")
 	err = json.Unmarshal(fileBytes, &c)
 	assert.NoError(t, err, "Cannot build json body")
@@ -64,11 +64,47 @@ func TestUnrollImages(t *testing.T) {
 	actual := cu.UnrollContent(req)
 	assert.NoError(t, actual.err, "Should not get an error when expanding images")
 
-	actualJson, err := json.Marshal(actual.uc)
-	assert.JSONEq(t, string(actualJson), string(expected))
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(expected), string(actualJSON))
 }
 
-func TestImageResolver_UnrollImages_SkipPromotionalImageWhenIdIsMissing(t *testing.T) {
+func TestUnrollContent_NilSchema(t *testing.T) {
+	cu := ContentUnroller{reader: nil}
+	var c Content
+	err := json.Unmarshal([]byte(InvalidBodyRequest), &c)
+	assert.NoError(t, err, "Cannot build json body")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContent(req)
+	actualJSON, err := json.Marshal(actual.uc)
+
+	assert.JSONEq(t, InvalidBodyRequest, string(actualJSON))
+}
+
+func TestUnrollContent_ErrorExpandingFromContentStore(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Cannot expand content from content store")
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContent(req)
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(fileBytes), string(actualJSON))
+	assert.Error(t, actual.err, "Expected to return error when cannot read from content store")
+}
+
+func TestUnrollContent_SkipPromotionalImageWhenIdIsMissing(t *testing.T) {
 	expectedAltImages := map[string]interface{}{
 		"promotionalImage": map[string]interface{}{
 			"": "http://api.ft.com/content/4723cb4e-027c-11e7-ace0-1ce02ef0def9",
@@ -78,7 +114,7 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenIdIsMissing(t *testi
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				b, err := ioutil.ReadFile("../test-resources/reader-content-valid-response.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -101,7 +137,7 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenIdIsMissing(t *testi
 	assert.Equal(t, expectedAltImages, actual.uc[altImages])
 }
 
-func TestImageResolver_UnrollImages_SkipPromotionalImageWhenUUIDIsInvalid(t *testing.T) {
+func TestUnrollContent_SkipPromotionalImageWhenUUIDIsInvalid(t *testing.T) {
 	expectedAltImages := map[string]interface{}{
 		"promotionalImage": map[string]interface{}{
 			"id": "http://api.ft.com/content/not-uuid",
@@ -111,7 +147,7 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenUUIDIsInvalid(t *tes
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response.json")
+				b, err := ioutil.ReadFile("../test-resources/reader-content-valid-response.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -134,31 +170,11 @@ func TestImageResolver_UnrollImages_SkipPromotionalImageWhenUUIDIsInvalid(t *tes
 	assert.Equal(t, expectedAltImages, actual.uc[altImages])
 }
 
-func TestImageResolver_UnrollImages_ErrorWhenReaderReturnsError(t *testing.T) {
+func TestUnrollContent_EmbeddedContentSkippedWhenMissingBodyXML(t *testing.T) {
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				return nil, errors.New("Cannot retrieve content")
-			},
-		},
-		apiHost: "test.api.ft.com",
-	}
-
-	var c Content
-	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
-	assert.NoError(t, err, "Cannot read test file")
-	err = json.Unmarshal(fileBytes, &c)
-
-	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
-	actual := cu.UnrollContent(req)
-	assert.Error(t, actual.err)
-}
-
-func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(t *testing.T) {
-	cu := ContentUnroller{
-		reader: &ReaderMock{
-			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-content-reader-response-no-body.json")
+				b, err := ioutil.ReadFile("../test-resources/reader-content-valid-response-no-body.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -170,7 +186,7 @@ func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(
 	}
 
 	var c Content
-	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
 	assert.NoError(t, err, "Cannot read test file")
 	err = json.Unmarshal(fileBytes, &c)
 	c[bodyXML] = "invalid body"
@@ -181,11 +197,19 @@ func TestImageResolver_UnrollImages_EmbeddedImagesSkippedWhenParserReturnsError(
 	assert.Nil(t, res.uc["embeds"], "Response should not contain embeds field")
 }
 
-func TestImageResolver_UnrollLeadImages(t *testing.T) {
+func TestUnrollInternalContent(t *testing.T) {
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-internalcontent-reader-response.json")
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontent-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+			mockGetInternal: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontent-dynamic-valid-response.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -197,25 +221,29 @@ func TestImageResolver_UnrollLeadImages(t *testing.T) {
 	}
 
 	var c Content
-	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
+	fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
 	assert.NoError(t, err, "File necessary for building request body nod found")
 	err = json.Unmarshal(fileBytes, &c)
 
-	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
-	assert.NoError(t, err, "File necessary for building expected output not found.")
+	expected, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
 
 	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
 	actual := cu.UnrollInternalContent(req)
-	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
-	actualJson, err := json.Marshal(actual.uc)
-	assert.JSONEq(t, string(actualJson), string(expected))
+	assert.NoError(t, actual.err, "Should not receive error for expanding internal content")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(actualJSON), string(expected))
 }
 
-func TestImageResolver_UnrollLeadImages_ReturnWhenNone(t *testing.T) {
+func TestUnrollInternalContent_LeadImagesSkippedWhenReadingError(t *testing.T) {
 	cu := ContentUnroller{
 		reader: &ReaderMock{
 			mockGet: func(c []string, tid string) (map[string]Content, error) {
-				b, err := ioutil.ReadFile(testResourcesRoot + "valid-internalcontent-reader-response.json")
+				return nil, errors.New("Error retrieving content")
+			},
+			mockGetInternal: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontent-dynamic-valid-response.json")
 				assert.NoError(t, err, "Cannot open file necessary for test case")
 				var res map[string]Content
 				err = json.Unmarshal(b, &res)
@@ -227,18 +255,242 @@ func TestImageResolver_UnrollLeadImages_ReturnWhenNone(t *testing.T) {
 	}
 
 	var c Content
-	fileBytes, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent-no-lead-images.json")
+	fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
 	assert.NoError(t, err, "File necessary for building request body nod found")
 	err = json.Unmarshal(fileBytes, &c)
 
-	expected, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response-no-lead-images.json")
-	assert.NoError(t, err, "File necessary for building expected output not found.")
+	expected, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response-no-lead-images.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
 
 	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
 	actual := cu.UnrollInternalContent(req)
-	assert.NoError(t, actual.err, "Should not receive error for expanding lead images")
-	actualJson, err := json.Marshal(actual.uc)
-	assert.JSONEq(t, string(actualJson), string(expected))
+	assert.NoError(t, actual.err, "Should not receive error for expanding internal content")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(actualJSON), string(expected))
+}
+
+func TestUnrollInternalContent_DynamicContentSkippedWhenReadingError(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontent-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+			mockGetInternal: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Error retrieving content")
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "File necessary for building request body nod found")
+	err = json.Unmarshal(fileBytes, &c)
+
+	expected, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response-no-dynamic-content.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollInternalContent(req)
+	assert.NoError(t, actual.err, "Should not receive error for expanding internal content")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(actualJSON), string(expected))
+}
+
+func TestUnrollContentPreview(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-contentpreview-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+			mockGetPreview: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-contentpreview-dynamic-content-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	expected, err := ioutil.ReadFile("../test-resources/contentpreview-valid-response.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContentPreview(req)
+	assert.NoError(t, actual.err, "Should not get an error when expanding images")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(expected), string(actualJSON))
+}
+
+func TestUnrollContentPreview_NilSchema(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGetPreview: func(c []string, tid string) (map[string]Content, error) {
+				return nil, nil
+			},
+		},
+	}
+	var c Content
+	err := json.Unmarshal([]byte(InvalidBodyRequest), &c)
+	assert.NoError(t, err, "Cannot build json body")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContentPreview(req)
+	actualJSON, err := json.Marshal(actual.uc)
+
+	assert.JSONEq(t, InvalidBodyRequest, string(actualJSON))
+}
+
+func TestUnrollContentPreview_ErrorExpandingImages(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Cannot expand content from content store")
+			},
+			mockGetPreview: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-contentpreview-dynamic-content-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	expected, err := ioutil.ReadFile("../test-resources/contentpreview-noimages-valid-response.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContentPreview(req)
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(expected), string(actualJSON))
+}
+
+func TestUnrollContentPreview_ErrorExpandingImagesAndDynamicContent(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Cannot expand content from content store")
+			},
+			mockGetPreview: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Cannot expand content from content store")
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContentPreview(req)
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(fileBytes), string(actualJSON))
+}
+
+func TestUnrollInternalContentPreview(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontent-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+			mockGetInternalPreview: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontentpreview-dynamic-content-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "File necessary for building request body nod found")
+	err = json.Unmarshal(fileBytes, &c)
+
+	expected, err := ioutil.ReadFile("../test-resources/internalcontentpreview-valid-response.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollInternalContentPreview(req)
+	assert.NoError(t, actual.err, "Should not receive error for expanding internal content")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(actualJSON), string(expected))
+}
+
+func TestUnrollInternalContentPreview_LeadImagesSkippedWhenReadingError(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				return nil, errors.New("Error retrieving content")
+			},
+			mockGetInternalPreview: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-internalcontentpreview-dynamic-content-valid-response.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+		apiHost: "test.api.ft.com",
+	}
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "File necessary for building request body nod found")
+	err = json.Unmarshal(fileBytes, &c)
+
+	expected, err := ioutil.ReadFile("../test-resources/internalcontentpreview-valid-response-no-leadimages.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollInternalContentPreview(req)
+	assert.NoError(t, actual.err, "Should not receive error for expanding internal content")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(actualJSON), string(expected))
 }
 
 func TestExtractIDFromURL(t *testing.T) {

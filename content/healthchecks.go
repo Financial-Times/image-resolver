@@ -10,21 +10,48 @@ import (
 )
 
 type ServiceConfig struct {
-	ContentStoreAppName string
-	ContentStoreHost    string
-	HttpClient          *http.Client
+	ContentStoreAppName                string
+	ContentStoreAppHealthURI           string
+	ContentPreviewAppName              string
+	ContentPreviewAppHealthURI         string
+	InternalContentPreviewAppName      string
+	InternalContentPreviewAppHealthURI string
+	HTTPClient                         *http.Client
 }
 
 func (sc *ServiceConfig) GtgCheck() gtg.Status {
-	msg, err := sc.checkerContent()
-	if err != nil {
-		return gtg.Status{GoodToGo: false, Message: msg}
+	contentStoreCheck := func() gtg.Status {
+		msg, err := sc.checkServiceAvailability(sc.ContentStoreAppName, sc.ContentStoreAppHealthURI)
+		if err != nil {
+			return gtg.Status{GoodToGo: false, Message: msg}
+		}
+		return gtg.Status{GoodToGo: true}
+	}
+	contentPreviewCheck := func() gtg.Status {
+		msg, err := sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
+		if err != nil {
+			return gtg.Status{GoodToGo: false, Message: msg}
+		}
+
+		return gtg.Status{GoodToGo: true}
+	}
+	internalContentPreviewCheck := func() gtg.Status {
+		msg, err := sc.checkServiceAvailability(sc.InternalContentPreviewAppName, sc.InternalContentPreviewAppHealthURI)
+		if err != nil {
+			return gtg.Status{GoodToGo: false, Message: msg}
+		}
+
+		return gtg.Status{GoodToGo: true}
 	}
 
-	return gtg.Status{GoodToGo: true}
+	return gtg.FailFastParallelCheck([]gtg.StatusChecker{
+		contentStoreCheck,
+		contentPreviewCheck,
+		internalContentPreviewCheck,
+	})()
 }
 
-func (sc *ServiceConfig) ContentCheck() fthealth.Check {
+func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 	return fthealth.Check{
 		ID:               fmt.Sprintf("check-connect-%s", sc.ContentStoreAppName),
 		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentStoreAppName),
@@ -33,19 +60,47 @@ func (sc *ServiceConfig) ContentCheck() fthealth.Check {
 		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentStoreAppName),
 		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
 		Checker: func() (string, error) {
-			return sc.checkerContent()
+			return sc.checkServiceAvailability(sc.ContentStoreAppName, sc.ContentStoreAppHealthURI)
 		},
 	}
 }
 
-func (sc *ServiceConfig) checkerContent() (string, error) {
-	req, err := http.NewRequest(http.MethodGet, sc.ContentStoreHost, nil)
-	resp, err := sc.HttpClient.Do(req)
+func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
+	return fthealth.Check{
+		ID:               fmt.Sprintf("check-connect-%s", sc.ContentPreviewAppName),
+		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentPreviewAppName),
+		Severity:         1,
+		BusinessImpact:   "Image unrolled won't be available",
+		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentPreviewAppName),
+		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
+		Checker: func() (string, error) {
+			return sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
+		},
+	}
+}
+
+func (sc *ServiceConfig) InternalContentPreviewCheck() fthealth.Check {
+	return fthealth.Check{
+		ID:               fmt.Sprintf("check-connect-%s", sc.InternalContentPreviewAppName),
+		Name:             fmt.Sprintf("Check connectivity to %s", sc.InternalContentPreviewAppName),
+		Severity:         1,
+		BusinessImpact:   "Image unrolled won't be available",
+		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.InternalContentPreviewAppName),
+		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
+		Checker: func() (string, error) {
+			return sc.checkServiceAvailability(sc.InternalContentPreviewAppName, sc.InternalContentPreviewAppHealthURI)
+		},
+	}
+}
+
+func (sc *ServiceConfig) checkServiceAvailability(serviceName string, healthURI string) (string, error) {
+	req, err := http.NewRequest(http.MethodGet, healthURI, nil)
+	resp, err := sc.HTTPClient.Do(req)
 	if err != nil {
-		return "Error", errors.Errorf("%s service is unreachable: %v", sc.ContentStoreAppName, err)
+		return "Error", errors.Errorf("%s service is unreachable: %v", serviceName, err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "Error", errors.Errorf("%s service is not responding with OK. Status=%d", sc.ContentStoreAppName, resp.StatusCode)
+		return "Error", errors.Errorf("%s service is not responding with OK. Status=%d", serviceName, resp.StatusCode)
 	}
 	return "Ok", nil
 }

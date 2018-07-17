@@ -128,9 +128,13 @@ func main() {
 		}
 
 		sc := content.ServiceConfig{
-			ContentStoreAppName: *contentStoreApplicationName,
-			ContentStoreHost:    getServiceHealthURI(*contentStoreHost),
-			HttpClient:          httpClient,
+			ContentStoreAppName:                *contentStoreApplicationName,
+			ContentStoreAppHealthURI:           getServiceHealthURI(*contentStoreHost),
+			ContentPreviewAppName:              *contentPreviewAppName,
+			ContentPreviewAppHealthURI:         getServiceHealthURI(*contentPreviewHost),
+			InternalContentPreviewAppName:      *internalContentPreviewAppName,
+			InternalContentPreviewAppHealthURI: getServiceHealthURI(*internalContentPreviewHost),
+			HTTPClient:                         httpClient,
 		}
 
 		readerConfig := content.ReaderConfig{
@@ -173,7 +177,7 @@ func setupServiceHandler(s *content.ContentUnroller, sc content.ServiceConfig) *
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
-	checks := []fthealth.Check{sc.ContentCheck()}
+	checks := []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck(), sc.InternalContentPreviewCheck()}
 	hc := fthealth.TimedHealthCheck{
 		HealthCheck: fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks},
 		Timeout:     10 * time.Second,

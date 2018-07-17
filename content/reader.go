@@ -50,7 +50,7 @@ func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader 
 	}
 }
 
-// Get content from content-public-read
+// Get reads content from content-public-read
 func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.ContentStorePath)
@@ -72,7 +72,7 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 		return cm, nil
 	}
 
-	imgModelsList, err := cr.doGet(imgModelUUIDs, tid, cr.config.ContentStoreHost, cr.config.ContentStoreAppName)
+	imgModelsList, err := cr.doGet(imgModelUUIDs, tid, requestURL, cr.config.ContentStoreAppName)
 	if err != nil {
 		return cm, err
 	}
@@ -84,7 +84,7 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 	return cm, nil
 }
 
-// GetInternal internal components from document-store-api
+// GetInternal reads internal components from content-public-read
 func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.ContentStoreInternalPath)
@@ -101,7 +101,7 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 	return cm, nil
 }
 
-// GetPreview from Methode API
+// GetPreview reads content from Content-Preview API
 func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
@@ -118,7 +118,7 @@ func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Cont
 	return cm, nil
 }
 
-// GetInternalPreview reads internalcomponents from Methode API
+// GetInternalPreview reads internalcomponents from Internal-Content-Preview API
 func (cr *ContentReader) GetInternalPreview(uuids []string, tid string) (map[string]Content, error) {
 	var cm = make(map[string]Content)
 
@@ -152,7 +152,6 @@ func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appNam
 		}
 	}
 	req.URL.RawQuery = q.Encode()
-
 	res, err := cr.client.Do(req)
 	if err != nil {
 		return cb, errors.Wrapf(err, "Request to %v failed.", appName)

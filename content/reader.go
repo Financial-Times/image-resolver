@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/Financial-Times/transactionid-utils-go"
 	"github.com/Financial-Times/uuid-utils-go"
@@ -103,32 +104,45 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 
 // GetPreview reads content from Content-Preview API
 func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Content, error) {
-	var cm = make(map[string]Content)
-
-	for _, uuid := range uuids {
-		requestURL := fmt.Sprintf("%s%s/%s", cr.config.ContentPreviewHost, cr.config.ContentPreviewPath, uuid)
-		content, err := cr.doGetPreview(uuid, tid, requestURL, cr.config.ContentPreviewAppName)
-		if err != nil {
-			return nil, err
-		}
-
-		cm[uuid] = content
-	}
-
-	return cm, nil
+	return cr.getPreviewAsync(uuids, tid, false)
 }
 
 // GetInternalPreview reads internalcomponents from Internal-Content-Preview API
 func (cr *ContentReader) GetInternalPreview(uuids []string, tid string) (map[string]Content, error) {
-	var cm = make(map[string]Content)
+	return cr.getPreviewAsync(uuids, tid, true)
+}
+
+func (cr *ContentReader) getPreviewAsync(uuids []string, tid string, isInternalPreview bool) (map[string]Content, error) {
+	cm := make(map[string]Content)
+	ch := make(chan Content, len(uuids))
+
+	var wg sync.WaitGroup
+	wg.Add(len(uuids))
 
 	for _, uuid := range uuids {
-		requestURL := fmt.Sprintf("%s%s/%s", cr.config.InternalContentPreviewHost, cr.config.InternalContentPreviewPath, uuid)
-		content, err := cr.doGetPreview(uuid, tid, requestURL, cr.config.InternalContentPreviewAppName)
-		if err != nil {
-			return nil, err
-		}
+		go func(uuid string, tid string, cr *ContentReader) {
+			requestURL := cr.createPreviewRequestURL(uuid, isInternalPreview)
+			content, err := cr.doGetPreview(uuid, tid, requestURL, cr.config.ContentPreviewAppName)
 
+			if err != nil {
+				logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting expanding from %s", cr.config.ContentPreviewAppName))
+				wg.Done()
+			} else {
+				ch <- content
+				wg.Done()
+			}
+		}(uuid, tid, cr)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	for {
+		content, ok := <-ch
+		if !ok {
+			break
+		}
+		uuid := content["uuid"].(string)
 		cm[uuid] = content
 	}
 
@@ -216,4 +230,12 @@ func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
 		return
 	}
 	cm[uuid] = c
+}
+
+func (cr *ContentReader) createPreviewRequestURL(uuid string, isInternalPreview bool) string {
+	if isInternalPreview {
+		return fmt.Sprintf("%s%s/%s", cr.config.InternalContentPreviewHost, cr.config.InternalContentPreviewPath, uuid)
+	}
+
+	return fmt.Sprintf("%s%s/%s", cr.config.ContentPreviewHost, cr.config.ContentPreviewPath, uuid)
 }

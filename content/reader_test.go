@@ -221,8 +221,11 @@ func TestGetPreview_ContentSourceReturns500(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetPreview_ContentSourceReturns404(t *testing.T) {
@@ -235,8 +238,11 @@ func TestGetPreview_ContentSourceReturns404(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetPreview_ContentSourceCannotBeResolved(t *testing.T) {
@@ -246,8 +252,11 @@ func TestGetPreview_ContentSourceCannotBeResolved(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetPreview_ContentSourceHasInvalidURL(t *testing.T) {
@@ -257,8 +266,11 @@ func TestGetPreview_ContentSourceHasInvalidURL(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetInternalPreview(t *testing.T) {
@@ -292,8 +304,11 @@ func TestGetInternalPreview_ContentSourceReturns500(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetInternalPreview_ContentSourceReturns404(t *testing.T) {
@@ -306,8 +321,11 @@ func TestGetInternalPreview_ContentSourceReturns404(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetInternalPreview_ContentSourceCannotBeResolved(t *testing.T) {
@@ -317,8 +335,11 @@ func TestGetInternalPreview_ContentSourceCannotBeResolved(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }
 
 func TestGetInternalPreview_ContentSourceHasInvalidURL(t *testing.T) {
@@ -328,6 +349,9 @@ func TestGetInternalPreview_ContentSourceHasInvalidURL(t *testing.T) {
 	}
 	cr := readerForTest(cfg)
 
-	_, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
-	assert.Error(t, err, "There should an error thrown")
+	actual, err := cr.GetInternalPreview(dynamicContentTestData, "tid_1")
+	assert.NoError(t, err, "Error while getting content data")
+
+	var expected = make(map[string]Content)
+	assert.Equal(t, expected, actual)
 }

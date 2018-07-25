@@ -20,19 +20,19 @@ func getEmbedded(body string, acceptedTypes []string, tid string, uuid string) (
 func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid string, uuid string) {
 	if n.Data == "ft-content" {
 		isEmbedded := false
-		isTypeMaching := false
+		isTypeMatching := false
 		var id string
 		for _, a := range n.Attr {
 			if a.Key == "data-embedded" && a.Val == "true" {
 				isEmbedded = true
 			} else if a.Key == "type" {
-				isTypeMaching = isContentTypeMaching(a.Val, acceptedTypes)
+				isTypeMatching = isContentTypeMatching(a.Val, acceptedTypes)
 			} else if a.Key == "url" {
 				id = a.Val
 			}
 		}
 
-		if isEmbedded && isTypeMaching {
+		if isEmbedded && isTypeMatching {
 			u, err := extractUUIDFromString(id)
 			if err != nil {
 				logger.Infof(tid, uuid, "Cannot extract UUID: %v", err.Error())
@@ -46,7 +46,7 @@ func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid str
 	}
 }
 
-func isContentTypeMaching(contentType string, acceptedTypes []string) bool {
+func isContentTypeMatching(contentType string, acceptedTypes []string) bool {
 	for _, t := range acceptedTypes {
 		if contentType == t {
 			return true

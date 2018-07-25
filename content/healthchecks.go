@@ -10,13 +10,11 @@ import (
 )
 
 type ServiceConfig struct {
-	ContentStoreAppName                string
-	ContentStoreAppHealthURI           string
-	ContentPreviewAppName              string
-	ContentPreviewAppHealthURI         string
-	InternalContentPreviewAppName      string
-	InternalContentPreviewAppHealthURI string
-	HTTPClient                         *http.Client
+	ContentStoreAppName        string
+	ContentStoreAppHealthURI   string
+	ContentPreviewAppName      string
+	ContentPreviewAppHealthURI string
+	HTTPClient                 *http.Client
 }
 
 func (sc *ServiceConfig) GtgCheck() gtg.Status {
@@ -35,19 +33,9 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 
 		return gtg.Status{GoodToGo: true}
 	}
-	internalContentPreviewCheck := func() gtg.Status {
-		msg, err := sc.checkServiceAvailability(sc.InternalContentPreviewAppName, sc.InternalContentPreviewAppHealthURI)
-		if err != nil {
-			return gtg.Status{GoodToGo: false, Message: msg}
-		}
-
-		return gtg.Status{GoodToGo: true}
-	}
-
 	return gtg.FailFastParallelCheck([]gtg.StatusChecker{
 		contentStoreCheck,
 		contentPreviewCheck,
-		internalContentPreviewCheck,
 	})()
 }
 
@@ -56,7 +44,7 @@ func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 		ID:               fmt.Sprintf("check-connect-%s", sc.ContentStoreAppName),
 		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentStoreAppName),
 		Severity:         1,
-		BusinessImpact:   "Image unrolled won't be available",
+		BusinessImpact:   "Unrolled images and dynamic content won't be available",
 		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentStoreAppName),
 		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
 		Checker: func() (string, error) {
@@ -75,20 +63,6 @@ func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
 		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
 		Checker: func() (string, error) {
 			return sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
-		},
-	}
-}
-
-func (sc *ServiceConfig) InternalContentPreviewCheck() fthealth.Check {
-	return fthealth.Check{
-		ID:               fmt.Sprintf("check-connect-%s", sc.InternalContentPreviewAppName),
-		Name:             fmt.Sprintf("Check connectivity to %s", sc.InternalContentPreviewAppName),
-		Severity:         1,
-		BusinessImpact:   "Image unrolled won't be available",
-		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.InternalContentPreviewAppName),
-		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
-		Checker: func() (string, error) {
-			return sc.checkServiceAvailability(sc.InternalContentPreviewAppName, sc.InternalContentPreviewAppHealthURI)
 		},
 	}
 }

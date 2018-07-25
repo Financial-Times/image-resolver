@@ -6,15 +6,10 @@ service:
 content_store:
   app_name: content-public-read
   host: http://content-public-read:8080
-  content_path: /content
-  internal_content_path: /internalcontent
 
 content_preview:
-  app_name: content-preview
-  host: http://content-preview:8080
-  path: /content-preview
-
-internal_content_preview:
-  app_name: internal-components-preview
-  host: http://internal-components-preview:8080
-  path: /content-preview
+  app_name: content-public-read-preview
+  host: http://content-public-read-preview:8080
+  
+content_path: /content
+internal_content_path: /internalcontent

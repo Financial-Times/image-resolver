@@ -44,21 +44,9 @@ func main() {
 		Desc:   "Content source hostname",
 		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentStorePath := app.String(cli.StringOpt{
-		Name:   "contentStorePath",
-		Value:  "/content",
-		Desc:   "/content path",
-		EnvVar: "CONTENT_PATH",
-	})
-	contentStoreInternalPath := app.String(cli.StringOpt{
-		Name:   "contentStoreInternalPath",
-		Value:  "/internalcontent",
-		Desc:   "/internalcontent path",
-		EnvVar: "INTERNAL_CONTENT_PATH",
-	})
 	contentPreviewAppName := app.String(cli.StringOpt{
 		Name:   "contentPreviewAppName",
-		Value:  "content-preview",
+		Value:  "content-public-read-preview",
 		Desc:   "Content Preview app",
 		EnvVar: "CONTENT_PREVIEW_APP_NAME",
 	})
@@ -68,29 +56,17 @@ func main() {
 		Desc:   "Content Preview hostname",
 		EnvVar: "CONTENT_PREVIEW_HOST",
 	})
-	contentPreviewPath := app.String(cli.StringOpt{
-		Name:   "contentPreviewPath",
-		Value:  "/content-preview",
-		Desc:   "Content Preview path",
-		EnvVar: "CONTENT_PREVIEW_PATH",
+	contentPathEndpoint := app.String(cli.StringOpt{
+		Name:   "contentPathEndpoint",
+		Value:  "/content",
+		Desc:   "/content path",
+		EnvVar: "CONTENT_PATH",
 	})
-	internalContentPreviewAppName := app.String(cli.StringOpt{
-		Name:   "internalContentPreviewAppName",
-		Value:  "internal-components-preview",
-		Desc:   "Internal Content Preview app",
-		EnvVar: "INTERNAL_CONTENT_PREVIEW_APP_NAME",
-	})
-	internalContentPreviewHost := app.String(cli.StringOpt{
-		Name:   "internalContentPreviewHost",
-		Value:  "http://localhost:8080/__internal-components-preview",
-		Desc:   "Internal Content Preview hostname",
-		EnvVar: "INTERNAL_CONTENT_PREVIEW_HOST",
-	})
-	internalContentPreviewPath := app.String(cli.StringOpt{
-		Name:   "contentPreviewPath",
-		Value:  "/content-preview",
-		Desc:   "Intenal Content Preview path",
-		EnvVar: "INTERNAL_CONTENT_PREVIEW_PATH",
+	internalContentPathEndpoint := app.String(cli.StringOpt{
+		Name:   "internalContentPathEndpoint",
+		Value:  "/internalcontent",
+		Desc:   "/internalcontent path",
+		EnvVar: "INTERNAL_CONTENT_PATH",
 	})
 	graphiteTCPAddress := app.String(cli.StringOpt{
 		Name:   "graphiteTCPAddress",
@@ -128,26 +104,20 @@ func main() {
 		}
 
 		sc := content.ServiceConfig{
-			ContentStoreAppName:                *contentStoreApplicationName,
-			ContentStoreAppHealthURI:           getServiceHealthURI(*contentStoreHost),
-			ContentPreviewAppName:              *contentPreviewAppName,
-			ContentPreviewAppHealthURI:         getServiceHealthURI(*contentPreviewHost),
-			InternalContentPreviewAppName:      *internalContentPreviewAppName,
-			InternalContentPreviewAppHealthURI: getServiceHealthURI(*internalContentPreviewHost),
-			HTTPClient:                         httpClient,
+			ContentStoreAppName:        *contentStoreApplicationName,
+			ContentStoreAppHealthURI:   getServiceHealthURI(*contentStoreHost),
+			ContentPreviewAppName:      *contentPreviewAppName,
+			ContentPreviewAppHealthURI: getServiceHealthURI(*contentPreviewHost),
+			HTTPClient:                 httpClient,
 		}
 
 		readerConfig := content.ReaderConfig{
-			ContentStoreAppName:           *contentStoreApplicationName,
-			ContentStoreHost:              *contentStoreHost,
-			ContentStorePath:              *contentStorePath,
-			ContentStoreInternalPath:      *contentStoreInternalPath,
-			ContentPreviewAppName:         *contentPreviewAppName,
-			ContentPreviewHost:            *contentPreviewHost,
-			ContentPreviewPath:            *contentPreviewPath,
-			InternalContentPreviewAppName: *internalContentPreviewAppName,
-			InternalContentPreviewHost:    *internalContentPreviewHost,
-			InternalContentPreviewPath:    *internalContentPreviewPath,
+			ContentStoreAppName:         *contentStoreApplicationName,
+			ContentStoreHost:            *contentStoreHost,
+			ContentPreviewAppName:       *contentPreviewAppName,
+			ContentPreviewHost:          *contentPreviewHost,
+			ContentPathEndpoint:         *contentPathEndpoint,
+			InternalContentPathEndpoint: *internalContentPathEndpoint,
 		}
 
 		reader := content.NewContentReader(readerConfig, httpClient)
@@ -177,7 +147,7 @@ func setupServiceHandler(s *content.ContentUnroller, sc content.ServiceConfig) *
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
-	checks := []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck(), sc.InternalContentPreviewCheck()}
+	checks := []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
 	hc := fthealth.TimedHealthCheck{
 		HealthCheck: fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks},
 		Timeout:     10 * time.Second,

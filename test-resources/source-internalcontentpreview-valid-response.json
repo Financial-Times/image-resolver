@@ -17,7 +17,7 @@
     },
     "pushNotificationsCohort": null,
     "pushNotificationsText": null,
-    "uuid": "d02886fc-58ff-11e8-9859-6668838a4c10",
+    "id": "http://www.ft.com/thing/d02886fc-58ff-11e8-9859-6668838a4c10",
     "lastModified": "2018-06-19T14:06:53.936Z",
     "publishReference": "tid_7e6t38njyg",
     "blocks": [

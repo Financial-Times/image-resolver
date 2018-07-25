@@ -66,28 +66,22 @@ func statusServiceUnavailableHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusServiceUnavailable)
 }
 
-func startUnrollerService(contentStoreURL string, contentPreviewURL string, contentInternalPreviewURL string) {
+func startUnrollerService(contentStoreURL string, contentPreviewURL string) {
 	sc := content.ServiceConfig{
-		ContentStoreAppName:                contentStoreAppName,
-		ContentStoreAppHealthURI:           getServiceHealthURI(contentStoreURL),
-		ContentPreviewAppName:              contentPreviewAppName,
-		ContentPreviewAppHealthURI:         getServiceHealthURI(contentPreviewURL),
-		InternalContentPreviewAppName:      internalContentPreviewAppName,
-		InternalContentPreviewAppHealthURI: getServiceHealthURI(contentInternalPreviewURL),
-		HTTPClient:                         http.DefaultClient,
+		ContentStoreAppName:        contentStoreAppName,
+		ContentStoreAppHealthURI:   getServiceHealthURI(contentStoreURL),
+		ContentPreviewAppName:      contentPreviewAppName,
+		ContentPreviewAppHealthURI: getServiceHealthURI(contentPreviewURL),
+		HTTPClient:                 http.DefaultClient,
 	}
 
 	rc := content.ReaderConfig{
-		ContentStoreAppName:           contentStoreAppName,
-		ContentStoreHost:              contentStoreURL,
-		ContentStorePath:              "",
-		ContentStoreInternalPath:      "",
-		ContentPreviewAppName:         contentPreviewAppName,
-		ContentPreviewHost:            contentPreviewURL,
-		ContentPreviewPath:            "",
-		InternalContentPreviewAppName: internalContentPreviewAppName,
-		InternalContentPreviewHost:    contentInternalPreviewURL,
-		InternalContentPreviewPath:    "",
+		ContentStoreAppName:         contentStoreAppName,
+		ContentStoreHost:            contentStoreURL,
+		ContentPreviewAppName:       contentPreviewAppName,
+		ContentPreviewHost:          contentPreviewURL,
+		ContentPathEndpoint:         "",
+		InternalContentPathEndpoint: "",
 	}
 
 	reader := content.NewContentReader(rc, http.DefaultClient)
@@ -99,7 +93,7 @@ func startUnrollerService(contentStoreURL string, contentPreviewURL string, cont
 
 func TestContent_ShouldReturn200(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	startUnrollerService(contentStoreServiceMock.URL, "", "")
+	startUnrollerService(contentStoreServiceMock.URL, "")
 	defer contentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -120,7 +114,7 @@ func TestContent_ShouldReturn200(t *testing.T) {
 
 func TestContent_ShouldReturn400WhenInvalidJson(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	startUnrollerService(contentStoreServiceMock.URL, "", "")
+	startUnrollerService(contentStoreServiceMock.URL, "")
 	defer contentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -134,7 +128,7 @@ func TestContent_ShouldReturn400WhenInvalidJson(t *testing.T) {
 
 func TestContent_ShouldReturn400WhenInvalidContentRequest(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	startUnrollerService(contentStoreServiceMock.URL, "", "")
+	startUnrollerService(contentStoreServiceMock.URL, "")
 	defer contentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -148,7 +142,7 @@ func TestContent_ShouldReturn400WhenInvalidContentRequest(t *testing.T) {
 
 func TestInternalContent_ShouldReturn200(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/internalcontent-source-valid-response.json", false)
-	startUnrollerService(contentStoreServiceMock.URL, "", "")
+	startUnrollerService(contentStoreServiceMock.URL, "")
 	defer contentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -169,7 +163,7 @@ func TestInternalContent_ShouldReturn200(t *testing.T) {
 
 func TestInternalContent_ShouldReturn400InvalidJson(t *testing.T) {
 	internalContentStoreServiceMock := startContentServerMock("test-resources/internalcontent-source-valid-response.json", false)
-	startUnrollerService(internalContentStoreServiceMock.URL, "", "")
+	startUnrollerService(internalContentStoreServiceMock.URL, "")
 	defer internalContentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -183,7 +177,7 @@ func TestInternalContent_ShouldReturn400InvalidJson(t *testing.T) {
 
 func TestInternalContent_ShouldReturn400InvalidArticle(t *testing.T) {
 	internalContentStoreServiceMock := startContentServerMock("test-resources/internalcontent-source-valid-response.json", false)
-	startUnrollerService(internalContentStoreServiceMock.URL, "", "")
+	startUnrollerService(internalContentStoreServiceMock.URL, "")
 	defer internalContentStoreServiceMock.Close()
 	defer unrollerService.Close()
 
@@ -198,7 +192,7 @@ func TestInternalContent_ShouldReturn400InvalidArticle(t *testing.T) {
 func TestShouldReturn200ForContentPreview(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, "")
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
@@ -222,7 +216,7 @@ func TestShouldReturn200ForContentPreview(t *testing.T) {
 func TestContentPreview_ShouldReturn400InvalidJson(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, "")
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
@@ -239,7 +233,7 @@ func TestContentPreview_ShouldReturn400InvalidJson(t *testing.T) {
 func TestContentPreview_ShouldReturn400InvalidArticle(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, "")
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
@@ -256,7 +250,7 @@ func TestContentPreview_ShouldReturn400InvalidArticle(t *testing.T) {
 func TestShouldReturn200ForInternalContentPreview(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-internalcontent-valid-lead-images-reasponse.json", false)
 	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, "", internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, internalContentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer internalContentPreviewServiceMock.Close()
@@ -280,7 +274,7 @@ func TestShouldReturn200ForInternalContentPreview(t *testing.T) {
 func TestInternalContentPreview_ShouldReturn400InvalidJson(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-internalcontent-valid-lead-images-reasponse.json", false)
 	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, "", internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, internalContentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer internalContentPreviewServiceMock.Close()
@@ -297,7 +291,7 @@ func TestInternalContentPreview_ShouldReturn400InvalidJson(t *testing.T) {
 func TestInternalContentPreview_ShouldReturn400InvalidArticle(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-internalcontent-valid-lead-images-reasponse.json", false)
 	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, "", internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, internalContentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer internalContentPreviewServiceMock.Close()
@@ -314,12 +308,10 @@ func TestInternalContentPreview_ShouldReturn400InvalidArticle(t *testing.T) {
 func TestShouldBeHealthy(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__health")
@@ -331,12 +323,10 @@ func TestShouldBeHealthy(t *testing.T) {
 func TestShouldNotBeHealthyWhenContentStoreIsNotHappy(t *testing.T) {
 	contentStoreServiceMock := startUnhealthyContentServerMock()
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__health")
@@ -354,12 +344,10 @@ func TestShouldNotBeHealthyWhenContentStoreIsNotHappy(t *testing.T) {
 func TestShouldNotBeHealthyWhenContentPreviewIsNotHappy(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startUnhealthyContentServerMock()
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__health")
@@ -374,38 +362,13 @@ func TestShouldNotBeHealthyWhenContentPreviewIsNotHappy(t *testing.T) {
 	assert.Contains(t, string(respBody), assertMsg)
 }
 
-func TestShouldNotBeHealthyWhenInternalContentPreviewIsNotHappy(t *testing.T) {
-	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startUnhealthyContentServerMock()
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
-
-	defer contentStoreServiceMock.Close()
-	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
-	defer unrollerService.Close()
-
-	resp, err := http.Get(unrollerService.URL + "/__health")
-
-	assert.NoError(t, err, "Cannot send request to gtg endpoint")
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 503")
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-
-	assert.NoError(t, err, "")
-	assertMsg := fmt.Sprintf(`"id":"check-connect-%v","name":"Check connectivity to %v","ok":false`, internalContentPreviewAppName, internalContentPreviewAppName)
-	assert.Contains(t, string(respBody), assertMsg)
-}
-
 func TestShouldBeGoodToGo(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__gtg")
@@ -416,12 +379,10 @@ func TestShouldBeGoodToGo(t *testing.T) {
 func TestShouldNotBeGoodToGoWhenContentStoreIsNotHappy(t *testing.T) {
 	contentStoreServiceMock := startUnhealthyContentServerMock()
 	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__gtg")
@@ -432,28 +393,10 @@ func TestShouldNotBeGoodToGoWhenContentStoreIsNotHappy(t *testing.T) {
 func TestShouldNotBeGoodToGoWhenContentPreviewIsNotHappy(t *testing.T) {
 	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
 	contentPreviewServiceMock := startUnhealthyContentServerMock()
-	internalContentPreviewServiceMock := startContentServerMock("test-resources/source-internalcontentpreview-valid-response.json", true)
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
+	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL)
 
 	defer contentStoreServiceMock.Close()
 	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
-	defer unrollerService.Close()
-
-	resp, err := http.Get(unrollerService.URL + "/__gtg")
-	assert.NoError(t, err, "Cannot send request to gtg endpoint")
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
-}
-
-func TestShouldNotBeGoodToGoWhenInternalContentPreviewIsNotHappy(t *testing.T) {
-	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	contentPreviewServiceMock := startContentServerMock("test-resources/source-contentpreview-valid-response.json", true)
-	internalContentPreviewServiceMock := startUnhealthyContentServerMock()
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, internalContentPreviewServiceMock.URL)
-
-	defer contentStoreServiceMock.Close()
-	defer contentPreviewServiceMock.Close()
-	defer internalContentPreviewServiceMock.Close()
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__gtg")

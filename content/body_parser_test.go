@@ -23,19 +23,19 @@ func TestShouldReturnImages(t *testing.T) {
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
-	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids shoud be equal to expected images")
+	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids should be equal to expected images")
 }
 
 func TestBodyNoEmbeddedImagesReturnsEmptyList(t *testing.T) {
 	emImagesUUIDs, err := getEmbedded("<body><p>Sample body</p></body>", []string{ImageSetType}, "", "")
 	assert.NoError(t, err, "Body parsing should be successful")
-	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
+	assert.Len(t, emImagesUUIDs, 0, "Response image ids should be equal to expected images")
 }
 
 func TestMalformedBodyReturnsEmptyList(t *testing.T) {
 	emImagesUUIDs, err := getEmbedded("Sample body", []string{ImageSetType}, "", "")
 	assert.NoError(t, err, "Body parsing should be successful")
-	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
+	assert.Len(t, emImagesUUIDs, 0, "Response image ids should be equal to expected images")
 }
 
 func TestEmptyBodyReturnsEmptyList(t *testing.T) {
@@ -58,13 +58,12 @@ func TestShouldReturnDynamicContent(t *testing.T) {
 		assert.Fail(t, err.Error())
 	}
 	assert.Equal(t, expectedOutput, emDynContentUUIDs, "Embedded dynamic content not extracted correctly from bodyXML")
-
 }
 
 func TestBodyNoEmbeddedDynamicContentReturnsEmptyList(t *testing.T) {
 	emImagesUUIDs, err := getEmbedded("<body><p>Sample body</p></body>", []string{DynamicContentType}, "", "")
 	assert.NoError(t, err, "Body parsing should be successful")
-	assert.Len(t, emImagesUUIDs, 0, "Response image ids shoud be equal to expected images")
+	assert.Len(t, emImagesUUIDs, 0, "Response image ids should be equal to expected images")
 }
 
 func TestShouldReturnImagesAndDynamicContent(t *testing.T) {
@@ -84,5 +83,5 @@ func TestShouldReturnImagesAndDynamicContent(t *testing.T) {
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
-	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids shoud be equal to expected images")
+	assert.Equal(t, expectedOutput, emImagesUUIDs, "Response image ids should be equal to expected images")
 }

@@ -88,7 +88,7 @@ func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
 	if schema != nil {
 		contentMap, err := u.reader.Get(schema.toArray(), req.tid)
 		if err != nil {
-			logger.Errorf(req.tid, "Error while getting expanded images for uuid: %v", req.uuid)
+			logger.Errorf(req.tid, "Error while getting expanded images: %s", err.Error())
 		} else {
 			u.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
 
@@ -239,7 +239,7 @@ func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) 
 
 	imgMap, err := u.reader.Get(schema.toArray(), tid)
 	if err != nil {
-		logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting content for expanded images uuid"))
+		logger.Errorf(tid, "Error while getting content for expanded images %s", err.Error())
 
 		// couldn't get the images so we have to delete the additional uuid field (previously added)
 		for _, li := range images {
@@ -278,7 +278,7 @@ func (u *ContentUnroller) unrollDynamicContent(cc Content, tid string, uuid stri
 
 	contentMap, err := getContentFromSourceFn(emContentUUIDs, tid)
 	if err != nil {
-		logger.Errorf(tid, uuid, errors.Wrapf(err, "Error while getting embedded dynamic content"))
+		logger.Errorf(tid, "Error while getting embedded dynamic content %s", err.Error())
 		return nil, false
 	}
 
@@ -352,7 +352,7 @@ func (u *ContentUnroller) extractEmbeddedContentByType(cc Content, acceptedTypes
 	bodyXML := body.(string)
 	emContentUUIDs, err := getEmbedded(bodyXML, acceptedTypes, tid, uuid)
 	if err != nil {
-		logger.Errorf(tid, uuid, errors.Wrapf(err, "Cannot parse body for uuid=%s", uuid))
+		logger.Errorf(tid, "Cannot parse bodyXML for content %s", err.Error())
 		return nil, false
 	}
 

@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	InvalidBodyRequest = "{\"id\": \"d02886fc-58ff-11e8-9859-6668838a4c10\"}"
+	InvalidBodyRequest   = "{\"id\": \"d02886fc-58ff-11e8-9859-6668838a4c10\"}"
+	invalidBodyMissingID = "{\"bodyXML\": \"sample body\"}"
 )
 
 type ContentUnrollerMock struct {
@@ -84,6 +85,19 @@ func TestGetContent_UnrollEventError(t *testing.T) {
 	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
 }
 
+func TestGetContent_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id field")
+}
+
 func TestGetContent_ValidationError(t *testing.T) {
 	h := Handler{nil}
 	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader(InvalidBodyRequest))
@@ -144,9 +158,7 @@ func TestGetInternalContentReturns200(t *testing.T) {
 
 	expectedBody, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response.json")
 	assert.NoError(t, err, "Cannot read test file")
-	actualBody := rr.Body
-
-	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
+	assert.JSONEq(t, string(expectedBody), string(rr.Body.Bytes()))
 }
 
 func TestGetInternalContent_UnrollEventError(t *testing.T) {
@@ -160,6 +172,19 @@ func TestGetInternalContent_UnrollEventError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
+}
+
+func TestGetInternalContent_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
 }
 
 func TestGetInternalContent_ValidationError(t *testing.T) {
@@ -195,6 +220,7 @@ func TestGetInternalContent_UnrollingError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	assert.Contains(t, string(rr.Body.Bytes()), "Error while unrolling content")
 }
+
 func TestGetContentPreviewReturns200(t *testing.T) {
 	cu := ContentUnrollerMock{
 		mockUnrollContentPreview: func(req UnrollEvent) UnrollResult {
@@ -225,6 +251,7 @@ func TestGetContentPreviewReturns200(t *testing.T) {
 
 	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
 }
+
 func TestGetContentPreview_UnrollEventError(t *testing.T) {
 	h := Handler{nil}
 	req, err := http.NewRequest(http.MethodPost, "/content-preview", strings.NewReader("sample body"))
@@ -236,6 +263,19 @@ func TestGetContentPreview_UnrollEventError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
+}
+
+func TestGetContentPreview_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
 }
 
 func TestGetContentPreview_ValidationError(t *testing.T) {
@@ -302,6 +342,7 @@ func TestGetInternalContentPreviewReturns200(t *testing.T) {
 
 	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
 }
+
 func TestGetInternalContentPreview_UnrollEventError(t *testing.T) {
 	h := Handler{nil}
 	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", strings.NewReader("sample body"))
@@ -313,6 +354,19 @@ func TestGetInternalContentPreview_UnrollEventError(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
+}
+
+func TestGetInternalContentPreview_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
 }
 
 func TestGetInternalContentPreview_ValidationError(t *testing.T) {

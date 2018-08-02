@@ -46,7 +46,7 @@ func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 		Severity:         1,
 		BusinessImpact:   "Unrolled images and dynamic content won't be available",
 		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentStoreAppName),
-		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
+		PanicGuide:       "https://dewey.in.ft.com/runbooks/content-unroller",
 		Checker: func() (string, error) {
 			return sc.checkServiceAvailability(sc.ContentStoreAppName, sc.ContentStoreAppHealthURI)
 		},
@@ -60,7 +60,7 @@ func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
 		Severity:         1,
 		BusinessImpact:   "Image unrolled won't be available",
 		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentPreviewAppName),
-		PanicGuide:       "https://dewey.ft.com/upp-image-resolver.html",
+		PanicGuide:       "https://dewey.in.ft.com/runbooks/content-unroller",
 		Checker: func() (string, error) {
 			return sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
 		},

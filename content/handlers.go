@@ -123,7 +123,6 @@ func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
 	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(jsonRes)
-
 }
 
 func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {

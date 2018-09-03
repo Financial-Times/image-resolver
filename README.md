@@ -36,8 +36,8 @@ Endpoint | Description
 --- | --- 
 `/content` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images + dynamic content 
 `/internalcontent` | Calls **Content-Public-Read** service to expand lead images and body embedded dynamic content
-`/content-preview` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images. Calls **Content-Preview** service to expand body embedded dynamic content
-`/internalcontent-preview` | Calls **Content-Public-Read** service to expand lead images. Calls **Internal-Content-Preview** service to expand body embedded dynamic content
+`/content-preview` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
+`/internalcontent-preview` | Calls **Content-Public-Read** service to expand lead images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
 
 ### Admin specific endpoints:
 

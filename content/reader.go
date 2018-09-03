@@ -148,7 +148,7 @@ func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appNam
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		return cb, errors.Wrapf(err, "Error connecting to %v", appName)
+		return cb, errors.Wrapf(err, "Error creating request to %v", appName)
 	}
 
 	req.Header.Add(transactionidutils.TransactionIDHeader, tid)
@@ -185,7 +185,7 @@ func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appNam
 func (cr *ContentReader) doGetPreview(uuid string, tid string, reqURL string, appName string) (Content, error) {
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error connecting to %v for uuid: %s", appName, uuid)
+		return nil, errors.Wrapf(err, "Error creating request to %v for uuid: %s", appName, uuid)
 	}
 
 	req.Header.Set(transactionidutils.TransactionIDHeader, tid)

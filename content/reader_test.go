@@ -46,13 +46,6 @@ func errorContentServerMock(t *testing.T, statusCode int) *httptest.Server {
 	}))
 }
 
-/*func readerForTest(cfg ReaderConfig) *ContentReader {
-	return &ContentReader{
-		config: cfg,
-		client: http.DefaultClient,
-	}
-}*/
-
 func readerForTest(contentStoreHost string, contentPreviewHost string) *ContentReader {
 	cfg := ReaderConfig{
 		ContentStoreAppName:   "content-source-app-name",

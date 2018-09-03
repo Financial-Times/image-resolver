@@ -21,7 +21,7 @@ import (
 const (
 	AppCode = "image-resolver"
 	AppName = "Image Resolver"
-	AppDesc = "Image Resolver - unroll images for a given content"
+	AppDesc = "Image Resolver - unroll images and dynamic content for a given content"
 )
 
 func main() {
@@ -97,9 +97,9 @@ func main() {
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
 				MaxIdleConnsPerHost: 100,
-				Dial: (&net.Dialer{
+				DialContext: (&net.Dialer{
 					KeepAlive: 30 * time.Second,
-				}).Dial,
+				}).DialContext,
 			},
 		}
 
@@ -136,7 +136,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(s *content.ContentUnroller, sc content.ServiceConfig) *mux.Router {
+func setupServiceHandler(s content.Unroller, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
 	r.HandleFunc("/content", ch.GetContent).Methods("POST")

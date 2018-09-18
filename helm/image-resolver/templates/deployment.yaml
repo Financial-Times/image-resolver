@@ -48,13 +48,6 @@ spec:
             configMapKeyRef:
               name: global-config
               key: api.host
-        - name: GRAPHITE_ADDRESS
-          valueFrom:
-            configMapKeyRef:
-              name: global-config
-              key: graphite.address
-        - name: GRAPHITE_PREFIX
-          value: "coco.services.k8s.{{ .Values.service.name }}"
         ports: 
         - containerPort: 8080 
         livenessProbe: 

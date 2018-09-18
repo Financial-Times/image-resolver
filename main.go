@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/image-resolver/content"
 	"github.com/Financial-Times/service-status-go/gtg"
@@ -49,23 +48,6 @@ func main() {
 		Desc:   "Health url of the content source app",
 		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
 	})
-	graphiteTCPAddress := app.String(cli.StringOpt{
-		Name:   "graphiteTCPAddress",
-		Desc:   "Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)",
-		EnvVar: "GRAPHITE_TCP_ADDRESS",
-	})
-	graphitePrefix := app.String(cli.StringOpt{
-		Name:   "graphitePrefix",
-		Value:  "coco.services.$ENV.image-resolver.0",
-		Desc:   "Prefix to use. Should start with content, include the environment, and the host name. e.g. coco.pre-prod.image-resolver.1",
-		EnvVar: "GRAPHITE_PREFIX",
-	})
-	logMetrics := app.Bool(cli.BoolOpt{
-		Name:   "logMetrics",
-		Value:  false,
-		Desc:   "Whether to log metrics. Set to true if running locally and you want metrics output",
-		EnvVar: "LOG_METRICS",
-	})
 	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
 		Name:   "embeddedContentTypeWhitelist",
 		Value:  "^(http://www.ft.com/ontology/content/ImageSet)",
@@ -99,7 +81,6 @@ func main() {
 		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
 		ir := content.NewImageResolver(reader, *embeddedContentTypeWhitelist, *apiHost)
 
-		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 		h := setupServiceHandler(ir, sc)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {

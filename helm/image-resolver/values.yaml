@@ -13,8 +13,3 @@ resources:
     memory: 60Mi
   limits:
     memory: 128Mi
-env: # env vars for the app
-  CONTENT_SOURCE_APP_NAME: ""
-  CONTENT_SOURCE_URL: ""
-  CONTENT_SOURCE_HEALTH_URL: ""
-  EMBEDS_CONTENT_TYPE_WHITELIST: ""

@@ -1,56 +1,56 @@
 package content
 
 import (
-	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 )
 
-func getEmbedded(body string, embedsType string, tid string, uuid string) ([]string, error) {
-	embedsImg := []string{}
+func getEmbedded(body string, acceptedTypes []string, tid string, uuid string) ([]string, error) {
+	embedsResult := []string{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
-		return embedsImg, err
+		return embedsResult, err
 	}
 
-	re, err := regexp.Compile(embedsType)
-	if err != nil {
-		return embedsImg, errors.Wrap(err, "Error while compiling whitelist")
-	}
-
-	parse(doc, re, &embedsImg, tid, uuid)
-	return embedsImg, nil
+	parse(doc, acceptedTypes, &embedsResult, tid, uuid)
+	return embedsResult, nil
 }
 
-func parse(n *html.Node, re *regexp.Regexp, embedsImg *[]string, tid string, uuid string) {
+func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid string, uuid string) {
 	if n.Data == "ft-content" {
 		isEmbedded := false
-		isImageSet := false
+		isTypeMatching := false
 		var id string
 		for _, a := range n.Attr {
 			if a.Key == "data-embedded" && a.Val == "true" {
 				isEmbedded = true
 			} else if a.Key == "type" {
-				values := re.FindStringSubmatch(a.Val)
-				if len(values) > 0 {
-					isImageSet = true
-				}
+				isTypeMatching = isContentTypeMatching(a.Val, acceptedTypes)
 			} else if a.Key == "url" {
 				id = a.Val
 			}
 		}
-		if isEmbedded && isImageSet {
+
+		if isEmbedded && isTypeMatching {
 			u, err := extractUUIDFromString(id)
 			if err != nil {
 				logger.Infof(tid, uuid, "Cannot extract UUID: %v", err.Error())
 			} else {
-				*embedsImg = append(*embedsImg, u)
+				*embedsResult = append(*embedsResult, u)
 			}
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		parse(c, re, embedsImg, tid, uuid)
+		parse(c, acceptedTypes, embedsResult, tid, uuid)
 	}
+}
+
+func isContentTypeMatching(contentType string, acceptedTypes []string) bool {
+	for _, t := range acceptedTypes {
+		if contentType == t {
+			return true
+		}
+	}
+	return false
 }

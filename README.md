@@ -1,16 +1,18 @@
 [![CircleCI](https://circleci.com/gh/Financial-Times/image-resolver/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/image-resolver/tree/master)
 [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/image-resolver/badge.svg)](https://coveralls.io/github/Financial-Times/image-resolver)
-# image-resolver
+# content-unroller
 
-Image resolver is an internally used API for expanding images of an article. It receives an article and returns the same article with each image UUID replaced by its actual data. The types of images that are expanded are:
+Content unroller is an internally used API for expanding images and dynamic content of an article. It receives an article and returns the same article with some additional data:
+* Each image UUID replaced by its actual data. The types of images that are expanded are:
   * main image
   * body embedded images
   * alternative images
   * lead images
+* Each dynamic content UUID replaced by its actual data. It will be extracted from `bodyXML`, based on its type (`DynamicContent`)
 
 ## Usage
 ### Install
-`go get -u github.com/Financial-Times/image-resolver`
+`go get -u github.com/Financial-Times/content-unroller`
 
 ## Running locally
 To run the service locally, you will need to run the following commands first to get the vendored dependencies for this project:
@@ -22,7 +24,7 @@ To run the service locally, you will need to run the following commands first to
 ## Usage
 
 ```
-./image-resolver --help
+./content-unroller --help
 
 ```
 
@@ -30,8 +32,12 @@ To run the service locally, you will need to run the following commands first to
 
 ### Application specific endpoints:
 
-* /content/image
-* /internalcontent/image
+Endpoint | Description
+--- | --- 
+`/content` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images + dynamic content 
+`/internalcontent` | Calls **Content-Public-Read** service to expand lead images and body embedded dynamic content
+`/content-preview` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
+`/internalcontent-preview` | Calls **Content-Public-Read** service to expand lead images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
 
 ### Admin specific endpoints:
 
@@ -42,7 +48,7 @@ To run the service locally, you will need to run the following commands first to
 
 
 ## Example 1 (main image)
-POST: /content/image
+POST: `/content`
 Body:
 ```
 {
@@ -182,7 +188,7 @@ Response:
 
 
 ## Example 2 (alternative images)
-POST: /content/image
+POST: `/content`
 Body:
 ```
 {
@@ -275,7 +281,7 @@ Response:
 ```
 
 ## Example 3 (lead images)
-POST: /internalcontent/image
+POST: `/internalcontent`
 Body:
 ```
 {

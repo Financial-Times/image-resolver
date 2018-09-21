@@ -13,24 +13,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type ImageResolverMock struct {
-	mockUnrollImages     func(req UnrollEvent) UnrollResult
-	mockUnrollLeadImages func(req UnrollEvent) UnrollResult
+const (
+	InvalidBodyRequest   = "{\"id\": \"d02886fc-58ff-11e8-9859-6668838a4c10\"}"
+	invalidBodyMissingID = "{\"bodyXML\": \"sample body\"}"
+)
+
+type ContentUnrollerMock struct {
+	mockUnrollContent                func(UnrollEvent) UnrollResult
+	mockUnrollContentPreview         func(UnrollEvent) UnrollResult
+	mockUnrollInternalContent        func(UnrollEvent) UnrollResult
+	mockUnrollInternalContentPreview func(UnrollEvent) UnrollResult
 }
 
-func (irm *ImageResolverMock) UnrollImages(req UnrollEvent) UnrollResult {
-	return irm.mockUnrollImages(req)
+func (cu *ContentUnrollerMock) UnrollContent(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollContent(req)
 }
 
-func (irm *ImageResolverMock) UnrollLeadImages(req UnrollEvent) UnrollResult {
-	return irm.mockUnrollLeadImages(req)
+func (cu *ContentUnrollerMock) UnrollContentPreview(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollContentPreview(req)
 }
 
-func TestContentHandler_GetContentImages(t *testing.T) {
-	ir := ImageResolverMock{
-		mockUnrollImages: func(req UnrollEvent) UnrollResult {
+func (cu *ContentUnrollerMock) UnrollInternalContent(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollInternalContent(req)
+}
+
+func (cu *ContentUnrollerMock) UnrollInternalContentPreview(req UnrollEvent) UnrollResult {
+	return cu.mockUnrollInternalContentPreview(req)
+}
+
+func TestGetContentReturns200(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollContent: func(req UnrollEvent) UnrollResult {
 			var r Content
-			fileBytes, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
+			fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-response.json")
 			assert.NoError(t, err, "Cannot read resources test file")
 			err = json.Unmarshal(fileBytes, &r)
 			assert.NoError(t, err, "Cannot build json body")
@@ -38,71 +53,90 @@ func TestContentHandler_GetContentImages(t *testing.T) {
 		},
 	}
 
-	h := Handler{
-		Service: &ir,
-	}
-
-	body, err := ioutil.ReadFile("../test-resources/valid-article.json")
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/content/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/content", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	expectedBody, err := ioutil.ReadFile("../test-resources/valid-expanded-content-response.json")
+	expectedBody, err := ioutil.ReadFile("../test-resources/content-valid-response.json")
 	assert.NoError(t, err, "Cannot read test file")
 	actualBody := rr.Body
 
 	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
 }
 
-func TestContentHandler_GetContentImagesWhenBodyNotValid(t *testing.T) {
-	h := Handler{
-		Service: nil,
-	}
-
-	req, err := http.NewRequest(http.MethodPost, "/content/image", strings.NewReader("sample body"))
+func TestGetContent_UnrollEventError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader("sample body"))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
 }
 
-func TestContentHandler_GetContentImages_InternalServerErrorWhenServiceReturnsError(t *testing.T) {
-	ir := ImageResolverMock{
-		mockUnrollImages: func(req UnrollEvent) UnrollResult {
-			return UnrollResult{nil, errors.New("Image resolver failed")}
-		},
-	}
-
-	h := Handler{
-		Service: &ir,
-	}
-
-	body, err := ioutil.ReadFile("../test-resources/valid-article.json")
-	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/content/image", bytes.NewReader(body))
+func TestGetContent_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader(invalidBodyMissingID))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetContentImages)
+	handler := http.HandlerFunc(h.GetContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id field")
+}
+
+func TestGetContent_ValidationError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content", strings.NewReader(InvalidBodyRequest))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Invalid content")
+}
+
+func TestGetContent_UnrollingError(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollContent: func(req UnrollEvent) UnrollResult {
+			return UnrollResult{nil, errors.New("Error while unrolling content")}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/content", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Error while unrolling content")
 }
 
-func TestContentHandler_GetLeadImages(t *testing.T) {
-	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(req UnrollEvent) UnrollResult {
+func TestGetInternalContentReturns200(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollInternalContent: func(req UnrollEvent) UnrollResult {
 			var r Content
-			fileBytes, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
+			fileBytes, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response.json")
 			assert.NoError(t, err, "Cannot read test file")
 			err = json.Unmarshal(fileBytes, &r)
 			assert.NoError(t, err, "Cannot build json body")
@@ -110,63 +144,261 @@ func TestContentHandler_GetLeadImages(t *testing.T) {
 		},
 	}
 
-	h := Handler{
-		Service: &ir,
-	}
-
-	body, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
 	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", bytes.NewReader(body))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetInternalContent)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	expectedBody, err := ioutil.ReadFile("../test-resources/valid-expanded-internalcontent-response.json")
+	expectedBody, err := ioutil.ReadFile("../test-resources/internalcontent-valid-response.json")
+	assert.NoError(t, err, "Cannot read test file")
+	assert.JSONEq(t, string(expectedBody), string(rr.Body.Bytes()))
+}
+
+func TestGetInternalContent_UnrollEventError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", strings.NewReader("sample body"))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
+}
+
+func TestGetInternalContent_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
+}
+
+func TestGetInternalContent_ValidationError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", strings.NewReader(InvalidBodyRequest))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Invalid content")
+}
+
+func TestGetInternalContent_UnrollingError(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollInternalContent: func(req UnrollEvent) UnrollResult {
+			return UnrollResult{nil, errors.New("Error while unrolling content")}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Error while unrolling content")
+}
+
+func TestGetContentPreviewReturns200(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollContentPreview: func(req UnrollEvent) UnrollResult {
+			var r Content
+			fileBytes, err := ioutil.ReadFile("../test-resources/contentpreview-valid-response.json")
+			assert.NoError(t, err, "Cannot read resources test file")
+			err = json.Unmarshal(fileBytes, &r)
+			assert.NoError(t, err, "Cannot build json body")
+			return UnrollResult{r, nil}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	expectedBody, err := ioutil.ReadFile("../test-resources/contentpreview-valid-response.json")
 	assert.NoError(t, err, "Cannot read test file")
 	actualBody := rr.Body
 
 	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
 }
 
-func TestContentHandler_GetLeadImagesWhenBodyNotValid(t *testing.T) {
-	h := Handler{
-		Service: nil,
-	}
-
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", strings.NewReader("sample body"))
+func TestGetContentPreview_UnrollEventError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", strings.NewReader("sample body"))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetContentPreview)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
 }
 
-func TestHandler_GetLeadImages_InternalServerErrorWhenServiceReturnsError(t *testing.T) {
-	ir := ImageResolverMock{
-		mockUnrollLeadImages: func(req UnrollEvent) UnrollResult {
-			return UnrollResult{nil, errors.New("Image resolver failed")}
-		},
-	}
-
-	h := Handler{
-		Service: &ir,
-	}
-
-	body, err := ioutil.ReadFile("../test-resources/valid-article-internalcontent.json")
-	assert.NoError(t, err, "Cannot read test file")
-	req, err := http.NewRequest(http.MethodPost, "/internalcontent/image", bytes.NewReader(body))
+func TestGetContentPreview_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", strings.NewReader(invalidBodyMissingID))
 	assert.NoError(t, err, "Cannot create request necessary for test")
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetLeadImages)
+	handler := http.HandlerFunc(h.GetContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
+}
+
+func TestGetContentPreview_ValidationError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", strings.NewReader(InvalidBodyRequest))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Invalid content")
+}
+
+func TestGetContentPreview_UnrollingError(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollContentPreview: func(req UnrollEvent) UnrollResult {
+			return UnrollResult{nil, errors.New("Error while unrolling content")}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/content-preview", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetContentPreview)
 
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Error while unrolling content")
+}
 
+func TestGetInternalContentPreviewReturns200(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollInternalContentPreview: func(req UnrollEvent) UnrollResult {
+			var r Content
+			fileBytes, err := ioutil.ReadFile("../test-resources/internalcontentpreview-valid-response.json")
+			assert.NoError(t, err, "Cannot read test file")
+			err = json.Unmarshal(fileBytes, &r)
+			assert.NoError(t, err, "Cannot build json body")
+			return UnrollResult{r, nil}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	expectedBody, err := ioutil.ReadFile("../test-resources/internalcontentpreview-valid-response.json")
+	assert.NoError(t, err, "Cannot read test file")
+	actualBody := rr.Body
+
+	assert.JSONEq(t, string(expectedBody), string(actualBody.Bytes()))
+}
+
+func TestGetInternalContentPreview_UnrollEventError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", strings.NewReader("sample body"))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "invalid character")
+}
+
+func TestGetInternalContentPreview_UnrollEventError_MissingID(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", strings.NewReader(invalidBodyMissingID))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContent)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Missing or invalid id")
+}
+
+func TestGetInternalContentPreview_ValidationError(t *testing.T) {
+	h := Handler{nil}
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", strings.NewReader(InvalidBodyRequest))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Invalid content")
+}
+
+func TestGetInternalContentPreview_UnrollingError(t *testing.T) {
+	cu := ContentUnrollerMock{
+		mockUnrollInternalContentPreview: func(req UnrollEvent) UnrollResult {
+			return UnrollResult{nil, errors.New("Error while unrolling content")}
+		},
+	}
+
+	h := Handler{&cu}
+	body, err := ioutil.ReadFile("../test-resources/internalcontent-valid-request.json")
+	assert.NoError(t, err, "Cannot read test file")
+	req, err := http.NewRequest(http.MethodPost, "/internalcontent-preview", bytes.NewReader(body))
+	assert.NoError(t, err, "Cannot create request necessary for test")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetInternalContentPreview)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Contains(t, string(rr.Body.Bytes()), "Error while unrolling content")
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -10,16 +11,16 @@ import (
 	"github.com/Financial-Times/image-resolver/content"
 	"github.com/Financial-Times/service-status-go/gtg"
 	"github.com/Financial-Times/service-status-go/httphandlers"
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
 	AppCode = "image-resolver"
 	AppName = "Image Resolver"
-	AppDesc = "Image Resolver - unroll images for a given content"
+	AppDesc = "Image Resolver - unroll images and dynamic content for a given content"
 )
 
 func main() {
@@ -30,29 +31,41 @@ func main() {
 		Desc:   "application port",
 		EnvVar: "PORT",
 	})
-	contentSourceAppName := app.String(cli.StringOpt{
-		Name:   "contentSourceApplicationName",
+	contentStoreApplicationName := app.String(cli.StringOpt{
+		Name:   "contentSourceAppName",
 		Value:  "content-public-read",
 		Desc:   "Content read app",
-		EnvVar: "CONTENT_SOURCE_APP_NAME",
+		EnvVar: "CONTENT_STORE_APP_NAME",
 	})
-	contentSourceURL := app.String(cli.StringOpt{
-		Name:   "contentSourceURL",
-		Value:  "http://localhost:8080/__content-public-read/content",
-		Desc:   "URL of the content source app",
-		EnvVar: "CONTENT_SOURCE_URL",
+	contentStoreHost := app.String(cli.StringOpt{
+		Name:   "contentStoreHost",
+		Value:  "http://localhost:8080/__content-public-read",
+		Desc:   "Content source hostname",
+		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentSourceHealthURL := app.String(cli.StringOpt{
-		Name:   "contentSourceHealthURL",
-		Value:  "http://localhost:8080/__content-public-read/__health",
-		Desc:   "Health url of the content source app",
-		EnvVar: "CONTENT_SOURCE_HEALTH_URL",
+	contentPreviewAppName := app.String(cli.StringOpt{
+		Name:   "contentPreviewAppName",
+		Value:  "content-public-read-preview",
+		Desc:   "Content Preview app",
+		EnvVar: "CONTENT_PREVIEW_APP_NAME",
 	})
-	embeddedContentTypeWhitelist := app.String(cli.StringOpt{
-		Name:   "embeddedContentTypeWhitelist",
-		Value:  "^(http://www.ft.com/ontology/content/ImageSet)",
-		Desc:   "The type supported for embedded images, ex ImageSet",
-		EnvVar: "EMBEDS_CONTENT_TYPE_WHITELIST",
+	contentPreviewHost := app.String(cli.StringOpt{
+		Name:   "contentPreviewHost",
+		Value:  "http://localhost:8080/__content-preview",
+		Desc:   "Content Preview hostname",
+		EnvVar: "CONTENT_PREVIEW_HOST",
+	})
+	contentPathEndpoint := app.String(cli.StringOpt{
+		Name:   "contentPathEndpoint",
+		Value:  "/content",
+		Desc:   "/content path",
+		EnvVar: "CONTENT_PATH",
+	})
+	internalContentPathEndpoint := app.String(cli.StringOpt{
+		Name:   "internalContentPathEndpoint",
+		Value:  "/internalcontent",
+		Desc:   "/internalcontent path",
+		EnvVar: "INTERNAL_CONTENT_PATH",
 	})
 	apiHost := app.String(cli.StringOpt{
 		Name:   "apiHost",
@@ -66,22 +79,33 @@ func main() {
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
 				MaxIdleConnsPerHost: 100,
-				Dial: (&net.Dialer{
+				DialContext: (&net.Dialer{
 					KeepAlive: 30 * time.Second,
-				}).Dial,
+				}).DialContext,
 			},
 		}
 
 		sc := content.ServiceConfig{
-			ContentSourceAppName: *contentSourceAppName,
-			ContentSourceURL:     *contentSourceHealthURL,
-			HttpClient:           httpClient,
+			ContentStoreAppName:        *contentStoreApplicationName,
+			ContentStoreAppHealthURI:   getServiceHealthURI(*contentStoreHost),
+			ContentPreviewAppName:      *contentPreviewAppName,
+			ContentPreviewAppHealthURI: getServiceHealthURI(*contentPreviewHost),
+			HTTPClient:                 httpClient,
 		}
 
-		reader := content.NewContentReader(*contentSourceAppName, *contentSourceURL, httpClient)
-		ir := content.NewImageResolver(reader, *embeddedContentTypeWhitelist, *apiHost)
+		readerConfig := content.ReaderConfig{
+			ContentStoreAppName:         *contentStoreApplicationName,
+			ContentStoreHost:            *contentStoreHost,
+			ContentPreviewAppName:       *contentPreviewAppName,
+			ContentPreviewHost:          *contentPreviewHost,
+			ContentPathEndpoint:         *contentPathEndpoint,
+			InternalContentPathEndpoint: *internalContentPathEndpoint,
+		}
 
-		h := setupServiceHandler(ir, sc)
+		reader := content.NewContentReader(readerConfig, httpClient)
+		unroller := content.NewContentUnroller(reader, *apiHost)
+
+		h := setupServiceHandler(unroller, sc)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
@@ -93,16 +117,18 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mux.Router {
+func setupServiceHandler(s content.Unroller, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	r.HandleFunc("/content/image", ch.GetContentImages).Methods("POST")
-	r.HandleFunc("/internalcontent/image", ch.GetLeadImages).Methods("POST")
+	r.HandleFunc("/content", ch.GetContent).Methods("POST")
+	r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
+	r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
+	r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
-	checks := []fthealth.Check{sc.ContentCheck()}
+	checks := []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
 	hc := fthealth.TimedHealthCheck{
 		HealthCheck: fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks},
 		Timeout:     10 * time.Second,
@@ -112,4 +138,8 @@ func setupServiceHandler(s *content.ImageResolver, sc content.ServiceConfig) *mu
 	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})
 	return r
+}
+
+func getServiceHealthURI(hostname string) string {
+	return fmt.Sprintf("%s%s", hostname, "/__health")
 }

@@ -35,14 +35,18 @@ spec:
         env: 
         - name: PORT 
           value: "8080"
-        - name: CONTENT_SOURCE_APP_NAME
-          value:  {{ .Values.env.CONTENT_SOURCE_APP_NAME }}
-        - name: CONTENT_SOURCE_URL
-          value:  {{ .Values.env.CONTENT_SOURCE_URL }}
-        - name: CONTENT_SOURCE_HEALTH_URL
-          value:  {{ .Values.env.CONTENT_SOURCE_HEALTH_URL }}
-        - name: EMBEDS_CONTENT_TYPE_WHITELIST
-          value:  {{ .Values.env.EMBEDS_CONTENT_TYPE_WHITELIST }}
+        - name: CONTENT_STORE_APP_NAME
+          value:  {{ .Values.content_store.app_name }}
+        - name: CONTENT_STORE_HOST
+          value:  {{ .Values.content_store.host }}
+        - name: CONTENT_PREVIEW_APP_NAME
+          value: {{ .Values.content_preview.app_name }}
+        - name: CONTENT_PREVIEW_HOST
+          value: {{ .Values.content_preview.host }}
+        - name: CONTENT_PATH
+          value:  {{ .Values.content_path }}
+        - name: INTERNAL_CONTENT_PATH
+          value: {{ .Values.internal_content_path }}
         - name: API_HOST
           valueFrom:
             configMapKeyRef:

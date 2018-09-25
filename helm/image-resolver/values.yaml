@@ -1,4 +1,4 @@
-# Default values for image-resolver.
+# Default values for content-unroller.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 service:
@@ -6,7 +6,7 @@ service:
   hasHealthcheck: "true"
 replicaCount: 2
 image:
-  repository: coco/image-resolver
+  repository: coco/content-unroller
   pullPolicy: IfNotPresent
 resources:
   requests:

@@ -2,44 +2,12 @@
 
 
 [[projects]]
-  digest = "1:54e00e0d226aea84d6ded343fef20ce3bf93594d06268f6645181f888754b675"
-  name = "github.com/Financial-Times/api-endpoint"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "d9f326a291cc08362746471b16b3533472b1d4da"
-  version = "0.0.2"
-
-[[projects]]
-  digest = "1:4fe570eca4e4190605fc40170a4ba0e66caf7c261b991f39dbcd185c2e6baf2d"
-  name = "github.com/Financial-Times/base-ft-rw-app-go"
-  packages = ["baseftrwapp"]
-  pruneopts = "UT"
-  revision = "74eab27b0c6d6044fd326183ddd37ea8ac0e236e"
-  version = "1.0.3"
-
-[[projects]]
   digest = "1:3b7e921b3c7c81a1ea711e8d515d99e8cf0a12905ab5dafb962b51bac2741aaf"
   name = "github.com/Financial-Times/go-fthealth"
   packages = ["v1_1"]
   pruneopts = "UT"
   revision = "3d8eb430d5b5e1f3a3c53e817504e796a7d6cc9f"
   version = "0.5.0"
-
-[[projects]]
-  digest = "1:92da547d0414ad8a3f1a405503ee9b103cb87f5beabc52ef907f712f2ee1caf2"
-  name = "github.com/Financial-Times/http-handlers-go"
-  packages = ["httphandlers"]
-  pruneopts = "UT"
-  revision = "229ac16f1d9ec9bca485d2dafb9ec14dc7e9ba24"
-  version = "0.1.1"
-
-[[projects]]
-  digest = "1:1903443c7d64428cb750d35bdf03c925f59c9704280a88991290f38b8b34f4b6"
-  name = "github.com/Financial-Times/neo-utils-go"
-  packages = ["neoutils"]
-  pruneopts = "UT"
-  revision = "5cb1750096545b3c8f7384326247e3e30996a905"
-  version = "1.0.2"
 
 [[projects]]
   digest = "1:79842a99b682a84375be78f0c6ba316d784eb347f8db2354c3a68fee39a497da"
@@ -62,28 +30,12 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:cd53695006485e7005389f4b479da43782960a4773f8223a56aff84406fa6698"
-  name = "github.com/Financial-Times/up-rw-app-api-go"
-  packages = ["rwapi"]
-  pruneopts = "UT"
-  revision = "d9d93a1f689538313d12fee6f5f10715cfe280e0"
-  version = "1.0.0"
-
-[[projects]]
   digest = "1:c6529f7e93e2449829fd25678420bbe4050c6013ff8a9c47a995df5e326e77a7"
   name = "github.com/Financial-Times/uuid-utils-go"
   packages = ["."]
   pruneopts = "UT"
   revision = "e22658edd0f130936e99079bf844bde7087c914c"
   version = "1.0.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:7b274cc72af687fe6eb618acd83b9601c4317fbe5ac1dfb41cc116e3495f68b0"
-  name = "github.com/cyberdelia/go-metrics-graphite"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "39f87cc3b432bbb898d7c643c0e93cac2bc865ad"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -143,38 +95,6 @@
   version = "v1.0.4"
 
 [[projects]]
-  digest = "1:7902c7a299724335a6f73514193afb51c82f09893a467f65f679807a9bb2a884"
-  name = "github.com/jmcvetta/neoism"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c37ec30845b63d9f168f55e837c787e08a15e9a6"
-  version = "v1.3.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c32290d024281ffba4a3dd53d65e2e48103262b4757fc3fcb3d3470852753e7f"
-  name = "github.com/jmcvetta/randutil"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "2bb1b664bcff821e02b2a0644cd29c7e824d54f8"
-
-[[projects]]
-  digest = "1:ca955a9cd5b50b0f43d2cc3aeb35c951473eeca41b34eb67507f1dbcc0542394"
-  name = "github.com/kr/pretty"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
-  version = "v0.1.0"
-
-[[projects]]
-  digest = "1:15b5cc79aad436d47019f814fde81a10221c740dc8ddf769221a65097fb6c2e9"
-  name = "github.com/kr/text"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
-  version = "v0.1.0"
-
-[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -189,13 +109,6 @@
   pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  digest = "1:166d5400333156c32e5ae39062e75bf455882007797f45fdcf8079e6634489f6"
-  name = "github.com/rcrowley/go-metrics"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
 
 [[projects]]
   digest = "1:3b8f5d88e2b182b77f04355ed40c8810e516913bedc51b4ffd17ec506613a90e"
@@ -223,14 +136,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e4fe44b4ad457fd027f64318b963be3af4287bf5b842c0b621bf24f7dcdeccfb"
-  name = "go4.org"
-  packages = ["osutil"]
-  pruneopts = "UT"
-  revision = "417644f6feb5ed3a356ca5d6d8e3a3fac7dfd33f"
-
-[[projects]]
-  branch = "master"
   digest = "1:a7aef54caba8554b7d3f1e6042e1d06070635229913f8d59ebbd14fc1a9faa0b"
   name = "golang.org/x/net"
   packages = [
@@ -249,27 +154,10 @@
   pruneopts = "UT"
   revision = "2b024373dcd9800f0cae693839fac6ede8d64a8c"
 
-[[projects]]
-  digest = "1:c321f7496d1bbb2340c4e0a789d9d8d9b755be8cf51b865f5da042aae0f4986c"
-  name = "gopkg.in/jmcvetta/napping.v3"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "4c7b4b235c63152afa9a1c6384e708e0fbfd77ca"
-  version = "v3.2.0"
-
-[[projects]]
-  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp",
     "github.com/Financial-Times/go-fthealth/v1_1",
     "github.com/Financial-Times/service-status-go/gtg",
     "github.com/Financial-Times/service-status-go/httphandlers",

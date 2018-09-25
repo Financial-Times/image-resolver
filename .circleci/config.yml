@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: /go/src/github.com/Financial-Times/image-resolver
+    working_directory: /go/src/github.com/Financial-Times/content-unroller
     docker:
       - image: circleci/golang:1.10
         environment:
@@ -35,7 +35,7 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
   dockerfile:
-    working_directory: /image-resolver
+    working_directory: /content-unroller
     docker:
       - image: docker:18.03
     steps:

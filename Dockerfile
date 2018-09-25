@@ -1,6 +1,6 @@
 FROM golang:1.10-alpine
 
-ENV PROJECT="image-resolver"
+ENV PROJECT="content-unroller"
 
 # Include code
 ENV ORG_PATH="github.com/Financial-Times"
@@ -30,4 +30,4 @@ WORKDIR /
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=0 /artifacts/* /
 
-CMD ["/image-resolver"]
+CMD ["/content-unroller"]

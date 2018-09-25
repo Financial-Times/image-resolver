@@ -1,5 +1,5 @@
-[![CircleCI](https://circleci.com/gh/Financial-Times/image-resolver/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/image-resolver/tree/master)
-[![Coverage Status](https://coveralls.io/repos/github/Financial-Times/image-resolver/badge.svg)](https://coveralls.io/github/Financial-Times/image-resolver)
+[![CircleCI](https://circleci.com/gh/Financial-Times/content-unroller.svg?style=svg)](https://circleci.com/gh/Financial-Times/content-unroller)
+[![Coverage Status](https://coveralls.io/repos/github/Financial-Times/content-unroller/badge.svg)](https://coveralls.io/github/Financial-Times/content-unroller)
 # content-unroller
 
 Content unroller is an internally used API for expanding images and dynamic content of an article. It receives an article and returns the same article with some additional data:
@@ -17,8 +17,9 @@ Content unroller is an internally used API for expanding images and dynamic cont
 ## Running locally
 To run the service locally, you will need to run the following commands first to get the vendored dependencies for this project:
   ```
-  go get github.com/kardianos/govendor
-  govendor sync
+  dep ensure -vendor-only
+  go test ./... -race
+  go install
   ```
 
 ## Usage

@@ -1,5 +1,5 @@
 [![CircleCI](https://circleci.com/gh/Financial-Times/content-unroller.svg?style=svg)](https://circleci.com/gh/Financial-Times/content-unroller)
-[![Coverage Status](https://coveralls.io/repos/github/Financial-Times/content-unroller/badge.svg)](https://coveralls.io/github/Financial-Times/content-unroller)
+[![Coverage Status](https://coveralls.io/repos/github/Financial-Times/content-unroller/badge.svg?branch=master)](https://coveralls.io/github/Financial-Times/content-unroller?branch=master)
 # content-unroller
 
 Content unroller is an internally used API for expanding images and dynamic content of an article. It receives an article and returns the same article with some additional data:

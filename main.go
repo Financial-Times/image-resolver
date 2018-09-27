@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Financial-Times/content-unroller/content"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/Financial-Times/image-resolver/content"
 	"github.com/Financial-Times/service-status-go/gtg"
 	"github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/handlers"
@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	AppCode = "image-resolver"
-	AppName = "Image Resolver"
-	AppDesc = "Image Resolver - unroll images and dynamic content for a given content"
+	AppCode = "content-unroller"
+	AppName = "Content Unroller"
+	AppDesc = "Content Unroller - unroll images and dynamic content for a given content"
 )
 
 func main() {

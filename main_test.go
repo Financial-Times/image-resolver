@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Financial-Times/image-resolver/content"
+	"github.com/Financial-Times/content-unroller/content"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"

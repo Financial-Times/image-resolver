@@ -21,7 +21,8 @@
       "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
     ],
     "mainImage": {
-      "id": "http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+	  "id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+	  "apiUrl": "https://test.api.ft.com/content/b7c8e40e-73a7-11e8-17fc-56e8d19c9a20"
     },
     "alternativeImages": {
       "promotionalImage": {

@@ -48,10 +48,7 @@ spec:
         - name: INTERNAL_CONTENT_PATH
           value: {{ .Values.internal_content_path }}
         - name: API_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: global-config
-              key: api.host
+          value: {{ .Values.api_host }}
         ports: 
         - containerPort: 8080 
         livenessProbe: 

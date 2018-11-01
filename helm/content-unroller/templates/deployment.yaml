@@ -47,8 +47,6 @@ spec:
           value:  {{ .Values.content_path }}
         - name: INTERNAL_CONTENT_PATH
           value: {{ .Values.internal_content_path }}
-        - name: API_HOST
-          value: {{ .Values.api_host }}
         ports: 
         - containerPort: 8080 
         livenessProbe: 

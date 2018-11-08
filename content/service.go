@@ -26,18 +26,16 @@ type Unroller interface {
 }
 
 type ContentUnroller struct {
-	reader  Reader
-	apiHost string
+	reader Reader
 }
 
 type Content map[string]interface{}
 
 type ContentSchema map[string][]string
 
-func NewContentUnroller(r Reader, apiHost string) *ContentUnroller {
+func NewContentUnroller(r Reader) *ContentUnroller {
 	return &ContentUnroller{
-		reader:  r,
-		apiHost: apiHost,
+		reader: r,
 	}
 }
 
@@ -302,7 +300,7 @@ func (u *ContentUnroller) resolveModelsForSetsMembers(b ContentSchema, imgMap ma
 func (u *ContentUnroller) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) {
 	imageSet, found := u.resolveContent(imageSetUUID, imgMap)
 	if !found {
-		imgMap[imageSetUUID] = Content{id: createID(u.apiHost, "", imageSetUUID)}
+		imgMap[imageSetUUID] = Content{id: createID(imageSetUUID)}
 		return
 	}
 

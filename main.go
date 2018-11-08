@@ -67,12 +67,6 @@ func main() {
 		Desc:   "/internalcontent path",
 		EnvVar: "INTERNAL_CONTENT_PATH",
 	})
-	apiHost := app.String(cli.StringOpt{
-		Name:   "apiHost",
-		Value:  "www.ft.com/thing",
-		Desc:   "API host to use for URLs in responses",
-		EnvVar: "API_HOST",
-	})
 
 	app.Action = func() {
 		httpClient := &http.Client{
@@ -103,7 +97,7 @@ func main() {
 		}
 
 		reader := content.NewContentReader(readerConfig, httpClient)
-		unroller := content.NewContentUnroller(reader, *apiHost)
+		unroller := content.NewContentUnroller(reader)
 
 		h := setupServiceHandler(unroller, sc)
 		err := http.ListenAndServe(":"+*port, h)

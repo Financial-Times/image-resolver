@@ -49,7 +49,6 @@ func TestUnrollContent(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	expected, err := ioutil.ReadFile("../test-resources/content-valid-response.json")
@@ -88,7 +87,6 @@ func TestUnrollContent_ErrorExpandingFromContentStore(t *testing.T) {
 				return nil, errors.New("Cannot expand content from content store")
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -122,7 +120,6 @@ func TestUnrollContent_SkipPromotionalImageWhenIdIsMissing(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -155,7 +152,6 @@ func TestUnrollContent_SkipPromotionalImageWhenUUIDIsInvalid(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -182,7 +178,6 @@ func TestUnrollContent_EmbeddedContentSkippedWhenMissingBodyXML(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -195,6 +190,37 @@ func TestUnrollContent_EmbeddedContentSkippedWhenMissingBodyXML(t *testing.T) {
 	res := cu.UnrollContent(req)
 	assert.NoError(t, res.err, "Should not receive error when body cannot be parsed.")
 	assert.Nil(t, res.uc["embeds"], "Response should not contain embeds field")
+}
+
+func TestUnrollContent_EmbeddedContentNotResolved(t *testing.T) {
+	cu := ContentUnroller{
+		reader: &ReaderMock{
+			mockGet: func(c []string, tid string) (map[string]Content, error) {
+				b, err := ioutil.ReadFile("../test-resources/reader-content-valid-response-embeds-not-resolved.json")
+				assert.NoError(t, err, "Cannot open file necessary for test case")
+				var res map[string]Content
+				err = json.Unmarshal(b, &res)
+				assert.NoError(t, err, "Cannot return valid response")
+				return res, nil
+			},
+		},
+	}
+
+	expected, err := ioutil.ReadFile("../test-resources/content-valid-response-embeds-not-resolved.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+
+	var c Content
+	fileBytes, err := ioutil.ReadFile("../test-resources/content-valid-request.json")
+	assert.NoError(t, err, "Cannot read necessary test file")
+	err = json.Unmarshal(fileBytes, &c)
+	assert.NoError(t, err, "Cannot build json body")
+
+	req := UnrollEvent{c, "tid_sample", "sample_uuid"}
+	actual := cu.UnrollContent(req)
+	assert.NoError(t, actual.err, "Should not get an error when expanding images")
+
+	actualJSON, err := json.Marshal(actual.uc)
+	assert.JSONEq(t, string(expected), string(actualJSON))
 }
 
 func TestUnrollInternalContent(t *testing.T) {
@@ -217,7 +243,6 @@ func TestUnrollInternalContent(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -251,7 +276,6 @@ func TestUnrollInternalContent_LeadImagesSkippedWhenReadingError(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -285,7 +309,6 @@ func TestUnrollInternalContent_DynamicContentSkippedWhenReadingError(t *testing.
 				return nil, errors.New("Error retrieving content")
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -324,7 +347,6 @@ func TestUnrollContentPreview(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	expected, err := ioutil.ReadFile("../test-resources/contentpreview-valid-response.json")
@@ -377,7 +399,6 @@ func TestUnrollContentPreview_ErrorExpandingImages(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	expected, err := ioutil.ReadFile("../test-resources/contentpreview-noimages-valid-response.json")
@@ -405,7 +426,6 @@ func TestUnrollContentPreview_ErrorExpandingImagesAndDynamicContent(t *testing.T
 				return nil, errors.New("Cannot expand content from content store")
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -440,7 +460,6 @@ func TestUnrollInternalContentPreview(t *testing.T) {
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content
@@ -474,7 +493,6 @@ func TestUnrollInternalContentPreview_LeadImagesSkippedWhenReadingError(t *testi
 				return res, nil
 			},
 		},
-		apiHost: "test.api.ft.com",
 	}
 
 	var c Content

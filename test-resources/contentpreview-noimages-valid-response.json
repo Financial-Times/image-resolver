@@ -91,7 +91,8 @@
     ],
     "lastModified": "2017-03-31T15:42:28.504Z",
     "mainImage": {
-        "id": "http://api.ft.com/content/639cd952-149f-11e7-2ea7-a07ecd9ac73f"
+		"id": "http://www.ft.com/thing/639cd952-149f-11e7-2ea7-a07ecd9ac73f",
+		"apiUrl": "https://test.api.ft.com/content/b7c8e40e-73a7-11e8-17fc-56e8d19c9a20"
     },
     "publishReference": "tid_ra4srof3qc",
     "publishedDate": "2017-03-30T06:54:02.000Z",

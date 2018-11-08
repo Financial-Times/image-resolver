@@ -6,7 +6,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const uuidRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+const (
+	uuidRegex        = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+	uuidFormatPrefix = "http://www.ft.com/thing/"
+)
 
 func extractUUIDFromString(url string) (string, error) {
 	re, err := regexp.Compile(uuidRegex)
@@ -21,6 +24,6 @@ func extractUUIDFromString(url string) (string, error) {
 	return "", errors.Errorf("Cannot extract UUID from %s", url)
 }
 
-func createID(APIHost string, handlerPath string, uuid string) string {
-	return "http://" + APIHost + "/" + handlerPath + "/" + uuid
+func createID(uuid string) string {
+	return uuidFormatPrefix + uuid
 }

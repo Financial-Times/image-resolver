@@ -26,18 +26,16 @@ type Unroller interface {
 }
 
 type ContentUnroller struct {
-	reader  Reader
-	apiHost string
+	reader Reader
 }
 
 type Content map[string]interface{}
 
 type ContentSchema map[string][]string
 
-func NewContentUnroller(r Reader, apiHost string) *ContentUnroller {
+func NewContentUnroller(r Reader) *ContentUnroller {
 	return &ContentUnroller{
-		reader:  r,
-		apiHost: apiHost,
+		reader: r,
 	}
 }
 
@@ -55,7 +53,10 @@ func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
 
 		mainImageUUID := schema.get(mainImage)
 		if mainImageUUID != "" {
-			cc[mainImage] = contentMap[mainImageUUID]
+			expMainImage := contentMap[mainImageUUID]
+			if expMainImage != nil {
+				cc[mainImage] = expMainImage
+			}
 		}
 
 		embeddedContentUUIDs := schema.getAll(embeds)
@@ -291,17 +292,15 @@ func (u *ContentUnroller) unrollDynamicContent(cc Content, tid string, uuid stri
 }
 
 func (u *ContentUnroller) resolveModelsForSetsMembers(b ContentSchema, imgMap map[string]Content, tid string, uuid string) {
-	mainImageUUID := b.get(mainImage)
-	u.resolveImageSet(mainImageUUID, imgMap, tid, uuid)
-	for _, embeddedImgSet := range b.getAll(embeds) {
-		u.resolveImageSet(embeddedImgSet, imgMap, tid, uuid)
+	for _, embeddedImgSetUUID := range b.getAll(embeds) {
+		u.resolveImageSet(embeddedImgSetUUID, imgMap, tid, uuid)
 	}
 }
 
 func (u *ContentUnroller) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) {
 	imageSet, found := u.resolveContent(imageSetUUID, imgMap)
 	if !found {
-		imgMap[imageSetUUID] = Content{id: createID(u.apiHost, "content", imageSetUUID)}
+		imgMap[imageSetUUID] = Content{id: createID(imageSetUUID)}
 		return
 	}
 

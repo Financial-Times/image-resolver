@@ -41,7 +41,7 @@ func NewContentUnroller(r Reader, apiHost string) *ContentUnroller {
 	}
 }
 
-func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
+func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult { // read
 	//make a copy of the content
 	cc := req.c.clone()
 
@@ -79,7 +79,7 @@ func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
+func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult { // preview
 	//make a copy of the content
 	cc := req.c.clone()
 	unrolledEmbedded := []Content{}
@@ -130,7 +130,7 @@ func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (u *ContentUnroller) UnrollInternalContent(req UnrollEvent) UnrollResult {
+func (u *ContentUnroller) UnrollInternalContent(req UnrollEvent) UnrollResult { // read
 	cc := req.c.clone()
 	expLeadImages, foundImages := u.unrollLeadImages(cc, req.tid, req.uuid)
 	if foundImages {
@@ -145,7 +145,7 @@ func (u *ContentUnroller) UnrollInternalContent(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollResult {
+func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollResult { // preview
 	cc := req.c.clone()
 	expLeadImages, foundImages := u.unrollLeadImages(cc, req.tid, req.uuid)
 	if foundImages {
@@ -160,7 +160,7 @@ func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollRe
 	return UnrollResult{cc, nil}
 }
 
-func (u *ContentUnroller) createContentSchema(cc Content, acceptedTypes []string, tid string, uuid string) ContentSchema {
+func (u *ContentUnroller) createContentSchema(cc Content, acceptedTypes []string, tid string, uuid string) ContentSchema { // both
 	//mainImage
 	schema := make(ContentSchema)
 	mi, foundMainImg := cc[mainImage].(map[string]interface{})
@@ -214,7 +214,7 @@ func (u *ContentUnroller) createContentSchema(cc Content, acceptedTypes []string
 	return schema
 }
 
-func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) ([]Content, bool) {
+func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) ([]Content, bool) { // both
 	images, foundLeadImages := cc[leadImages].([]interface{})
 	if !foundLeadImages {
 		logger.Info(tid, uuid, "No lead images to expand for supplied content")
@@ -270,7 +270,7 @@ func (u *ContentUnroller) unrollLeadImages(cc Content, tid string, uuid string) 
 	return expLeadImages, true
 }
 
-func (u *ContentUnroller) unrollDynamicContent(cc Content, tid string, uuid string, getContentFromSourceFn ReaderFunc) ([]Content, bool) {
+func (u *ContentUnroller) unrollDynamicContent(cc Content, tid string, uuid string, getContentFromSourceFn ReaderFunc) ([]Content, bool) { // both
 	emContentUUIDs, foundEmbedded := u.extractEmbeddedContentByType(cc, []string{DynamicContentType}, tid, uuid)
 	if !foundEmbedded {
 		return nil, false
@@ -290,7 +290,7 @@ func (u *ContentUnroller) unrollDynamicContent(cc Content, tid string, uuid stri
 	return embedded, true
 }
 
-func (u *ContentUnroller) resolveModelsForSetsMembers(b ContentSchema, imgMap map[string]Content, tid string, uuid string) {
+func (u *ContentUnroller) resolveModelsForSetsMembers(b ContentSchema, imgMap map[string]Content, tid string, uuid string) { // both
 	mainImageUUID := b.get(mainImage)
 	u.resolveImageSet(mainImageUUID, imgMap, tid, uuid)
 	for _, embeddedImgSet := range b.getAll(embeds) {
@@ -298,7 +298,7 @@ func (u *ContentUnroller) resolveModelsForSetsMembers(b ContentSchema, imgMap ma
 	}
 }
 
-func (u *ContentUnroller) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) {
+func (u *ContentUnroller) resolveImageSet(imageSetUUID string, imgMap map[string]Content, tid string, uuid string) { // both
 	imageSet, found := u.resolveContent(imageSetUUID, imgMap)
 	if !found {
 		imgMap[imageSetUUID] = Content{id: createID(u.apiHost, "content", imageSetUUID)}
@@ -334,7 +334,7 @@ func (u *ContentUnroller) resolveImageSet(imageSetUUID string, imgMap map[string
 
 }
 
-func (u *ContentUnroller) resolveContent(uuid string, imgMap map[string]Content) (Content, bool) {
+func (u *ContentUnroller) resolveContent(uuid string, imgMap map[string]Content) (Content, bool) { // both
 	c, found := imgMap[uuid]
 	if !found {
 		return Content{}, false
@@ -342,7 +342,7 @@ func (u *ContentUnroller) resolveContent(uuid string, imgMap map[string]Content)
 	return c, true
 }
 
-func (u *ContentUnroller) extractEmbeddedContentByType(cc Content, acceptedTypes []string, tid string, uuid string) ([]string, bool) {
+func (u *ContentUnroller) extractEmbeddedContentByType(cc Content, acceptedTypes []string, tid string, uuid string) ([]string, bool) { // both
 	body, foundBody := cc[bodyXML]
 	if !foundBody {
 		logger.Info(tid, uuid, "Missing body. Skipping expanding embedded content and images.")
@@ -363,7 +363,7 @@ func (u *ContentUnroller) extractEmbeddedContentByType(cc Content, acceptedTypes
 	return emContentUUIDs, true
 }
 
-func (c Content) clone() Content {
+func (c Content) clone() Content { // both
 	clone := make(Content)
 	for k, v := range c {
 		clone[k] = v
@@ -371,7 +371,7 @@ func (c Content) clone() Content {
 	return clone
 }
 
-func (c Content) getMembersUUID() []string {
+func (c Content) getMembersUUID() []string { // read
 	uuids := []string{}
 	members, found := c[members]
 	if !found {
@@ -397,13 +397,13 @@ func (c Content) getMembersUUID() []string {
 	return uuids
 }
 
-func (c Content) merge(src Content) {
+func (c Content) merge(src Content) { // both
 	for k, v := range src {
 		c[k] = v
 	}
 }
 
-func (u ContentSchema) put(key string, value string) {
+func (u ContentSchema) put(key string, value string) { // both
 	if key != mainImage && key != promotionalImage && key != leadImages {
 		return
 	}
@@ -416,14 +416,14 @@ func (u ContentSchema) put(key string, value string) {
 	u[key] = act
 }
 
-func (u ContentSchema) get(key string) string {
+func (u ContentSchema) get(key string) string { // both
 	if _, found := u[key]; key != mainImage && key != promotionalImage || !found {
 		return ""
 	}
 	return u[key][0]
 }
 
-func (u ContentSchema) putAll(key string, values []string) {
+func (u ContentSchema) putAll(key string, values []string) { // both
 	if key != embeds && key != leadImages {
 		return
 	}
@@ -435,21 +435,21 @@ func (u ContentSchema) putAll(key string, values []string) {
 	u[key] = append(prevValue, values...)
 }
 
-func (u ContentSchema) getAll(key string) []string {
+func (u ContentSchema) getAll(key string) []string { // both
 	if key != embeds && key != leadImages {
 		return []string{}
 	}
 	return u[key]
 }
 
-func (u ContentSchema) toArray() (UUIDs []string) {
+func (u ContentSchema) toArray() (UUIDs []string) { // both
 	for _, v := range u {
 		UUIDs = append(UUIDs, v...)
 	}
 	return UUIDs
 }
 
-func fromMap(src map[string]interface{}) Content {
+func fromMap(src map[string]interface{}) Content { // both
 	dest := Content{}
 	for k, v := range src {
 		dest[k] = v

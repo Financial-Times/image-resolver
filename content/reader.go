@@ -17,7 +17,7 @@ const (
 	userAgentValue = "UPP_content-unroller"
 )
 
-type Reader interface {
+type Reader interface { // split
 	Get([]string, string) (map[string]Content, error)
 	GetInternal([]string, string) (map[string]Content, error)
 	GetPreview([]string, string) (map[string]Content, error)
@@ -26,7 +26,7 @@ type Reader interface {
 
 type ReaderFunc func([]string, string) (map[string]Content, error)
 
-type ReaderConfig struct {
+type ReaderConfig struct { // split
 	ContentStoreAppName         string
 	ContentStoreHost            string
 	ContentPreviewAppName       string
@@ -35,12 +35,12 @@ type ReaderConfig struct {
 	InternalContentPathEndpoint string
 }
 
-type ContentReader struct {
+type ContentReader struct { // both
 	client *http.Client
 	config ReaderConfig
 }
 
-func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader {
+func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader { // both
 	return &ContentReader{
 		client: client,
 		config: rConfig,
@@ -48,7 +48,7 @@ func NewContentReader(rConfig ReaderConfig, client *http.Client) *ContentReader 
 }
 
 // Get reads content from content-public-read
-func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) {
+func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, error) { // read
 	var cm = make(map[string]Content)
 	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.ContentPathEndpoint)
 
@@ -82,7 +82,7 @@ func (cr *ContentReader) Get(uuids []string, tid string) (map[string]Content, er
 }
 
 // GetInternal reads internal components from content-public-read
-func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) {
+func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Content, error) { //read
 	var cm = make(map[string]Content)
 	requestURL := fmt.Sprintf("%s%s", cr.config.ContentStoreHost, cr.config.InternalContentPathEndpoint)
 
@@ -99,16 +99,16 @@ func (cr *ContentReader) GetInternal(uuids []string, tid string) (map[string]Con
 }
 
 // GetPreview reads content from Content-Preview API
-func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Content, error) {
+func (cr *ContentReader) GetPreview(uuids []string, tid string) (map[string]Content, error) { // preview
 	return cr.getPreviewAsync(uuids, tid, false)
 }
 
 // GetInternalPreview reads internalcomponents from Internal-Content-Preview API
-func (cr *ContentReader) GetInternalPreview(uuids []string, tid string) (map[string]Content, error) {
+func (cr *ContentReader) GetInternalPreview(uuids []string, tid string) (map[string]Content, error) { // preview
 	return cr.getPreviewAsync(uuids, tid, true)
 }
 
-func (cr *ContentReader) getPreviewAsync(uuids []string, tid string, isInternalPreview bool) (map[string]Content, error) {
+func (cr *ContentReader) getPreviewAsync(uuids []string, tid string, isInternalPreview bool) (map[string]Content, error) { // preview
 	cm := make(map[string]Content)
 	ch := make(chan Content, len(uuids))
 
@@ -143,7 +143,7 @@ func (cr *ContentReader) getPreviewAsync(uuids []string, tid string, isInternalP
 	return cm, nil
 }
 
-func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appName string) ([]Content, error) {
+func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appName string) ([]Content, error) { // read
 	var cb []Content
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
@@ -182,7 +182,7 @@ func (cr *ContentReader) doGet(uuids []string, tid string, reqURL string, appNam
 	return cb, nil
 }
 
-func (cr *ContentReader) doGetPreview(uuid string, tid string, reqURL string, appName string) (Content, error) {
+func (cr *ContentReader) doGetPreview(uuid string, tid string, reqURL string, appName string) (Content, error) { // preview
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error creating request to %v for uuid: %s", appName, uuid)
@@ -214,7 +214,7 @@ func (cr *ContentReader) doGetPreview(uuid string, tid string, reqURL string, ap
 	return content, nil
 }
 
-func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
+func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) { // both
 	id, ok := c[id].(string)
 	if !ok {
 		return
@@ -226,7 +226,7 @@ func (cr *ContentReader) addItemToMap(c Content, cm map[string]Content) {
 	cm[uuid] = c
 }
 
-func (cr *ContentReader) createPreviewRequestURL(uuid string, isInternalPreview bool) string {
+func (cr *ContentReader) createPreviewRequestURL(uuid string, isInternalPreview bool) string { // preview
 	if isInternalPreview {
 		return fmt.Sprintf("%s%s/%s", cr.config.ContentPreviewHost, cr.config.InternalContentPathEndpoint, uuid)
 	}

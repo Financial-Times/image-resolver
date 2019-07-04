@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func getEmbedded(body string, acceptedTypes []string, tid string, uuid string) ([]string, error) {
+func getEmbedded(body string, acceptedTypes []string, tid string, uuid string) ([]string, error) { // both
 	embedsResult := []string{}
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
@@ -17,7 +17,7 @@ func getEmbedded(body string, acceptedTypes []string, tid string, uuid string) (
 	return embedsResult, nil
 }
 
-func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid string, uuid string) {
+func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid string, uuid string) { // both
 	if n.Data == "ft-content" {
 		isEmbedded := false
 		isTypeMatching := false
@@ -46,7 +46,7 @@ func parse(n *html.Node, acceptedTypes []string, embedsResult *[]string, tid str
 	}
 }
 
-func isContentTypeMatching(contentType string, acceptedTypes []string) bool {
+func isContentTypeMatching(contentType string, acceptedTypes []string) bool { // both
 	for _, t := range acceptedTypes {
 		if contentType == t {
 			return true

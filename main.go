@@ -25,49 +25,49 @@ const (
 
 func main() {
 	app := cli.App(AppCode, AppDesc)
-	port := app.String(cli.StringOpt{
+	port := app.String(cli.StringOpt{ // both
 		Name:   "port",
 		Value:  "9090",
 		Desc:   "application port",
 		EnvVar: "PORT",
 	})
-	contentStoreApplicationName := app.String(cli.StringOpt{
+	contentStoreApplicationName := app.String(cli.StringOpt{ // both
 		Name:   "contentSourceAppName",
 		Value:  "content-public-read",
 		Desc:   "Content read app",
 		EnvVar: "CONTENT_STORE_APP_NAME",
 	})
-	contentStoreHost := app.String(cli.StringOpt{
+	contentStoreHost := app.String(cli.StringOpt{ // both
 		Name:   "contentStoreHost",
 		Value:  "http://localhost:8080/__content-public-read",
 		Desc:   "Content source hostname",
 		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentPreviewAppName := app.String(cli.StringOpt{
+	contentPreviewAppName := app.String(cli.StringOpt{ // preview
 		Name:   "contentPreviewAppName",
 		Value:  "content-public-read-preview",
 		Desc:   "Content Preview app",
 		EnvVar: "CONTENT_PREVIEW_APP_NAME",
 	})
-	contentPreviewHost := app.String(cli.StringOpt{
+	contentPreviewHost := app.String(cli.StringOpt{ // preview
 		Name:   "contentPreviewHost",
 		Value:  "http://localhost:8080/__content-preview",
 		Desc:   "Content Preview hostname",
 		EnvVar: "CONTENT_PREVIEW_HOST",
 	})
-	contentPathEndpoint := app.String(cli.StringOpt{
+	contentPathEndpoint := app.String(cli.StringOpt{ // read
 		Name:   "contentPathEndpoint",
 		Value:  "/content",
 		Desc:   "/content path",
 		EnvVar: "CONTENT_PATH",
 	})
-	internalContentPathEndpoint := app.String(cli.StringOpt{
+	internalContentPathEndpoint := app.String(cli.StringOpt{ // read
 		Name:   "internalContentPathEndpoint",
 		Value:  "/internalcontent",
 		Desc:   "/internalcontent path",
 		EnvVar: "INTERNAL_CONTENT_PATH",
 	})
-	apiHost := app.String(cli.StringOpt{
+	apiHost := app.String(cli.StringOpt{ // both
 		Name:   "apiHost",
 		Value:  "test.api.ft.com",
 		Desc:   "API host to use for URLs in responses",

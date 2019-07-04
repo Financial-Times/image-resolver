@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ServiceConfig struct {
+type ServiceConfig struct { // both
 	ContentStoreAppName        string
 	ContentStoreAppHealthURI   string
 	ContentPreviewAppName      string
@@ -17,7 +17,7 @@ type ServiceConfig struct {
 	HTTPClient                 *http.Client
 }
 
-func (sc *ServiceConfig) GtgCheck() gtg.Status {
+func (sc *ServiceConfig) GtgCheck() gtg.Status { // both
 	contentStoreCheck := func() gtg.Status {
 		msg, err := sc.checkServiceAvailability(sc.ContentStoreAppName, sc.ContentStoreAppHealthURI)
 		if err != nil {
@@ -39,7 +39,7 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 	})()
 }
 
-func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
+func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {  // both
 	return fthealth.Check{
 		ID:               fmt.Sprintf("check-connect-%s", sc.ContentStoreAppName),
 		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentStoreAppName),
@@ -53,7 +53,7 @@ func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 	}
 }
 
-func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
+func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check { // preview
 	return fthealth.Check{
 		ID:               fmt.Sprintf("check-connect-%s", sc.ContentPreviewAppName),
 		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentPreviewAppName),
@@ -67,7 +67,7 @@ func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
 	}
 }
 
-func (sc *ServiceConfig) checkServiceAvailability(serviceName string, healthURI string) (string, error) {
+func (sc *ServiceConfig) checkServiceAvailability(serviceName string, healthURI string) (string, error) { // both
 	req, err := http.NewRequest(http.MethodGet, healthURI, nil)
 	resp, err := sc.HTTPClient.Do(req)
 	if err != nil {

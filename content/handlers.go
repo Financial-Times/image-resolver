@@ -10,28 +10,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ErrorMessage struct {
+type ErrorMessage struct { // both
 	Message string `json:"message"`
 }
 
-var logger = NewAppLogger()
+var logger = NewAppLogger()  // both
 
-type Handler struct {
+type Handler struct { // both
 	Service Unroller
 }
 
-type UnrollEvent struct {
+type UnrollEvent struct { // both
 	c    Content
 	tid  string
 	uuid string
 }
 
-type UnrollResult struct {
+type UnrollResult struct { // both
 	uc  Content
 	err error
 }
 
-func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) { // read
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
@@ -63,7 +63,7 @@ func (hh *Handler) GetContent(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonRes)
 }
 
-func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) { // read
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
@@ -94,7 +94,7 @@ func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonRes)
 }
 
-func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) { // preview
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
@@ -125,7 +125,7 @@ func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonRes)
 }
 
-func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {
+func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) { // preview
 	tid := transactionidutils.GetTransactionIDFromRequest(r)
 	event, err := createUnrollEvent(r, tid)
 	if err != nil {
@@ -156,7 +156,7 @@ func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Requ
 	w.Write(jsonRes)
 }
 
-func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
+func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) { // both
 	var unrollEvent UnrollEvent
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -182,7 +182,7 @@ func createUnrollEvent(r *http.Request, tid string) (UnrollEvent, error) {
 	return unrollEvent, nil
 }
 
-func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) {
+func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter, err error, statusCode int) { // both
 	var errMsg string
 	if statusCode >= 400 && statusCode < 500 {
 		errMsg = fmt.Sprintf("Error expanding content, supplied UUID is invalid: %s", err.Error())
@@ -195,7 +195,7 @@ func handleError(r *http.Request, tid string, uuid string, w http.ResponseWriter
 	w.Write([]byte(errMsg))
 }
 
-func validateContent(article Content) bool {
+func validateContent(article Content) bool { // both
 	_, hasMainImage := article[mainImage]
 	_, hasBody := article[bodyXML]
 	_, hasAltImg := article[altImages].(map[string]interface{})
@@ -203,7 +203,7 @@ func validateContent(article Content) bool {
 	return hasMainImage || hasBody || hasAltImg
 }
 
-func validateInternalContent(article Content) bool {
+func validateInternalContent(article Content) bool { // both
 	_, hasLeadImages := article[leadImages]
 	_, hasBody := article[bodyXML]
 

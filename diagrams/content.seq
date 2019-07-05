@@ -1,0 +1,9 @@
+Client -> /content: 
+/content -> handler: Article in ReqBody
+handler -> service.UnrollContent: UnrollEvent 
+service.UnrollContent -> reader: UUIDs (ImageSetType,DynamicContentType)
+reader -> content_public_read: UUIDs of images
+content_public_read --> reader: content of images
+reader --> service.UnrollContent: list of documents
+service.UnrollContent --> handler: UnrollResult
+handler --> /content: JSON

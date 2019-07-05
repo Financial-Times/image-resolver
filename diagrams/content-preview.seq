@@ -1,0 +1,10 @@
+Client -> /contentpreview: 
+/contentpreview -> handler: Article in ReqBody
+handler -> UnrollContentPreview: UnrollEvent
+UnrollContentPreview -> reader: UUIDs (ImageSetType)
+UnrollContentPreview -> reader: Preview DynamicContent
+reader -> content_public_read_preview: Preview
+content_public_read_preview --> reader: Preview
+reader --> UnrollContentPreview: []Content
+UnrollContentPreview --> handler: UnrollResult
+handler --> /contentpreview: JSON

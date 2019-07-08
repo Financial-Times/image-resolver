@@ -36,20 +36,6 @@ To run the service locally, you will need to run the following commands first to
 Endpoint | Description
 --- | --- 
 `/content` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images + dynamic content 
-
-```chart
-sequenceDiagram
-	Client -> contentEndpoint: request
-	contentEndpoint -> handler: Article in ReqBody
-	handler -> service_UnrollContent: UnrollEvent
-	service_UnrollContent -> reader: UUIDs (ImageSetType,DynamicContentType)
-	reader -> content_public_read: UUIDs of images
-	content_public_read --> reader: content of images
-	reader --> service_UnrollContent: list of documents
-	service_UnrollContent --> handler: UnrollResult
-	handler --> contentEndpoint: JSON
-```
-
 `/internalcontent` | Calls **Content-Public-Read** service to expand lead images and body embedded dynamic content
 `/content-preview` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
 `/internalcontent-preview` | Calls **Content-Public-Read** service to expand lead images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content

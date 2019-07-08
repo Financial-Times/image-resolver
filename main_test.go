@@ -87,7 +87,7 @@ func startUnrollerService(contentStoreURL string, contentPreviewURL string) {
 	reader := content.NewContentReader(rc, http.DefaultClient)
 	unroller := content.NewContentUnroller(reader, "test.api.ft.com")
 
-	h := setupServiceHandler(unroller, sc)
+	h := setupServiceHandler(unroller, sc, "read")
 	unrollerService = httptest.NewServer(h)
 }
 

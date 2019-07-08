@@ -48,3 +48,7 @@ func (appLogger *appLogger) Info(tid string, uuid string, message string) {
 func (appLogger *appLogger) Errorf(tid string, format string, args ...interface{}) {
 	appLogger.log.WithFields(logrus.Fields{"tid": tid}).Errorf(format, args...)
 }
+
+func (appLogger *appLogger) Warnf(tid string, uuid string, format string, args ...interface{}) {
+	appLogger.log.WithFields(logrus.Fields{"tid": tid, "uuid": uuid}).Warnf(format, args...)
+}

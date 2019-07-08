@@ -75,8 +75,8 @@ func main() {
 	})
 	flow := app.String(cli.StringOpt{
 		Name:   "flow",
-		Value:  "read",
-		Desc:   "Marks if it is read or preview flow (default: read)",
+		Value:  "preview",
+		Desc:   "Marks if it is read or preview flow (default: preview)",
 		EnvVar: "flow",
 	})
 
@@ -121,7 +121,7 @@ func main() {
 		case "read", "preview":
 			log.Infof("Value of 'flow' set to '%s'.", *flow)
 		default:
-			log.Warnf("Value of 'flow' should be one of: 'read' or 'preview', defaulting to 'read'.")
+			log.Warnf("Value of 'flow' should be one of: 'read' or 'preview', defaulting to 'preview'.")
 		}
 	}
 

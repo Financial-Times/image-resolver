@@ -76,7 +76,7 @@ func main() {
 	flow := app.String(cli.StringOpt{
 		Name:   "flow",
 		Value:  "read",
-		Desc:   "Marks if it is read or preview flow (default: read)",
+		Desc:   "Marks if it is 'read' or 'preview' flow (default: read)",
 		EnvVar: "FLOW",
 	})
 
@@ -133,7 +133,7 @@ func main() {
 func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow string) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	// Splitting the read and preview flow: endpoints amd healthchecks assigned accordingly
+	// Splitting the read and preview flow: endpoints and healthchecks assigned accordingly
 	var checks []fthealth.Check
 
 	if flow == "preview" {
@@ -141,6 +141,7 @@ func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow stri
 		r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
 	} else {
+		// the default value for flow is "read"
 		r.HandleFunc("/content", ch.GetContent).Methods("POST")
 		r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck()}

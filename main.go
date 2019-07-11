@@ -133,7 +133,7 @@ func main() {
 func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow string) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	// Splitting the read and preview flow: endpoints amd healthchecks assigned accordingly
+	// Splitting the read and preview flow: endpoints and healthchecks assigned accordingly
 	var checks []fthealth.Check
 
 	if flow == "preview" {

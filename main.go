@@ -141,6 +141,8 @@ func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow stri
 		r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
 	} else {
+		// the default value for flow is "read", there are no other cases other than "read" and "preview"
+		// the purpose for such is setup is that the service can be run wothout specifiyng flow for easier testing (when a dependacy)
 		r.HandleFunc("/content", ch.GetContent).Methods("POST")
 		r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck()}

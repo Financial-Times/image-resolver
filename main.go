@@ -135,16 +135,19 @@ func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow stri
 	ch := &content.Handler{Service: s}
 	// Splitting the read and preview flow: endpoints and healthchecks assigned accordingly
 	var checks []fthealth.Check
+	var gtgHandler
 
 	if flow == "preview" {
 		r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
 		r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
+		gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheckPreview))
 	} else {
 		// the default value for flow is "read"
 		r.HandleFunc("/content", ch.GetContent).Methods("POST")
 		r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
 		checks = []fthealth.Check{sc.ContentStoreCheck()}
+		gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	}
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
@@ -156,7 +159,6 @@ func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow stri
 	}
 
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(&hc))})
-	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})
 	return r
 }

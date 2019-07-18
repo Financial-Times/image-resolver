@@ -154,17 +154,3 @@ func TestShouldNotBeGoodToGoWhenContentStoreIsNotHappy(t *testing.T) {
 	assert.NoError(t, err, "Cannot send request to gtg endpoint")
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
 }
-
-func TestShouldNotBeGoodToGoWhenContentPreviewIsNotHappy(t *testing.T) {
-	contentStoreServiceMock := startContentServerMock("test-resources/source-content-valid-response.json", false)
-	contentPreviewServiceMock := startUnhealthyContentServerMock()
-	startUnrollerService(contentStoreServiceMock.URL, contentPreviewServiceMock.URL, flow)
-
-	defer contentStoreServiceMock.Close()
-	defer contentPreviewServiceMock.Close()
-	defer unrollerService.Close()
-
-	resp, err := http.Get(unrollerService.URL + "/__gtg")
-	assert.NoError(t, err, "Cannot send request to gtg endpoint")
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
-}

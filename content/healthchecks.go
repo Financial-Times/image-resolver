@@ -25,6 +25,12 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 		}
 		return gtg.Status{GoodToGo: true}
 	}
+	return gtg.FailFastParallelCheck([]gtg.StatusChecker{
+		contentStoreCheck,
+	})()
+}
+
+func (sc *ServiceConfig) GtgCheckPreview() gtg.Status {
 	contentPreviewCheck := func() gtg.Status {
 		msg, err := sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
 		if err != nil {
@@ -34,7 +40,6 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 		return gtg.Status{GoodToGo: true}
 	}
 	return gtg.FailFastParallelCheck([]gtg.StatusChecker{
-		contentStoreCheck,
 		contentPreviewCheck,
 	})()
 }

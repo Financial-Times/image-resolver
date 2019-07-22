@@ -1,7 +1,7 @@
 # Values used for the deployed application.
 replicaCount: 2
 service:
-  name: content-unroller
+  name: content-preview-unroller
 
 content_store:
   app_name: content-public-read
@@ -14,4 +14,4 @@ content_preview:
 content_path: /content
 internal_content_path: /internalcontent
 
-flow: read
+flow: preview

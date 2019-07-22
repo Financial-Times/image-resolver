@@ -73,6 +73,12 @@ func main() {
 		Desc:   "API host to use for URLs in responses",
 		EnvVar: "API_HOST",
 	})
+	flow := app.String(cli.StringOpt{
+		Name:   "flow",
+		Value:  "read",
+		Desc:   "Marks if it is 'read' or 'preview' flow (default: read)",
+		EnvVar: "FLOW",
+	})
 
 	app.Action = func() {
 		httpClient := &http.Client{
@@ -105,7 +111,14 @@ func main() {
 		reader := content.NewContentReader(readerConfig, httpClient)
 		unroller := content.NewContentUnroller(reader, *apiHost)
 
-		h := setupServiceHandler(unroller, sc)
+		switch *flow {
+		case "read", "preview":
+			log.Infof("Value of 'flow' set to '%s'.", *flow)
+		default:
+			log.Warnf("Value of 'flow' should be one of: 'read' or 'preview', defaulting to 'read'.")
+		}
+
+		h := setupServiceHandler(unroller, sc, *flow)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
@@ -117,25 +130,35 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(s content.Unroller, sc content.ServiceConfig) *mux.Router {
+func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow string) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	r.HandleFunc("/content", ch.GetContent).Methods("POST")
-	r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
-	r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
-	r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
+	// Splitting the read and preview flow: endpoints and healthchecks assigned accordingly
+	var checks []fthealth.Check
+	var gtgHandler func(http.ResponseWriter, *http.Request)
+
+	if flow == "preview" {
+		r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
+		r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
+		checks = []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
+		gtgHandler = httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheckPreview))
+	} else {
+		// the default value for flow is "read"
+		r.HandleFunc("/content", ch.GetContent).Methods("POST")
+		r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
+		checks = []fthealth.Check{sc.ContentStoreCheck()}
+		gtgHandler = httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
+	}
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 
-	checks := []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
 	hc := fthealth.TimedHealthCheck{
 		HealthCheck: fthealth.HealthCheck{SystemCode: AppCode, Name: AppName, Description: AppDesc, Checks: checks},
 		Timeout:     10 * time.Second,
 	}
 
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(&hc))})
-	gtgHandler := httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 	r.Path("/__gtg").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(gtgHandler)})
 	return r
 }

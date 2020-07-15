@@ -1,4 +1,4 @@
-# UPP - Synthetic image publication monitor
+# UPP - Content Unroller
 
 This service (internal API) expands images and dynamic content of an article.
 
@@ -60,9 +60,8 @@ No
 
 ## Dependencies
 
-- enriched-content-read-api
-- upp-prod-delivery-eu
-- upp-prod-delivery-us
+- contentreadapi
+- content-public-read-preview
 
 ## Failover Architecture Type
 

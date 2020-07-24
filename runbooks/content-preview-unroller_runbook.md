@@ -1,10 +1,10 @@
-# UPP - Content Unroller
+# UPP - Content Preview Unroller
 
-This service (internal API) expands images and dynamic content of an article.
+This service (internal API) expands images and dynamic content of an article. There are two deployments of the same code base - this one is part of the preview flow, the other one (content-unroller) is part of the reading flow.
 
 ## Code
 
-content-unroller
+content-preview-unroller
 
 ## Primary URL
 
@@ -12,7 +12,7 @@ content-unroller
 
 ## Service Tier
 
-Platinum
+Bronze
 
 ## Lifecycle Stage
 
@@ -46,9 +46,7 @@ AWS
 
 ## Architecture
 
-Content Unroller is an internally used API for expanding images and dynamic content of an article. It receives an article
-and returns the same article with some additional data: main image, body embedded images, alternative images, lead images 
-and embedded dynamic content.
+Content Preview Unroller is an internally used API for expanding images and dynamic content of an article preview. It receives an article and returns the same article with some additional data: main image, body embedded images, alternative images, lead images and embedded dynamic content.
 
 ## Contains Personal Data
 
@@ -60,7 +58,6 @@ No
 
 ## Dependencies
 
-- contentreadapi
 - content-public-read-preview
 
 ## Failover Architecture Type

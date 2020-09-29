@@ -16,9 +16,7 @@ Content unroller is an internally used API for expanding images and dynamic cont
 `go get -u github.com/Financial-Times/content-unroller`
 
 ## Running locally
-To run the service locally, you will need to run the following commands first to get the vendored dependencies for this project:
   ```
-  dep ensure -vendor-only
   go test ./... -race
   go install
   ```

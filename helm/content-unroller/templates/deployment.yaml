@@ -51,8 +51,6 @@ spec:
           value:  {{ .Values.content_path }}
         - name: INTERNAL_CONTENT_PATH
           value: {{ .Values.internal_content_path }}
-        - name: FLOW
-          value: {{ .Values.flow }}
         - name: API_HOST
           valueFrom:
             configMapKeyRef:

@@ -133,6 +133,9 @@ func TestShouldBeHealthy(t *testing.T) {
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__health")
+	if err == nil {
+		defer resp.Body.Close()
+	}
 
 	assert.NoError(t, err, "Cannot send request to health endpoint")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
@@ -148,6 +151,10 @@ func TestShouldBeGoodToGo(t *testing.T) {
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__gtg")
+	if err == nil {
+		defer resp.Body.Close()
+	}
+
 	assert.NoError(t, err, "Cannot send request to gtg endpoint")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Response status should be 200")
 }
@@ -162,6 +169,10 @@ func TestShouldNotBeGoodToGoWhenContentStoreIsNotHappy(t *testing.T) {
 	defer unrollerService.Close()
 
 	resp, err := http.Get(unrollerService.URL + "/__gtg")
+	if err == nil {
+		defer resp.Body.Close()
+	}
+
 	assert.NoError(t, err, "Cannot send request to gtg endpoint")
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, "Response status should be 503")
 }

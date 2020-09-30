@@ -13,7 +13,7 @@ Content unroller is an internally used API for expanding images and dynamic cont
 ## Usage
 ### Install
 
-`go get -u github.com/Financial-Times/content-unroller`
+`go get github.com/Financial-Times/content-unroller`
 
 ## Running locally
   ```

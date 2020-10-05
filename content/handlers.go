@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Financial-Times/transactionid-utils-go"
+	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/pkg/errors"
 )
 
@@ -78,68 +78,6 @@ func (hh *Handler) GetInternalContent(w http.ResponseWriter, r *http.Request) {
 	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
 
 	res := hh.Service.UnrollInternalContent(event)
-	if res.err != nil {
-		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
-		return
-	}
-
-	jsonRes, err := json.Marshal(res.uc)
-	if err != nil {
-		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
-		return
-	}
-
-	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write(jsonRes)
-}
-
-func (hh *Handler) GetContentPreview(w http.ResponseWriter, r *http.Request) {
-	tid := transactionidutils.GetTransactionIDFromRequest(r)
-	event, err := createUnrollEvent(r, tid)
-	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-	}
-
-	if !validateContent(event.c) {
-		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
-		return
-	}
-
-	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
-
-	res := hh.Service.UnrollContentPreview(event)
-	if res.err != nil {
-		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
-		return
-	}
-
-	jsonRes, err := json.Marshal(res.uc)
-	if err != nil {
-		handleError(r, tid, event.uuid, w, err, http.StatusInternalServerError)
-		return
-	}
-
-	logger.TransactionFinishedEvent(r.RequestURI, tid, http.StatusOK, event.uuid, "success")
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write(jsonRes)
-}
-
-func (hh *Handler) GetInternalContentPreview(w http.ResponseWriter, r *http.Request) {
-	tid := transactionidutils.GetTransactionIDFromRequest(r)
-	event, err := createUnrollEvent(r, tid)
-	if err != nil {
-		handleError(r, tid, "", w, err, http.StatusBadRequest)
-	}
-
-	if !validateInternalContent(event.c) {
-		handleError(r, tid, event.uuid, w, errors.New("Invalid content"), http.StatusBadRequest)
-		return
-	}
-
-	logger.TransactionStartedEvent(r.RequestURI, tid, event.uuid)
-
-	res := hh.Service.UnrollInternalContentPreview(event)
 	if res.err != nil {
 		handleError(r, tid, event.uuid, w, res.err, http.StatusInternalServerError)
 		return

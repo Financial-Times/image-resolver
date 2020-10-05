@@ -43,18 +43,6 @@ func main() {
 		Desc:   "Content source hostname",
 		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentPreviewAppName := app.String(cli.StringOpt{
-		Name:   "contentPreviewAppName",
-		Value:  "content-public-read-preview",
-		Desc:   "Content Preview app",
-		EnvVar: "CONTENT_PREVIEW_APP_NAME",
-	})
-	contentPreviewHost := app.String(cli.StringOpt{
-		Name:   "contentPreviewHost",
-		Value:  "http://localhost:8080/__content-preview",
-		Desc:   "Content Preview hostname",
-		EnvVar: "CONTENT_PREVIEW_HOST",
-	})
 	contentPathEndpoint := app.String(cli.StringOpt{
 		Name:   "contentPathEndpoint",
 		Value:  "/content",
@@ -86,18 +74,14 @@ func main() {
 		}
 
 		sc := content.ServiceConfig{
-			ContentStoreAppName:        *contentStoreApplicationName,
-			ContentStoreAppHealthURI:   getServiceHealthURI(*contentStoreHost),
-			ContentPreviewAppName:      *contentPreviewAppName,
-			ContentPreviewAppHealthURI: getServiceHealthURI(*contentPreviewHost),
-			HTTPClient:                 httpClient,
+			ContentStoreAppName:      *contentStoreApplicationName,
+			ContentStoreAppHealthURI: getServiceHealthURI(*contentStoreHost),
+			HTTPClient:               httpClient,
 		}
 
 		readerConfig := content.ReaderConfig{
 			ContentStoreAppName:         *contentStoreApplicationName,
 			ContentStoreHost:            *contentStoreHost,
-			ContentPreviewAppName:       *contentPreviewAppName,
-			ContentPreviewHost:          *contentPreviewHost,
 			ContentPathEndpoint:         *contentPathEndpoint,
 			InternalContentPathEndpoint: *internalContentPathEndpoint,
 		}

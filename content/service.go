@@ -20,9 +20,7 @@ const (
 
 type Unroller interface {
 	UnrollContent(UnrollEvent) UnrollResult
-	UnrollContentPreview(UnrollEvent) UnrollResult
 	UnrollInternalContent(UnrollEvent) UnrollResult
-	UnrollInternalContentPreview(UnrollEvent) UnrollResult
 }
 
 type ContentUnroller struct {
@@ -79,57 +77,6 @@ func (u *ContentUnroller) UnrollContent(req UnrollEvent) UnrollResult {
 	return UnrollResult{cc, nil}
 }
 
-func (u *ContentUnroller) UnrollContentPreview(req UnrollEvent) UnrollResult {
-	//make a copy of the content
-	cc := req.c.clone()
-	unrolledEmbedded := []Content{}
-
-	schema := u.createContentSchema(cc, []string{ImageSetType}, req.tid, req.uuid)
-	if schema != nil {
-		contentMap, err := u.reader.Get(schema.toArray(), req.tid)
-		if err != nil {
-			logger.Errorf(req.tid, "Error while getting expanded images: %s", err.Error())
-		} else {
-			u.resolveModelsForSetsMembers(schema, contentMap, req.tid, req.tid)
-
-			mainImageUUID := schema.get(mainImage)
-			if mainImageUUID != "" {
-				cc[mainImage] = contentMap[mainImageUUID]
-			}
-
-			// this is only for embedded images
-			embeddedContentUUIDs := schema.getAll(embeds)
-			if len(embeddedContentUUIDs) > 0 {
-				for _, emb := range embeddedContentUUIDs {
-					unrolledEmbedded = append(unrolledEmbedded, contentMap[emb])
-				}
-			}
-
-			promImgUUID := schema.get(promotionalImage)
-			if promImgUUID != "" {
-				pi, found := contentMap[promImgUUID]
-				if found {
-					cc[altImages].(map[string]interface{})[promotionalImage] = pi
-				}
-			}
-		}
-	}
-
-	// unroll dynamic content from Native content source
-	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetPreview)
-	if foundDyn {
-		for _, dynC := range dynContents {
-			unrolledEmbedded = append(unrolledEmbedded, dynC)
-		}
-	}
-
-	if len(unrolledEmbedded) > 0 {
-		cc[embeds] = unrolledEmbedded
-	}
-
-	return UnrollResult{cc, nil}
-}
-
 func (u *ContentUnroller) UnrollInternalContent(req UnrollEvent) UnrollResult {
 	cc := req.c.clone()
 	expLeadImages, foundImages := u.unrollLeadImages(cc, req.tid, req.uuid)
@@ -138,21 +85,6 @@ func (u *ContentUnroller) UnrollInternalContent(req UnrollEvent) UnrollResult {
 	}
 
 	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetInternal)
-	if foundDyn {
-		cc[embeds] = dynContents
-	}
-
-	return UnrollResult{cc, nil}
-}
-
-func (u *ContentUnroller) UnrollInternalContentPreview(req UnrollEvent) UnrollResult {
-	cc := req.c.clone()
-	expLeadImages, foundImages := u.unrollLeadImages(cc, req.tid, req.uuid)
-	if foundImages {
-		cc[leadImages] = expLeadImages
-	}
-
-	dynContents, foundDyn := u.unrollDynamicContent(cc, req.tid, req.uuid, u.reader.GetInternalPreview)
 	if foundDyn {
 		cc[embeds] = dynContents
 	}

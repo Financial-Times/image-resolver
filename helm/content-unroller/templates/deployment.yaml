@@ -43,10 +43,6 @@ spec:
           value:  {{ .Values.content_store.app_name }}
         - name: CONTENT_STORE_HOST
           value:  {{ .Values.content_store.host }}
-        - name: CONTENT_PREVIEW_APP_NAME
-          value: {{ .Values.content_preview.app_name }}
-        - name: CONTENT_PREVIEW_HOST
-          value: {{ .Values.content_preview.host }}
         - name: CONTENT_PATH
           value:  {{ .Values.content_path }}
         - name: INTERNAL_CONTENT_PATH

@@ -7,9 +7,5 @@ content_store:
   app_name: content-public-read
   host: http://content-public-read:8080
 
-content_preview:
-  app_name: content-public-read-preview
-  host: http://content-public-read-preview:8080
-
 content_path: /content
 internal_content_path: /internalcontent

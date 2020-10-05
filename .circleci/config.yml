@@ -12,4 +12,3 @@ workflows:
           name: build-docker-image
           requires:
             - build-and-test-project
-  

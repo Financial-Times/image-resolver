@@ -36,4 +36,3 @@ runbooks:
   systemCodes:
     # paths are relative to root, omitting ./ (case-insensitive)
     content-unroller: runbooks/content-unroller_runbook.md
-    content-preview-unroller: runbooks/content-preview-unroller_runbook.md

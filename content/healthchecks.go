@@ -10,11 +10,9 @@ import (
 )
 
 type ServiceConfig struct {
-	ContentStoreAppName        string
-	ContentStoreAppHealthURI   string
-	ContentPreviewAppName      string
-	ContentPreviewAppHealthURI string
-	HTTPClient                 *http.Client
+	ContentStoreAppName      string
+	ContentStoreAppHealthURI string
+	HTTPClient               *http.Client
 }
 
 func (sc *ServiceConfig) GtgCheck() gtg.Status {
@@ -30,20 +28,6 @@ func (sc *ServiceConfig) GtgCheck() gtg.Status {
 	})()
 }
 
-func (sc *ServiceConfig) GtgCheckPreview() gtg.Status {
-	contentPreviewCheck := func() gtg.Status {
-		msg, err := sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
-		if err != nil {
-			return gtg.Status{GoodToGo: false, Message: msg}
-		}
-
-		return gtg.Status{GoodToGo: true}
-	}
-	return gtg.FailFastParallelCheck([]gtg.StatusChecker{
-		contentPreviewCheck,
-	})()
-}
-
 func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 	return fthealth.Check{
 		ID:               fmt.Sprintf("check-connect-%s", sc.ContentStoreAppName),
@@ -54,20 +38,6 @@ func (sc *ServiceConfig) ContentStoreCheck() fthealth.Check {
 		PanicGuide:       "https://dewey.in.ft.com/runbooks/contentreadapi",
 		Checker: func() (string, error) {
 			return sc.checkServiceAvailability(sc.ContentStoreAppName, sc.ContentStoreAppHealthURI)
-		},
-	}
-}
-
-func (sc *ServiceConfig) ContentPreviewCheck() fthealth.Check {
-	return fthealth.Check{
-		ID:               fmt.Sprintf("check-connect-%s", sc.ContentPreviewAppName),
-		Name:             fmt.Sprintf("Check connectivity to %s", sc.ContentPreviewAppName),
-		Severity:         1,
-		BusinessImpact:   "Unrolled dynamic content won't be available",
-		TechnicalSummary: fmt.Sprintf(`Cannot connect to %v.`, sc.ContentPreviewAppName),
-		PanicGuide:       "https://dewey.in.ft.com/runbooks/content-preview",
-		Checker: func() (string, error) {
-			return sc.checkServiceAvailability(sc.ContentPreviewAppName, sc.ContentPreviewAppHealthURI)
 		},
 	}
 }

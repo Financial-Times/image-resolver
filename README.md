@@ -13,12 +13,10 @@ Content unroller is an internally used API for expanding images and dynamic cont
 ## Usage
 ### Install
 
-`go get -u github.com/Financial-Times/content-unroller`
+`go get github.com/Financial-Times/content-unroller`
 
 ## Running locally
-To run the service locally, you will need to run the following commands first to get the vendored dependencies for this project:
   ```
-  dep ensure -vendor-only
   go test ./... -race
   go install
   ```
@@ -38,8 +36,6 @@ Endpoint | Description
 --- | --- 
 `/content` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images + dynamic content 
 `/internalcontent` | Calls **Content-Public-Read** service to expand lead images and body embedded dynamic content
-`/content-preview` | Calls **Content-Public-Read** service to expand main images, alternative images and body embedded images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
-`/internalcontent-preview` | Calls **Content-Public-Read** service to expand lead images. Calls **Content-Public-Read-Preview** service to expand body embedded dynamic content
 
 ### Admin specific endpoints:
 

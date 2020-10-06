@@ -13,7 +13,7 @@ import (
 	"github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/jawher/mow.cli"
+	cli "github.com/jawher/mow.cli"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,18 +43,6 @@ func main() {
 		Desc:   "Content source hostname",
 		EnvVar: "CONTENT_STORE_HOST",
 	})
-	contentPreviewAppName := app.String(cli.StringOpt{
-		Name:   "contentPreviewAppName",
-		Value:  "content-public-read-preview",
-		Desc:   "Content Preview app",
-		EnvVar: "CONTENT_PREVIEW_APP_NAME",
-	})
-	contentPreviewHost := app.String(cli.StringOpt{
-		Name:   "contentPreviewHost",
-		Value:  "http://localhost:8080/__content-preview",
-		Desc:   "Content Preview hostname",
-		EnvVar: "CONTENT_PREVIEW_HOST",
-	})
 	contentPathEndpoint := app.String(cli.StringOpt{
 		Name:   "contentPathEndpoint",
 		Value:  "/content",
@@ -73,12 +61,6 @@ func main() {
 		Desc:   "API host to use for URLs in responses",
 		EnvVar: "API_HOST",
 	})
-	flow := app.String(cli.StringOpt{
-		Name:   "flow",
-		Value:  "read",
-		Desc:   "Marks if it is 'read' or 'preview' flow (default: read)",
-		EnvVar: "FLOW",
-	})
 
 	app.Action = func() {
 		httpClient := &http.Client{
@@ -92,18 +74,14 @@ func main() {
 		}
 
 		sc := content.ServiceConfig{
-			ContentStoreAppName:        *contentStoreApplicationName,
-			ContentStoreAppHealthURI:   getServiceHealthURI(*contentStoreHost),
-			ContentPreviewAppName:      *contentPreviewAppName,
-			ContentPreviewAppHealthURI: getServiceHealthURI(*contentPreviewHost),
-			HTTPClient:                 httpClient,
+			ContentStoreAppName:      *contentStoreApplicationName,
+			ContentStoreAppHealthURI: getServiceHealthURI(*contentStoreHost),
+			HTTPClient:               httpClient,
 		}
 
 		readerConfig := content.ReaderConfig{
 			ContentStoreAppName:         *contentStoreApplicationName,
 			ContentStoreHost:            *contentStoreHost,
-			ContentPreviewAppName:       *contentPreviewAppName,
-			ContentPreviewHost:          *contentPreviewHost,
 			ContentPathEndpoint:         *contentPathEndpoint,
 			InternalContentPathEndpoint: *internalContentPathEndpoint,
 		}
@@ -111,14 +89,7 @@ func main() {
 		reader := content.NewContentReader(readerConfig, httpClient)
 		unroller := content.NewContentUnroller(reader, *apiHost)
 
-		switch *flow {
-		case "read", "preview":
-			log.Infof("Value of 'flow' set to '%s'.", *flow)
-		default:
-			log.Warnf("Value of 'flow' should be one of: 'read' or 'preview', defaulting to 'read'.")
-		}
-
-		h := setupServiceHandler(unroller, sc, *flow)
+		h := setupServiceHandler(unroller, sc)
 		err := http.ListenAndServe(":"+*port, h)
 		if err != nil {
 			log.Fatalf("Unable to start server: %v", err)
@@ -130,25 +101,17 @@ func main() {
 	app.Run(os.Args)
 }
 
-func setupServiceHandler(s content.Unroller, sc content.ServiceConfig, flow string) *mux.Router {
+func setupServiceHandler(s content.Unroller, sc content.ServiceConfig) *mux.Router {
 	r := mux.NewRouter()
 	ch := &content.Handler{Service: s}
-	// Splitting the read and preview flow: endpoints and healthchecks assigned accordingly
+
 	var checks []fthealth.Check
 	var gtgHandler func(http.ResponseWriter, *http.Request)
 
-	if flow == "preview" {
-		r.HandleFunc("/content-preview", ch.GetContentPreview).Methods("POST")
-		r.HandleFunc("/internalcontent-preview", ch.GetInternalContentPreview).Methods("POST")
-		checks = []fthealth.Check{sc.ContentStoreCheck(), sc.ContentPreviewCheck()}
-		gtgHandler = httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheckPreview))
-	} else {
-		// the default value for flow is "read"
-		r.HandleFunc("/content", ch.GetContent).Methods("POST")
-		r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
-		checks = []fthealth.Check{sc.ContentStoreCheck()}
-		gtgHandler = httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
-	}
+	r.HandleFunc("/content", ch.GetContent).Methods("POST")
+	r.HandleFunc("/internalcontent", ch.GetInternalContent).Methods("POST")
+	checks = []fthealth.Check{sc.ContentStoreCheck()}
+	gtgHandler = httphandlers.NewGoodToGoHandler(gtg.StatusChecker(sc.GtgCheck))
 
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)

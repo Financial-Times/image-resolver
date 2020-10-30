@@ -2,7 +2,6 @@
 replicaCount: 2
 service:
   name: content-unroller
-eksCluster: true
 
 content_store:
   app_name: content-public-read
